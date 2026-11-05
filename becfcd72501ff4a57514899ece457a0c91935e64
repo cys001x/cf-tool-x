@@ -1,0 +1,70 @@
+cmd/db.go
+  69fd4781bb3eb42f 58,133-135,179-208,492-493,500-501,530-537,541-564,738-739,741,744
+cmd/practice_test.go
+  69fd4781bb3eb42f 95,106,109-114
+cf.go
+  69fd4781bb3eb42f 18
+docs/leftover-tests.md
+  69fd4781bb3eb42f 54-80
+docs/commands.md
+  69fd4781bb3eb42f 311
+cmd/practice.go
+  69fd4781bb3eb42f 222-225
+cmd/db_test.go
+  69fd4781bb3eb42f 252-292,414-463
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8-ntes.9",
+  "base_commit_sha": "becfcd72501ff4a57514899ece457a0c91935e64",
+  "prompts": {
+    "69fd4781bb3eb42f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e6f58b04-794a-40e1-8850-1fc4ca95514a",
+        "model": "deepseek-flash"
+      },
+      "human_author": "cys",
+      "messages": [],
+      "total_additions": 215,
+      "total_deletions": 22,
+      "accepted_lines": 212,
+      "overriden_lines": 0,
+      "per_file_stats": {
+        "cmd/practice_test.go": {
+          "additions": 9,
+          "deletions": 1,
+          "accepted_lines": 9
+        },
+        "cmd/practice.go": {
+          "additions": 4,
+          "deletions": 1,
+          "accepted_lines": 4
+        },
+        "cmd/db_test.go": {
+          "additions": 91,
+          "accepted_lines": 91
+        },
+        "cmd/db.go": {
+          "additions": 82,
+          "deletions": 18,
+          "accepted_lines": 79
+        },
+        "docs/commands.md": {
+          "additions": 1,
+          "deletions": 1,
+          "accepted_lines": 1
+        },
+        "docs/leftover-tests.md": {
+          "additions": 27,
+          "accepted_lines": 27
+        },
+        "cf.go": {
+          "additions": 1,
+          "deletions": 1,
+          "accepted_lines": 1
+        }
+      }
+    }
+  }
+}
