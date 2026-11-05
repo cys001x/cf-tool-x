@@ -13,6 +13,7 @@ var completionCommands = []string{
 	"config", "submit", "list", "parse", "gen", "test", "watch",
 	"open", "stand", "sid", "detail", "race", "pull", "sync",
 	"clone", "upgrade", "statement", "material", "completion",
+	"timer",
 }
 
 const bashCompletion = `# bash completion for cf
@@ -46,6 +47,9 @@ _cf() {
         watch)
             [[ $COMP_CWORD -eq 2 ]] && COMPREPLY=( $(compgen -W "all" -- "$cur") )
             ;;
+        timer)
+            [[ $COMP_CWORD -eq 2 ]] && COMPREPLY=( $(compgen -W "start end pause q status s e p" -- "$cur") )
+            ;;
     esac
 }
 complete -F _cf cf
@@ -76,6 +80,7 @@ _cf() {
         'statement:fetch problem statements'
         'material:fetch contest materials'
         'completion:print a shell completion script'
+        'timer:global timer for contests and problems'
     )
 
     if (( CURRENT == 2 )); then
@@ -90,6 +95,9 @@ _cf() {
         watch)
             _values 'scope' all
             ;;
+        timer)
+            _values 'timer command' start end pause q status s e p
+            ;;
     esac
 }
 compdef _cf cf
@@ -100,6 +108,7 @@ const fishCompletion = `# fish completion for cf
 complete -c cf -f -n "not __fish_seen_subcommand_from COMMANDS" -a "COMMANDS"
 complete -c cf -n "__fish_seen_subcommand_from pull clone" -a ac
 complete -c cf -n "__fish_seen_subcommand_from watch" -a all
+complete -c cf -n "__fish_seen_subcommand_from timer" -a "start end pause q status s e p"
 `
 
 // Completion prints a shell completion script.

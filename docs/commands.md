@@ -9,6 +9,7 @@ document describes every command, its arguments, and the files it creates.
 - [Commands](#commands)
   - [cf config](#cf-config)
   - [cf sync](#cf-sync)
+  - [cf timer](#cf-timer)
   - [cf pull](#cf-pull-ac)
   - [cf clone](#cf-clone)
   - [cf parse](#cf-parse)
@@ -148,6 +149,96 @@ Notes:
 - acmsguru problems have no submission list; only samples, statement, and
   template generation apply.
 - A template must be configured before `cf sync` can generate code.
+
+### cf timer
+
+```
+cf timer [<args>...]
+cf counttime [<args>...]   # alias
+```
+
+A global singleton timer. `cf timer` opens it in the foreground and
+refreshes the elapsed time on one line every second; the time is printed in
+green and the line is redrawn in place with the same cursor-up refresh used by
+`cf submit`. Typed commands appear after `>` on the
+same line. Ctrl-C or Ctrl-D leaves the monitor and keeps the timer state
+active. There is no background daemon: the clock is derived from the timestamps
+in `~/.cf/timer.json`, so the timer keeps counting even when no `cf` process is
+running. Run `cf timer` again to see the clock, or use any command from another
+terminal.
+
+While it is open, these commands can be typed in the timer window or run from
+any other terminal:
+
+| Command | Effect |
+|---------|--------|
+| `start <specifier> <note>` (`s`) | Start timing a problem or a contest. Several problems can run at the same time; only a duplicate start of the same problem is rejected. The timer is created automatically when it does not exist. |
+| `end <specifier> <note>` (`e`) | Stop the running problem that matches the specifier. The specifier must resolve to the same folder as one of the open `start` events; otherwise the command is rejected. The note is stored as that problem's summary. The elapsed time of that problem and the timer total are printed. |
+| `pause` (`p`) | Pause the timer. Running `pause` again resumes it. |
+| `q [<note>]` (`exit` is an alias) | Close the timer and print the summary. The note is stored as the session summary and as the summary of every open problem. A running problem is ended automatically with the note, or `auto end on quit`. |
+| `status` | Print the current elapsed time, active problem and state. |
+
+```plain
+cf timer                                  # foreground window
+cf timer start 1136a "read the problem"   # from any terminal
+cf timer end 1136a "solved"
+cf timer pause
+cf timer q "contest done"
+```
+
+Automatically recorded nodes:
+
+- `cf test` appends a `test` node when every sample passes.
+- `cf submit` appends a `submit` node with the verdict. When the verdict is
+  `Accepted`, `cf` asks `Accepted. Close the timer? (y/n)`. Answering `y` asks
+  for a summary of the session, then closes the timer and prints the summary.
+
+Files:
+
+- `~/.cf/timer.json` — singleton timer state: session start, paused flag,
+  accumulated elapsed time, active problem, and the list of touched records.
+- `<problem>/count_time.json` — time nodes of that problem:
+
+```json
+{
+  "problem": "1136a",
+  "link": "https://codeforces.com/contest/1136/problem/a",
+  "summary": "solved with a segment tree",
+  "events": [
+    {
+      "type": "start",
+      "time": "2026-11-05T12:00:00+08:00",
+      "elapsed": "00:00:00",
+      "note": "read the problem"
+    },
+    {
+      "type": "test",
+      "time": "2026-11-05T12:05:00+08:00",
+      "elapsed": "00:05:00",
+      "note": "all samples passed"
+    }
+  ]
+}
+```
+
+Event types are `start`, `end`, `test` and `submit`. Every event carries the
+absolute timestamp and `elapsed` in `HH:MM:SS`, measured from the timer session
+start and excluding paused periods. The record-level `summary` is the note of the last
+`end` for that problem, or the note given to `q`. The session summary is
+also stored in `~/.cf/timer.json`.
+
+Notes:
+
+- Several problems can be timed at once. The timer keeps one open set of `start` events; `test`/`submit` nodes are appended to the open problem that matches the current folder, and `end` closes the matching one.
+- `start`/`end` accept the usual specifiers (`1136a`, a problem URL, a contest
+  id, a gym/group URL).
+- Updates from different processes are serialized with a lock file next to the
+  state file.
+- The monitor window only displays the timer. Closing the window keeps the
+  timer state active until `cf timer q`.
+- No process stays alive in the background. Every command is a short-lived
+  process that reads and updates `~/.cf/timer.json`; elapsed time is computed
+  from timestamps when the state is read.
 
 ### cf pull [ac]
 
@@ -429,6 +520,7 @@ while typing.
 | Variable | Effect |
 |----------|--------|
 | `CF_UA` | Overrides the browser User-Agent used for every request. Takes precedence over the value stored in `~/.cf/config`. |
+| `CF_TIMER_STATE` | Overrides the path of the timer state file (default `~/.cf/timer.json`). |
 
 Configuration and session files:
 

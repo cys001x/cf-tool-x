@@ -21,6 +21,7 @@ Codeforces Tool 是 [Codeforces](https://codeforces.com) 的命令行界面的�
 * 动态刷新提交后的情况
 * 拉取问题的样例
 * 一条命令同步比赛或题目：样例、题面和最新提交代码
+* 全局计时器：为比赛或题目计时，并记录每个时间节点
 * 本地编译和测试样例
 * 拉取某人的所有代码
 * 从指定模板生成代码（包括时间戳，作者等信息）
@@ -68,6 +69,17 @@ $ go env -w GOPRIVATE=github.com/cys001x/cf-tool-x
  `cf sync 1136` 或者 `cf sync 1136a`
 
 一条命令同步整场比赛或单道题目：拉取样例和题面，拉取你最新的一次提交代码；如果没有提交且本地没有代码，则用默认模板生成代码。若本地已有代码，会先询问是否覆盖。
+
+ `cf timer`
+
+打开全局计时器。每秒在同一行刷新已用时间。输入 `start <specifier> <描述>` 开始为一道题目或一场
+比赛计时，`end <specifier> <描述>` 结束，`pause` 暂停或继续，`q`（或 `exit`）关闭计时并输出总结。这些
+命令也可以在其它终端执行。没有后台守护进程：计时依据 `~/.cf/timer.json` 中的时间戳计算。
+
+可以同时为多道题目计时，`end` 关闭与 specifier 对应的那一个。`cf test` 全部样例通过时自动记录 `test` 节点，`cf submit` 自动记录 `submit` 节点（含判定结果）。
+判定为 Accepted 时会询问是否关闭计时器，选是后再让用户提供一段总结。时间节点保存在
+`<题目>/count_time.json`，全局单例状态保存在 `~/.cf/timer.json`。`end` 的描述或 `q`
+时输入的总结会写入对应题目记录的 `summary` 字段。
 
  `cd ./cf/contest/1136/a` （或者是其他的路径，请看屏幕前的提示）
 
@@ -117,6 +129,7 @@ $ go env -w GOPRIVATE=github.com/cys001x/cf-tool-x
   cf race [<specifier>...]
   cf pull [ac] [<specifier>...]
   cf sync [<specifier>...]
+  cf timer [<args>...]
   cf clone [ac] [<handle>]
   cf statement [<specifier>...] [-d <dir>] [-f <file>]
   cf material [<specifier>...] [-d <dir>] [-f <file>]
@@ -140,6 +153,7 @@ $ go env -w GOPRIVATE=github.com/cys001x/cf-tool-x
                        你可以任意组合多个 <specifier> 来说明你的需求。
   <alias>              模板的名字，比如 "cpp"。
   <shell>              生成补全脚本的 shell：bash、zsh 或 fish。
+  <args>               计时器命令（start/end/pause/q/status，可简写为 s/e/p/q）与参数。
   ac                   是否只获取 Accpeted 的代码。
 
 例子:
@@ -191,6 +205,14 @@ $ go env -w GOPRIVATE=github.com/cys001x/cf-tool-x
                        没有提交且本地没有代码时用默认模板生成。
   cf sync 1136a        同步比赛 1136 的题目 a。
   cf sync              同步当前题目。
+  cf timer             在前台打开计时器，每秒刷新一行已用时间。
+  cf timer start 1136a "read the problem"
+                       开始为比赛 1136 的题目 a 计时。
+  cf timer end 1136a "solved"
+                       结束当前题目，必须与 start 的题目一致。
+  cf timer pause       暂停或继续计时。
+  cf timer q "contest done"
+                       关闭计时器并输出总结。
   cf clone xalanq      拉取 xalanq 的所有提交代码。
   cf upgrade           从 GitHub 更新 "cf" 到最新版。
   cf statement         拉取当前题目的题面到当前文件夹下。
@@ -208,6 +230,9 @@ $ go env -w GOPRIVATE=github.com/cys001x/cf-tool-x
 
   "~/.cf/config"        这是配置文件，包括模版等信息。
   "~/.cf/session"       这是会话文件，包括 cookies、用户名、密码等。
+  "~/.cf/timer.json"    全局计时器的状态。
+  "<题目>/count_time.json"
+                        "cf timer" 写入的计时数据。
 
   "~" 这个符号是系统当前用户的主文件夹。
 

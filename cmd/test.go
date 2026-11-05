@@ -61,12 +61,13 @@ func plain(raw []byte) string {
 	return b.String()
 }
 
-func judge(sampleID, sampleDir, command string) error {
+// judge runs one sample and reports whether the output matched the answer.
+func judge(sampleID, sampleDir, command string) (passed bool, err error) {
 	inPath := filepath.Join(sampleDir, fmt.Sprintf("in%v.txt", sampleID))
 	ansPath := filepath.Join(sampleDir, fmt.Sprintf("ans%v.txt", sampleID))
 	input, err := os.Open(inPath)
 	if err != nil {
-		return err
+		return false, err
 	}
 	var o bytes.Buffer
 	output := io.Writer(&o)
@@ -78,7 +79,7 @@ func judge(sampleID, sampleDir, command string) error {
 	cmd.Stdout = output
 	cmd.Stderr = os.Stderr
 	if err := cmd.Start(); err != nil {
-		return fmt.Errorf("Runtime Error #%v ... %v", sampleID, err.Error())
+		return false, fmt.Errorf("Runtime Error #%v ... %v", sampleID, err.Error())
 	}
 
 	pid := int32(cmd.Process.Pid)
@@ -92,7 +93,7 @@ func judge(sampleID, sampleDir, command string) error {
 		select {
 		case err := <-ch:
 			if err != nil {
-				return fmt.Errorf("Runtime Error #%v ... %v", sampleID, err.Error())
+				return false, fmt.Errorf("Runtime Error #%v ... %v", sampleID, err.Error())
 			}
 			running = false
 		default:
@@ -120,7 +121,7 @@ func judge(sampleID, sampleDir, command string) error {
 	} else {
 		input, err := ioutil.ReadFile(inPath)
 		if err != nil {
-			return err
+			return false, err
 		}
 		state = color.New(color.FgRed).Sprintf("Failed #%v", sampleID)
 		dmp := diffmatchpatch.New()
@@ -145,7 +146,7 @@ func judge(sampleID, sampleDir, command string) error {
 	}
 
 	ansi.Printf("%v ... %.3fs %v\n%v", state, cmd.ProcessState.UserTime().Seconds(), parseMemory(maxMemory), diff)
-	return nil
+	return out == ans, nil
 }
 
 // Test command
@@ -195,15 +196,27 @@ func Test() (err error) {
 	if err = run(template.BeforeScript); err != nil {
 		return
 	}
+	allPassed := true
 	if s := filter(template.Script); len(s) > 0 {
 		for _, i := range samples {
-			err := judge(i, Args.Dir, s)
-			if err != nil {
-				color.Red(err.Error())
+			passed, e := judge(i, Args.Dir, s)
+			if e != nil {
+				color.Red(e.Error())
+				allPassed = false
+				continue
+			}
+			if !passed {
+				allPassed = false
 			}
 		}
 	} else {
 		return errors.New("Invalid script command. Please check config file")
 	}
-	return run(template.AfterScript)
+	if err = run(template.AfterScript); err != nil {
+		return
+	}
+	if allPassed && len(samples) > 0 {
+		recordTestPassed()
+	}
+	return nil
 }

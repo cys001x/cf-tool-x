@@ -21,6 +21,7 @@ It's fast, small, cross-platform and powerful.
 * Watch submissions' status dynamically.
 * Fetch problems' samples.
 * Sync a contest or a problem in one command: samples, statements, and the latest submission code.
+* Time a contest or a problem and record every time node.
 * Compile and test locally.
 * Clone all codes of someone.
 * Generate codes from the specified template (including timestamp, author, etc.)
@@ -69,6 +70,23 @@ If the contest has not started yet, `cf` will count down. If the contest have st
  `cf sync 1136` or `cf sync 1136a`
 
 Sync a whole contest or a single problem in one command: fetch samples and statements, pull your latest submission code, or generate a code from the default template when there is no submission and no local code. If local code already exists, `cf` asks before overwriting it.
+
+ `cf timer`
+
+Open the global timer. It refreshes the elapsed time on one line every second.
+Type `start <specifier> <note>` to start timing a problem or contest, `end
+<specifier> <note>` to stop it, `pause` to pause or resume, and `q` (or `exit`) to close
+the timer and print the summary. The same commands work from any other terminal,
+so the timer state can be updated from any terminal. There is no background
+daemon: the clock is derived from timestamps in `~/.cf/timer.json`.
+
+Several problems can be timed at the same time; `end` closes the one matching
+the specifier. `cf test` records a `test` node when every sample passes, and `cf submit`
+records a `submit` node with the verdict. An accepted submission asks whether to
+close the timer and, if yes, asks for a summary of the session. Nodes are saved
+in `<problem>/count_time.json`; the singleton state lives in
+`~/.cf/timer.json`. The note of `end`, or the summary typed at `q`, is stored
+as the `summary` field of that problem's record.
 
  `cd ./cf/contest/1136/a` (May be different from this, please notice the message on your screen)
 
@@ -119,6 +137,7 @@ Usage:
   cf race [<specifier>...]
   cf pull [ac] [<specifier>...]
   cf sync [<specifier>...]
+  cf timer [<args>...]
   cf clone [ac] [<handle>]
   cf statement [<specifier>...] [-d <dir>] [-f <file>]
   cf material [<specifier>...] [-d <dir>] [-f <file>]
@@ -207,6 +226,20 @@ Examples:
                        no submission and no local code.
   cf sync 1136a        Sync problem "a" of contest 1136.
   cf sync              Sync the current problem.
+  cf timer             Open the timer in the foreground. Every second it
+                       refreshes the elapsed time on one line. There is no
+                       background daemon: the state lives in
+                       "~/.cf/timer.json" and commands work from any terminal.
+  cf timer start 1136a "read the problem"
+                       Start timing problem "a" of contest 1136.
+  cf timer end 1136a "solved"
+                       End the running problem. It must match the start.
+  cf timer pause       Pause or resume the timer.
+  cf timer q "contest done"
+                       Close the timer and print the summary. "q" can also
+                       be written as "exit"; commands can be shortened to their
+                       first letter: s, e, p, q. The same commands work from
+                       any terminal while the timer is open.
   cf clone xalanq      Clone all codes of xalanq.
   cf statement         Fetch problem statement of current problem as statement.md.
   cf statement 1136a   Fetch statement of contest 1136 problem a.
@@ -225,6 +258,9 @@ File:
 
   "~/.cf/config"        Configuration file, including templates, etc.
   "~/.cf/session"       Session file, including cookies, handle, password, etc.
+  "~/.cf/timer.json"     State of the global timer.
+  "<problem>/count_time.json"
+                        Timer data written by "cf timer".
 
   "~" is the home directory of current user in your system.
 

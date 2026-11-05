@@ -15,11 +15,14 @@ import (
 	docopt "github.com/docopt/docopt-go"
 )
 
-const version = "v1.0.6"
+const version = "v1.1.0"
 const configPath = "~/.cf/config"
 const sessionPath = "~/.cf/session"
 
 func main() {
+	if len(os.Args) > 1 && (os.Args[1] == "counttime" || os.Args[1] == "countTime") {
+		os.Args[1] = "timer"
+	}
 	usage := `Codeforces Tool $%version%$ (cf). https://github.com/cys001x/cf-tool-x
 
 You should run "cf config" to configure your handle, password and code
@@ -42,6 +45,7 @@ Usage:
   cf race [<specifier>...]
   cf pull [ac] [<specifier>...]
   cf sync [<specifier>...]
+  cf timer [<args>...]
   cf clone [ac] [<handle>]
   cf statement [<specifier>...] [-d <dir>] [-f <file>]
   cf material [<specifier>...] [-d <dir>] [-f <file>]
@@ -130,6 +134,20 @@ Examples:
                        no submission and no local code.
   cf sync 1136a        Sync problem "a" of contest 1136.
   cf sync              Sync the current problem.
+  cf timer             Open the timer in the foreground. Every second it
+                       refreshes the elapsed time on one line. There is no
+                       background daemon: the state lives in
+                       "~/.cf/timer.json" and commands work from any terminal.
+  cf timer start 1136a "read the problem"
+                       Start timing problem "a" of contest 1136.
+  cf timer end 1136a "solved"
+                       End the running problem. It must match the start.
+  cf timer pause       Pause or resume the timer.
+  cf timer q "contest done"
+                       Close the timer and print the summary. "q" can also
+                       be written as "exit"; commands can be shortened to their
+                       first letter: s, e, p, q. The same commands work from
+                       any terminal while the timer is open.
   cf clone xalanq      Clone all codes of xalanq.
   cf statement         Fetch problem statement of current problem as statement.md.
   cf statement 1136a   Fetch statement of contest 1136 problem a.
@@ -148,6 +166,9 @@ File:
 
   "~/.cf/config"        Configuration file, including templates, etc.
   "~/.cf/session"       Session file, including cookies, handle, password, etc.
+  "~/.cf/timer.json"     State of the global timer.
+  "<problem>/count_time.json"
+                        Timer data written by "cf timer".
 
   "~" is the home directory of current user in your system.
 

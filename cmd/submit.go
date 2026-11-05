@@ -38,6 +38,7 @@ func Submit() (err error) {
 		return
 	}
 	printFailedSubmissionTests(cln)
+	recordSubmissionTimer(cln)
 	return
 }
 

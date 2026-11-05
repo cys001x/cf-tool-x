@@ -41,6 +41,8 @@ type ParsedArgs struct {
 	Statement  bool     `docopt:"statement"`
 	Material   bool     `docopt:"material"`
 	Completion bool     `docopt:"completion"`
+	Timer      bool     `docopt:"timer"`
+	CountArgs  []string `docopt:"<args>"`
 	Shell      string   `docopt:"<shell>"`
 }
 
@@ -48,7 +50,6 @@ type ParsedArgs struct {
 var Args *ParsedArgs
 
 func parseArgs(opts docopt.Opts) error {
-	cfg := config.Instance
 	cln := client.Instance
 	path, err := os.Getwd()
 	if err != nil {
@@ -65,36 +66,50 @@ func parseArgs(opts docopt.Opts) error {
 	if Args.Handle == "" {
 		Args.Handle = cln.Handle
 	}
-	info := client.Info{}
-	for _, arg := range Args.Specifier {
+	info, err := infoFromSpecifiers(Args.Specifier, path)
+	if err != nil {
+		return err
+	}
+	info.Dir = Args.Dir
+	info.File = Args.File
+	Args.Info = info
+	// util.DebugJSON(Args)
+	return nil
+}
+
+// infoFromSpecifiers builds the contest/problem Info from free-form specifiers.
+// Path parsing is used when no problem type was given explicitly.
+func infoFromSpecifiers(specifiers []string, path string) (info client.Info, err error) {
+	cfg := config.Instance
+	for _, arg := range specifiers {
 		parsed := parseArg(arg)
 		if value, ok := parsed["problemType"]; ok {
 			if info.ProblemType != "" && info.ProblemType != value {
-				return fmt.Errorf("Problem Type conflicts: %v %v", info.ProblemType, value)
+				return client.Info{}, fmt.Errorf("Problem Type conflicts: %v %v", info.ProblemType, value)
 			}
 			info.ProblemType = value
 		}
 		if value, ok := parsed["contestID"]; ok {
 			if info.ContestID != "" && info.ContestID != value {
-				return fmt.Errorf("Contest ID conflicts: %v %v", info.ContestID, value)
+				return client.Info{}, fmt.Errorf("Contest ID conflicts: %v %v", info.ContestID, value)
 			}
 			info.ContestID = value
 		}
 		if value, ok := parsed["groupID"]; ok {
 			if info.GroupID != "" && info.GroupID != value {
-				return fmt.Errorf("Group ID conflicts: %v %v", info.GroupID, value)
+				return client.Info{}, fmt.Errorf("Group ID conflicts: %v %v", info.GroupID, value)
 			}
 			info.GroupID = value
 		}
 		if value, ok := parsed["problemID"]; ok {
 			if info.ProblemID != "" && info.ProblemID != value {
-				return fmt.Errorf("Problem ID conflicts: %v %v", info.ProblemID, value)
+				return client.Info{}, fmt.Errorf("Problem ID conflicts: %v %v", info.ProblemID, value)
 			}
 			info.ProblemID = value
 		}
 		if value, ok := parsed["submissionID"]; ok {
 			if info.SubmissionID != "" && info.SubmissionID != value {
-				return fmt.Errorf("Submission ID conflicts: %v %v", info.SubmissionID, value)
+				return client.Info{}, fmt.Errorf("Submission ID conflicts: %v %v", info.SubmissionID, value)
 			}
 			info.SubmissionID = value
 		}
@@ -141,11 +156,7 @@ func parseArgs(opts docopt.Opts) error {
 		path = filepath.Dir(path)
 	}
 	info.RootPath = filepath.Join(info.RootPath, cfg.FolderName[info.ProblemType])
-	info.Dir = Args.Dir
-	info.File = Args.File
-	Args.Info = info
-	// util.DebugJSON(Args)
-	return nil
+	return info, nil
 }
 
 // ProblemRegStr problem
