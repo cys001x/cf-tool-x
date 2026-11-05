@@ -1,0 +1,127 @@
+README_zh_CN.md
+  69fd4781bb3eb42f 31,101-102,112,130-133,147,214,224
+docs/commands.md
+  69fd4781bb3eb42f 26,367,409-410,541-542,633-650
+cmd/practice.go
+  69fd4781bb3eb42f 195-199
+cmd/gen.go
+  69fd4781bb3eb42f 39-53,68-70
+cmd/cmd.go
+  69fd4781bb3eb42f 32-33
+cmd/gen_test.go
+  69fd4781bb3eb42f 1-46
+cmd/timer_lifecycle_test.go
+  69fd4781bb3eb42f 4,106-126
+cmd/timer.go
+  69fd4781bb3eb42f 431-447
+cmd/practice_test.go
+  69fd4781bb3eb42f 94,105,109,112-117
+README.md
+  69fd4781bb3eb42f 31,113-114,127,145-148,163,235-236,246-247
+cmd/contests_test.go
+  69fd4781bb3eb42f 1-34
+cmd/args.go
+  69fd4781bb3eb42f 28
+cf.go
+  69fd4781bb3eb42f 18,49,121-122,132-133
+client/contest.go
+  69fd4781bb3eb42f 94-144
+cmd/contests.go
+  69fd4781bb3eb42f 1-64
+cmd/completion.go
+  69fd4781bb3eb42f 13,71
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8-ntes.9",
+  "base_commit_sha": "07221c41a880f1c0cfe24942a864321ecf6d94d8",
+  "prompts": {
+    "69fd4781bb3eb42f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e6f58b04-794a-40e1-8850-1fc4ca95514a",
+        "model": "deepseek-flash"
+      },
+      "human_author": "cys",
+      "messages": [],
+      "total_additions": 326,
+      "total_deletions": 20,
+      "accepted_lines": 326,
+      "overriden_lines": 0,
+      "per_file_stats": {
+        "cmd/gen_test.go": {
+          "additions": 46,
+          "accepted_lines": 46
+        },
+        "cmd/practice_test.go": {
+          "additions": 10,
+          "deletions": 2,
+          "accepted_lines": 10
+        },
+        "client/contest.go": {
+          "additions": 51,
+          "accepted_lines": 51
+        },
+        "cf.go": {
+          "additions": 6,
+          "deletions": 2,
+          "accepted_lines": 6
+        },
+        "cmd/timer.go": {
+          "additions": 17,
+          "deletions": 3,
+          "accepted_lines": 17
+        },
+        "cmd/contests.go": {
+          "additions": 64,
+          "accepted_lines": 64
+        },
+        "cmd/gen.go": {
+          "additions": 18,
+          "accepted_lines": 18
+        },
+        "cmd/practice.go": {
+          "additions": 5,
+          "deletions": 1,
+          "accepted_lines": 5
+        },
+        "cmd/args.go": {
+          "additions": 1,
+          "accepted_lines": 1
+        },
+        "README.md": {
+          "additions": 13,
+          "deletions": 3,
+          "accepted_lines": 13
+        },
+        "README_zh_CN.md": {
+          "additions": 11,
+          "deletions": 5,
+          "accepted_lines": 11
+        },
+        "cmd/completion.go": {
+          "additions": 2,
+          "deletions": 1,
+          "accepted_lines": 2
+        },
+        "cmd/contests_test.go": {
+          "additions": 34,
+          "accepted_lines": 34
+        },
+        "cmd/cmd.go": {
+          "additions": 2,
+          "accepted_lines": 2
+        },
+        "docs/commands.md": {
+          "additions": 24,
+          "deletions": 3,
+          "accepted_lines": 24
+        },
+        "cmd/timer_lifecycle_test.go": {
+          "additions": 22,
+          "accepted_lines": 22
+        }
+      }
+    }
+  }
+}
