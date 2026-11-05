@@ -59,6 +59,8 @@ func Eval(opts docopt.Opts) error {
 		return Material()
 	} else if Args.Upgrade {
 		return Upgrade()
+	} else if Args.Completion {
+		return Completion()
 	}
 	return nil
 }

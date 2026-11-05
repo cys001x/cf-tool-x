@@ -45,6 +45,7 @@ Usage:
   cf clone [ac] [<handle>]
   cf statement [<specifier>...] [-d <dir>] [-f <file>]
   cf material [<specifier>...] [-d <dir>] [-f <file>]
+  cf completion [<shell>]
   cf upgrade
 
 Options:
@@ -64,6 +65,7 @@ Options:
                        You can combine multiple specifiers to specify what you
                        want.
   <alias>              Template's alias. E.g. "cpp"
+  <shell>              Shell to generate completion for: bash, zsh or fish.
   ac                   The status of the submission is Accepted.
 
 Examples:
@@ -133,6 +135,12 @@ Examples:
   cf statement 1136a   Fetch statement of contest 1136 problem a.
   cf statement 1136    Fetch all statements of contest 1136.
   cf material 1136     Fetch all Contest materials for contest 1136 and save as .md files.
+  cf completion bash   Print a bash completion script. Load it with
+                       "source <(cf completion bash)".
+  cf completion zsh    Print a zsh completion script. Load it with
+                       "eval \"$(cf completion zsh)\"" in ~/.zshrc.
+  cf completion fish   Print a fish completion script. Save it to
+                       "~/.config/fish/completions/cf.fish".
   cf upgrade           Upgrade the "cf" to the latest version from GitHub.
 
 File:

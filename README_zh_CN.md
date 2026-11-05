@@ -120,6 +120,7 @@ $ go env -w GOPRIVATE=github.com/cys001x/cf-tool-x
   cf clone [ac] [<handle>]
   cf statement [<specifier>...] [-d <dir>] [-f <file>]
   cf material [<specifier>...] [-d <dir>] [-f <file>]
+  cf completion [<shell>]
   cf upgrade
 
 参数:
@@ -138,6 +139,7 @@ $ go env -w GOPRIVATE=github.com/cys001x/cf-tool-x
                        "1111A"、"1111"、"a"、"Cw4JRyRGXR"。
                        你可以任意组合多个 <specifier> 来说明你的需求。
   <alias>              模板的名字，比如 "cpp"。
+  <shell>              生成补全脚本的 shell：bash、zsh 或 fish。
   ac                   是否只获取 Accpeted 的代码。
 
 例子:
@@ -195,6 +197,11 @@ $ go env -w GOPRIVATE=github.com/cys001x/cf-tool-x
   cf statement 1136a   拉取比赛 1136 题目 a 的题面。
   cf statement 1136    拉取比赛 1136 所有题目的题面。
   cf material 1136     拉取比赛 1136 的所有比赛资料（公告、题解等）并保存为 .md 文件。
+  cf completion bash   输出 bash 补全脚本，用 "source <(cf completion bash)" 加载。
+  cf completion zsh    输出 zsh 补全脚本，在 ~/.zshrc 里用
+                       "eval \"$(cf completion zsh)\"" 加载。
+  cf completion fish   输出 fish 补全脚本，保存到
+                       "~/.config/fish/completions/cf.fish"。
 
 储存的文件:
   cf 会保存数据到以下文件：
@@ -283,6 +290,18 @@ Codeforces Tool 是命令行界面的工具，你应该在终端里运行这个�
 
 ### 在终端里启用 tab 补全命令
 
-使用这个工具 [Infinidat/infi.docopt_completion](https://github.com/Infinidat/infi.docopt_completion) 即可。
+`cf` 可以直接输出补全脚本：
 
-注意：如果有一个新版本发布（尤其是添加了新命令），你应该重新运行 `docopt-completion cf`。
+```plain
+# bash：加入 ~/.bashrc
+$ source <(cf completion bash)
+
+# zsh：加入 ~/.zshrc
+$ eval "$(cf completion zsh)"
+
+# fish
+$ cf completion fish > ~/.config/fish/completions/cf.fish
+```
+
+重新加载 shell 后，输入 `cf sta<Tab>` 会补全成 `cf stand`。zsh-autosuggestions
+或 fish 自带的行内提示也会复用这套补全定义，在输入时显示灰色建议。

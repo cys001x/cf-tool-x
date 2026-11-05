@@ -23,6 +23,7 @@ document describes every command, its arguments, and the files it creates.
   - [cf open / stand / sid](#cf-open--stand--sid)
   - [cf race](#cf-race)
   - [cf upgrade](#cf-upgrade)
+  - [cf completion](#cf-completion)
 - [Environment variables](#environment-variables)
 - [Troubleshooting](#troubleshooting)
 
@@ -394,6 +395,34 @@ cf upgrade
 
 Downloads the latest release binary from GitHub Releases and replaces the
 current executable.
+
+### cf completion
+
+```
+cf completion [<shell>]
+```
+
+Prints a shell completion script for `bash`, `zsh`, or `fish`. Without
+`<shell>`, the shell is detected from `$SHELL`.
+
+```plain
+# bash: add to ~/.bashrc
+$ source <(cf completion bash)
+
+# zsh: add to ~/.zshrc
+$ eval "$(cf completion zsh)"
+
+# fish
+$ cf completion fish > ~/.config/fish/completions/cf.fish
+```
+
+After reloading the shell, typing `cf sta<Tab>` completes to `cf stand`. The
+scripts also complete `ac` for `pull` and `clone`, `all` for `watch`, and (in
+bash) file or directory paths after `-f` and `-d`.
+
+Shell autosuggestion plugins such as zsh-autosuggestions or the fish
+autosuggestion feature reuse these completion definitions to show inline hints
+while typing.
 
 ## Environment variables
 

@@ -13,33 +13,35 @@ import (
 
 // ParsedArgs parsed arguments
 type ParsedArgs struct {
-	Info      client.Info
-	File      string
-	Dir       string   `docopt:"--dir"`
-	Specifier []string `docopt:"<specifier>"`
-	Alias     string   `docopt:"<alias>"`
-	Accepted  bool     `docopt:"ac"`
-	All       bool     `docopt:"all"`
-	Handle    string   `docopt:"<handle>"`
-	Version   string   `docopt:"{version}"`
-	Config    bool     `docopt:"config"`
-	Submit    bool     `docopt:"submit"`
-	List      bool     `docopt:"list"`
-	Parse     bool     `docopt:"parse"`
-	Gen       bool     `docopt:"gen"`
-	Test      bool     `docopt:"test"`
-	Watch     bool     `docopt:"watch"`
-	Open      bool     `docopt:"open"`
-	Stand     bool     `docopt:"stand"`
-	Sid       bool     `docopt:"sid"`
-	Detail    bool     `docopt:"detail"`
-	Race      bool     `docopt:"race"`
-	Pull      bool     `docopt:"pull"`
-	Sync      bool     `docopt:"sync"`
-	Clone     bool     `docopt:"clone"`
-	Upgrade   bool     `docopt:"upgrade"`
-	Statement bool     `docopt:"statement"`
-	Material  bool     `docopt:"material"`
+	Info       client.Info
+	File       string
+	Dir        string   `docopt:"--dir"`
+	Specifier  []string `docopt:"<specifier>"`
+	Alias      string   `docopt:"<alias>"`
+	Accepted   bool     `docopt:"ac"`
+	All        bool     `docopt:"all"`
+	Handle     string   `docopt:"<handle>"`
+	Version    string   `docopt:"{version}"`
+	Config     bool     `docopt:"config"`
+	Submit     bool     `docopt:"submit"`
+	List       bool     `docopt:"list"`
+	Parse      bool     `docopt:"parse"`
+	Gen        bool     `docopt:"gen"`
+	Test       bool     `docopt:"test"`
+	Watch      bool     `docopt:"watch"`
+	Open       bool     `docopt:"open"`
+	Stand      bool     `docopt:"stand"`
+	Sid        bool     `docopt:"sid"`
+	Detail     bool     `docopt:"detail"`
+	Race       bool     `docopt:"race"`
+	Pull       bool     `docopt:"pull"`
+	Sync       bool     `docopt:"sync"`
+	Clone      bool     `docopt:"clone"`
+	Upgrade    bool     `docopt:"upgrade"`
+	Statement  bool     `docopt:"statement"`
+	Material   bool     `docopt:"material"`
+	Completion bool     `docopt:"completion"`
+	Shell      string   `docopt:"<shell>"`
 }
 
 // Args global variable

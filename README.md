@@ -122,6 +122,7 @@ Usage:
   cf clone [ac] [<handle>]
   cf statement [<specifier>...] [-d <dir>] [-f <file>]
   cf material [<specifier>...] [-d <dir>] [-f <file>]
+  cf completion [<shell>]
   cf upgrade
 
 Options:
@@ -141,6 +142,7 @@ Options:
                        You can combine multiple specifiers to specify what you
                        want.
   <alias>              Template's alias. E.g. "cpp"
+  <shell>              Shell to generate completion for: bash, zsh or fish.
   ac                   The status of the submission is Accepted.
 
 Examples:
@@ -210,6 +212,12 @@ Examples:
   cf statement 1136a   Fetch statement of contest 1136 problem a.
   cf statement 1136    Fetch all statements of contest 1136.
   cf material 1136     Fetch all Contest materials for contest 1136 and save as .md files.
+  cf completion bash   Print a bash completion script. Load it with
+                       "source <(cf completion bash)".
+  cf completion zsh    Print a zsh completion script. Load it with
+                       "eval \"$(cf completion zsh)\"" in ~/.zshrc.
+  cf completion fish   Print a fish completion script. Save it to
+                       "~/.config/fish/completions/cf.fish".
   cf upgrade           Upgrade the "cf" to the latest version from GitHub.
 
 File:
@@ -303,9 +311,22 @@ Create two extra testcase files `inK.txt` and `ansK.txt` (K is a string with 0~9
 
 ### Enable tab completion in terminal
 
-Use this [Infinidat/infi.docopt_completion](https://github.com/Infinidat/infi.docopt_completion).
+`cf` can print its own completion scripts:
 
-Note: If there is a new version released (especially a new command added), you should run `docopt-completion cf` again.
+```plain
+# bash: add to ~/.bashrc
+$ source <(cf completion bash)
+
+# zsh: add to ~/.zshrc
+$ eval "$(cf completion zsh)"
+
+# fish
+$ cf completion fish > ~/.config/fish/completions/cf.fish
+```
+
+Reload the shell, then `cf sta<Tab>` completes to `cf stand`. Shell plugins
+such as zsh-autosuggestions or fish's built-in autosuggestions reuse the same
+completion definitions to show inline hints while typing.
 
 ## Copyright and License
 
