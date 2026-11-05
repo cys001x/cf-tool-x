@@ -1,0 +1,102 @@
+client/parse.go
+  69fd4781bb3eb42f 53-54,96-108
+client/langs.go
+  69fd4781bb3eb42f 3-4,7-8,111-158
+cmd/sync.go
+  69fd4781bb3eb42f 1-134
+cmd/args.go
+  69fd4781bb3eb42f 38
+cmd/cmd.go
+  69fd4781bb3eb42f 52-53
+client/sync.go
+  69fd4781bb3eb42f 1-175
+client/pull.go
+  69fd4781bb3eb42f 4,43-62,77,115
+cf.go
+  69fd4781bb3eb42f 44,125-130
+client/sync_test.go
+  69fd4781bb3eb42f 1-66
+client/fatch.go
+  69fd4781bb3eb42f 164-165,171-177,180
+.github/workflows/build.yml
+  69fd4781bb3eb42f 24-25
+client/clone.go
+  69fd4781bb3eb42f 145
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8-ntes.9",
+  "base_commit_sha": "498f8f09be071e827bcf48d6283b18369adb5072",
+  "prompts": {
+    "69fd4781bb3eb42f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e6f58b04-794a-40e1-8850-1fc4ca95514a",
+        "model": "deepseek-flash"
+      },
+      "human_author": "cys",
+      "messages": [],
+      "total_additions": 507,
+      "total_deletions": 46,
+      "accepted_lines": 490,
+      "overriden_lines": 0,
+      "per_file_stats": {
+        "cmd/cmd.go": {
+          "additions": 2,
+          "accepted_lines": 2
+        },
+        "client/langs.go": {
+          "additions": 52,
+          "deletions": 1,
+          "accepted_lines": 52
+        },
+        "client/fatch.go": {
+          "additions": 10,
+          "deletions": 3,
+          "accepted_lines": 10
+        },
+        "client/sync_test.go": {
+          "additions": 81,
+          "deletions": 15,
+          "accepted_lines": 66
+        },
+        ".github/workflows/build.yml": {
+          "additions": 2,
+          "accepted_lines": 2
+        },
+        "cmd/args.go": {
+          "additions": 1,
+          "accepted_lines": 1
+        },
+        "client/pull.go": {
+          "additions": 23,
+          "deletions": 12,
+          "accepted_lines": 23
+        },
+        "client/clone.go": {
+          "additions": 1,
+          "deletions": 1,
+          "accepted_lines": 1
+        },
+        "client/sync.go": {
+          "additions": 175,
+          "accepted_lines": 175
+        },
+        "cmd/sync.go": {
+          "additions": 136,
+          "deletions": 2,
+          "accepted_lines": 134
+        },
+        "client/parse.go": {
+          "additions": 17,
+          "deletions": 12,
+          "accepted_lines": 17
+        },
+        "cf.go": {
+          "additions": 7,
+          "accepted_lines": 7
+        }
+      }
+    }
+  }
+}
