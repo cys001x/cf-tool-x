@@ -1,30 +1,30 @@
-cmd/timer_test.go
-  69fd4781bb3eb42f 1-154
-cmd/cmd.go
-  69fd4781bb3eb42f 64-65
+docs/commands.md
+  69fd4781bb3eb42f 12,153-236,517
 cmd/submit.go
   69fd4781bb3eb42f 41
-cmd/completion.go
-  69fd4781bb3eb42f 16,50-52,83,98-100,111
-cmd/args.go
-  69fd4781bb3eb42f 44-46,70-85,89,95,101,107,113,160
-cf.go
-  69fd4781bb3eb42f 23-25,48-49,72,137-147,166-168
-README_zh_CN.md
-  69fd4781bb3eb42f 24,73-83,132,156-157,209-216,234-236
+cmd/cmd.go
+  69fd4781bb3eb42f 64-65
 cmd/test.go
   69fd4781bb3eb42f 64-65,70,82,96,124,149,199,202-206,208-209,215-219,221
+cmd/args.go
+  69fd4781bb3eb42f 44-46,70-85,89,95,101,107,113,160
+README_zh_CN.md
+  69fd4781bb3eb42f 24,73-83,132,156-157,209-216,234-236
+cf.go
+  69fd4781bb3eb42f 23-25,48-49,72,137-147,166-168
 cmd/timer.go
-  69fd4781bb3eb42f 1-402,405-449,452-497,501-751,754-852
+  69fd4781bb3eb42f 1-404,407-451,454-499,503-689,691-873,876-974
+cmd/timer_test.go
+  69fd4781bb3eb42f 1-154
 README.md
   69fd4781bb3eb42f 24,74,76-89,139-140,163,228-238,257-259
-docs/commands.md
-  69fd4781bb3eb42f 12,153-234,515
+cmd/completion.go
+  69fd4781bb3eb42f 16,50-52,83,98-100,111
 ---
 {
   "schema_version": "authorship/3.0.0",
   "git_ai_version": "1.2.8-ntes.9",
-  "base_commit_sha": "c15c49cff76d76f33cf5ee3575084984f2f2b431",
+  "base_commit_sha": "efcc0fa65bcccd134870b7647a9f5d3af950ef92",
   "prompts": {
     "69fd4781bb3eb42f": {
       "agent_id": {
@@ -34,30 +34,49 @@ docs/commands.md
       },
       "human_author": null,
       "messages": [],
-      "total_additions": 2983,
-      "total_deletions": 1781,
-      "accepted_lines": 3348,
+      "total_additions": 3152,
+      "total_deletions": 1826,
+      "accepted_lines": 3471,
       "overriden_lines": 0,
       "per_file_stats": {
+        "cmd/submit.go": {
+          "additions": 1,
+          "accepted_lines": 1
+        },
+        "cf.go": {
+          "additions": 38,
+          "deletions": 20,
+          "accepted_lines": 26
+        },
+        "cmd/completion.go": {
+          "additions": 20,
+          "deletions": 11,
+          "accepted_lines": 12
+        },
+        "cmd/timer.go": {
+          "additions": 1074,
+          "deletions": 101,
+          "accepted_lines": 1064
+        },
         "cmd/args.go": {
           "additions": 27,
           "deletions": 15,
           "accepted_lines": 26
         },
-        "README.md": {
-          "additions": 63,
-          "deletions": 31,
-          "accepted_lines": 50
-        },
-        "cmd/counttime_test.go": {
-          "additions": 295,
-          "deletions": 295,
-          "accepted_lines": 182
+        "cmd/cmd.go": {
+          "additions": 5,
+          "deletions": 3,
+          "accepted_lines": 4
         },
         "cmd/counttime.go": {
           "additions": 1256,
           "deletions": 1256,
           "accepted_lines": 638
+        },
+        "README.md": {
+          "additions": 63,
+          "deletions": 31,
+          "accepted_lines": 50
         },
         "README_zh_CN.md": {
           "additions": 39,
@@ -69,39 +88,20 @@ docs/commands.md
           "deletions": 4,
           "accepted_lines": 155
         },
-        "cmd/cmd.go": {
-          "additions": 5,
-          "deletions": 3,
-          "accepted_lines": 4
+        "cmd/counttime_test.go": {
+          "additions": 295,
+          "deletions": 295,
+          "accepted_lines": 182
         },
         "cmd/test.go": {
           "additions": 23,
           "deletions": 10,
           "accepted_lines": 23
         },
-        "cmd/completion.go": {
-          "additions": 20,
-          "deletions": 11,
-          "accepted_lines": 12
-        },
-        "cmd/submit.go": {
-          "additions": 1,
-          "accepted_lines": 1
-        },
         "docs/commands.md": {
-          "additions": 149,
-          "deletions": 65,
-          "accepted_lines": 134
-        },
-        "cmd/timer.go": {
-          "additions": 909,
-          "deletions": 58,
-          "accepted_lines": 902
-        },
-        "cf.go": {
-          "additions": 38,
-          "deletions": 20,
-          "accepted_lines": 26
+          "additions": 153,
+          "deletions": 67,
+          "accepted_lines": 138
         }
       }
     }
