@@ -1,0 +1,30 @@
+client/fatch.go
+  69fd4781bb3eb42f 25,43
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8-ntes.9",
+  "base_commit_sha": "d15bb60de2de1079d7ccb24652066ecf04323d42",
+  "prompts": {
+    "69fd4781bb3eb42f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e6f58b04-794a-40e1-8850-1fc4ca95514a",
+        "model": "deepseek-flash"
+      },
+      "human_author": "cys",
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 2,
+      "accepted_lines": 2,
+      "overriden_lines": 0,
+      "per_file_stats": {
+        "client/fatch.go": {
+          "additions": 2,
+          "deletions": 2,
+          "accepted_lines": 2
+        }
+      }
+    }
+  }
+}
