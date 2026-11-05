@@ -7,7 +7,7 @@
 [![Go Version](https://img.shields.io/badge/go-%3E%3D1.26-green.svg)](https://go.dev)
 [![license](https://img.shields.io/badge/license-MIT-%23373737.svg)](https://github.com/cys001x/cf-tool-x/blob/main/LICENSE)
 
-Codeforces Tool is a command-line interface tool for [Codeforces](https://codeforces.com).
+Codeforces Tool x is a command-line interface tool for [Codeforces](https://codeforces.com).
 
 It's fast, small, cross-platform and powerful.
 
@@ -295,3 +295,17 @@ Create two extra testcase files `inK.txt` and `ansK.txt` (K is a string with 0~9
 Use this [Infinidat/infi.docopt_completion](https://github.com/Infinidat/infi.docopt_completion).
 
 Note: If there is a new version released (especially a new command added), you should run `docopt-completion cf` again.
+
+## Copyright and License
+
+This project, cf-tool-x, is a derivative work based on [xalanq/cf-tool](https://github.com/xalanq/cf-tool) by xalanq.
+
+Original source: https://github.com/xalanq/cf-tool
+Original Copyright (c) 2014 Manuel Martínez-Almeida (as stated in the original [LICENSE](https://github.com/xalanq/cf-tool/blob/master/LICENSE))
+Original License: MIT
+
+Modifications and new features added by cys001x.
+New code Copyright (c) 2026 cys001x.
+This project is licensed under the MIT License.
+
+This is not an official release of the original project.
