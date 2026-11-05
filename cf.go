@@ -114,14 +114,14 @@ Examples:
   cf race 1136         If the contest 1136 has not started yet, it will
                        countdown. When the countdown ends, it will open all
                        problems' pages and parse samples.
-  cf pull 100          Pull all problems' latest codes of contest 100 into
-                       "./100/<problem-id>".
-  cf pull 100 a        Pull the latest code of problem "a" of contest 100 into
-                       "./100/<problem-id>".
+  cf pull 100          Pull all your submissions of contest 100 into
+                       "./<problem-id>/<problem-id>.<ext>".
+  cf pull 100 a        Pull your submissions of problem "a" of contest 100
+                       into "./a.<ext>".
   cf pull ac 100 a     Pull the "Accepted" or "Pretests passed" code of problem
                        "a" of contest 100.
-  cf pull              Pull the latest codes of current problem into current
-                       path.
+  cf pull              Pull your submissions of the current problem into the
+                       current path.
   cf sync 1136         Sync all problems of contest 1136: fetch samples and
                        statements, pull the latest submission code, or
                        generate a code from the default template when there is
