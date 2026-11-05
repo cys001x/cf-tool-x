@@ -11,7 +11,7 @@ Codeforces Tool x is a command-line interface tool for [Codeforces](https://code
 
 It's fast, small, cross-platform and powerful.
 
-[Installation](#installation) | [Usage](#usage) | [FAQ](#faq) | [中文](./README_zh_CN.md)
+[Installation](#installation) | [Usage](#usage) | [Commands](./docs/commands.md) | [FAQ](#faq) | [中文](./README_zh_CN.md)
 
 ## Features
 
@@ -54,6 +54,9 @@ $ go env -w GOPRIVATE=github.com/cys001x/cf-tool-x
 ```
 
 ## Usage
+
+See [docs/commands.md](./docs/commands.md) for the full command reference,
+including `cf sync`, `cf pull`, and `cf clone`.
 
 Let's simulate a competition.
 
