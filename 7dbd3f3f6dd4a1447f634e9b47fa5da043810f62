@@ -1,30 +1,30 @@
-cmd/counttime.go
-  69fd4781bb3eb42f 1-638
-cmd/cmd.go
-  69fd4781bb3eb42f 64-65
-cf.go
-  69fd4781bb3eb42f 45,134-137,156-157
-README.md
-  69fd4781bb3eb42f 24,74-83,133,222-225,244-245
-docs/commands.md
-  69fd4781bb3eb42f 12,153-221
-README_zh_CN.md
-  69fd4781bb3eb42f 24,73-79,128,203-205,223-224
-cmd/test.go
-  69fd4781bb3eb42f 64-65,70,82,96,124,149,199,202-206,208-209,215-219,221
 cmd/submit.go
   69fd4781bb3eb42f 41
-cmd/counttime_test.go
-  69fd4781bb3eb42f 1-182
-cmd/completion.go
-  69fd4781bb3eb42f 16,80
+README_zh_CN.md
+  69fd4781bb3eb42f 24,73-82,131,155-156,208-215,233-235
+cmd/timer.go
+  69fd4781bb3eb42f 1-785
+cf.go
+  69fd4781bb3eb42f 23-25,48-49,72,137-147,166-168
 cmd/args.go
-  69fd4781bb3eb42f 44
+  69fd4781bb3eb42f 44-46,70-85,89,95,101,107,113,160
+cmd/test.go
+  69fd4781bb3eb42f 64-65,70,82,96,124,149,199,202-206,208-209,215-219,221
+cmd/cmd.go
+  69fd4781bb3eb42f 64-65
+README.md
+  69fd4781bb3eb42f 24,74,76-87,137-138,161,226-236,255-257
+cmd/completion.go
+  69fd4781bb3eb42f 16,50-52,83,98-100,111
+cmd/timer_test.go
+  69fd4781bb3eb42f 1-140
+docs/commands.md
+  69fd4781bb3eb42f 12,153-231,512
 ---
 {
   "schema_version": "authorship/3.0.0",
   "git_ai_version": "1.2.8-ntes.9",
-  "base_commit_sha": "90cb4eded18a98475b1a8d1e96f4228a995ef5f3",
+  "base_commit_sha": "7dbd3f3f6dd4a1447f634e9b47fa5da043810f62",
   "prompts": {
     "69fd4781bb3eb42f": {
       "agent_id": {
@@ -32,61 +32,76 @@ cmd/args.go
         "id": "e6f58b04-794a-40e1-8850-1fc4ca95514a",
         "model": "deepseek-flash"
       },
-      "human_author": "cys",
+      "human_author": null,
       "messages": [],
-      "total_additions": 1001,
-      "total_deletions": 53,
-      "accepted_lines": 961,
+      "total_additions": 2835,
+      "total_deletions": 1719,
+      "accepted_lines": 3268,
       "overriden_lines": 0,
       "per_file_stats": {
+        "cmd/args.go": {
+          "additions": 27,
+          "deletions": 15,
+          "accepted_lines": 26
+        },
+        "README.md": {
+          "additions": 59,
+          "deletions": 29,
+          "accepted_lines": 46
+        },
+        "docs/commands.md": {
+          "additions": 140,
+          "deletions": 59,
+          "accepted_lines": 125
+        },
+        "cmd/counttime.go": {
+          "additions": 1256,
+          "deletions": 1256,
+          "accepted_lines": 638
+        },
+        "cmd/counttime_test.go": {
+          "additions": 295,
+          "deletions": 295,
+          "accepted_lines": 182
+        },
+        "cmd/timer_test.go": {
+          "additions": 142,
+          "deletions": 2,
+          "accepted_lines": 140
+        },
+        "cf.go": {
+          "additions": 38,
+          "deletions": 20,
+          "accepted_lines": 26
+        },
+        "cmd/timer.go": {
+          "additions": 793,
+          "deletions": 8,
+          "accepted_lines": 785
+        },
+        "cmd/completion.go": {
+          "additions": 20,
+          "deletions": 11,
+          "accepted_lines": 12
+        },
+        "cmd/cmd.go": {
+          "additions": 5,
+          "deletions": 3,
+          "accepted_lines": 4
+        },
+        "README_zh_CN.md": {
+          "additions": 36,
+          "deletions": 11,
+          "accepted_lines": 36
+        },
         "cmd/test.go": {
           "additions": 23,
           "deletions": 10,
           "accepted_lines": 23
         },
-        "cmd/counttime_test.go": {
-          "additions": 186,
-          "deletions": 4,
-          "accepted_lines": 182
-        },
-        "cmd/counttime.go": {
-          "additions": 672,
-          "deletions": 34,
-          "accepted_lines": 638
-        },
-        "README.md": {
-          "additions": 18,
-          "accepted_lines": 18
-        },
-        "cmd/args.go": {
-          "additions": 1,
-          "accepted_lines": 1
-        },
         "cmd/submit.go": {
           "additions": 1,
           "accepted_lines": 1
-        },
-        "docs/commands.md": {
-          "additions": 72,
-          "deletions": 2,
-          "accepted_lines": 72
-        },
-        "cmd/cmd.go": {
-          "additions": 2,
-          "accepted_lines": 2
-        },
-        "README_zh_CN.md": {
-          "additions": 14,
-          "accepted_lines": 14
-        },
-        "cf.go": {
-          "additions": 7,
-          "accepted_lines": 7
-        },
-        "cmd/completion.go": {
-          "additions": 5,
-          "deletions": 3,
-          "accepted_lines": 3
         }
       }
     }
