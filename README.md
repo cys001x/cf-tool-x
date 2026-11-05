@@ -20,6 +20,7 @@ It's fast, small, cross-platform and powerful.
 * Submit codes.
 * Watch submissions' status dynamically.
 * Fetch problems' samples.
+* Sync a contest or a problem in one command: samples, statements, and the latest submission code.
 * Compile and test locally.
 * Clone all codes of someone.
 * Generate codes from the specified template (including timestamp, author, etc.)
@@ -62,6 +63,10 @@ To start competing the contest 1136!
 
 If the contest has not started yet, `cf` will count down. If the contest have started or the countdown ends, `cf` will use the default browser to open dashboard's page and problems' page, and fetch all samples to the local.
 
+ `cf sync 1136` or `cf sync 1136a`
+
+Sync a whole contest or a single problem in one command: fetch samples and statements, pull your latest submission code, or generate a code from the default template when there is no submission and no local code. If local code already exists, `cf` asks before overwriting it.
+
  `cd ./cf/contest/1136/a` (May be different from this, please notice the message on your screen)
 
 Enter the directory of problem A, the directory should contain all samples of the problem.
@@ -94,7 +99,7 @@ Open the standings' page of the contest.
 You should run "cf config" to configure your handle, password and code
 templates at first.
 
-If you want to compete, the best command is "cf race".
+If you want to compete, the best command is "cf race"
 
 Usage:
   cf config
@@ -110,10 +115,11 @@ Usage:
   cf detail [<specifier>...]
   cf race [<specifier>...]
   cf pull [ac] [<specifier>...]
+  cf sync [<specifier>...]
   cf clone [ac] [<handle>]
-  cf upgrade
   cf statement [<specifier>...] [-d <dir>] [-f <file>]
   cf material [<specifier>...] [-d <dir>] [-f <file>]
+  cf upgrade
 
 Options:
   -h --help            Show this screen.
@@ -127,7 +133,7 @@ Options:
   <specifier>          Any useful text. E.g.
                        "https://codeforces.com/contest/100",
                        "https://codeforces.com/contest/180/problem/A",
-                       "https://codeforces.com/group/Cw4JRyRGXR/contest/269760",
+                       "https://codeforces.com/group/Cw4JRyRGXR/contest/269760"
                        "1111A", "1111", "a", "Cw4JRyRGXR"
                        You can combine multiple specifiers to specify what you
                        want.
@@ -149,7 +155,7 @@ Examples:
   cf list              List all problems' stats of a contest.
   cf list 1119
   cf parse 100         Fetch all problems' samples of contest 100 into
-                       "{cf}/{contest}/100/".
+                       "{cf}/{contest}/100/<problem-id>".
   cf parse gym 100001a
                        Fetch samples of problem "a" of gym 100001 into
                        "{cf}/{gym}/100001/a".
@@ -164,10 +170,7 @@ Examples:
                        test all samples. If you want to add a new testcase,
                        create two files "inK.txt" and "ansK.txt" where K is
                        a string with 0~9.
-  cf test -f a.cpp -d ./1a
-                       Test a.cpp using sample files from directory ./1a.
-  cf test 2231a
-                       in ./cf/contest/2231/a directory test
+  cf test -f a.cpp -d ./1a  Test a.cpp using sample files from directory ./1a.
   cf watch             Watch the first 10 submissions of current contest.
   cf watch all         Watch all submissions of current contest.
   cf open 1136a        Use default web browser to open the page of contest
@@ -193,13 +196,18 @@ Examples:
                        "a" of contest 100.
   cf pull              Pull the latest codes of current problem into current
                        path.
+  cf sync 1136         Sync all problems of contest 1136: fetch samples and
+                       statements, pull the latest submission code, or
+                       generate a code from the default template when there is
+                       no submission and no local code.
+  cf sync 1136a        Sync problem "a" of contest 1136.
+  cf sync              Sync the current problem.
   cf clone xalanq      Clone all codes of xalanq.
-  cf upgrade           Upgrade the "cf" to the latest version from GitHub.
-  cf statement         Fetch statement of current problem into current path.
+  cf statement         Fetch problem statement of current problem as statement.md.
   cf statement 1136a   Fetch statement of contest 1136 problem a.
   cf statement 1136    Fetch all statements of contest 1136.
-  cf material 1136     Fetch all Contest materials (announcement, tutorial, etc.)
-                       for contest 1136 and save as .md files.
+  cf material 1136     Fetch all Contest materials for contest 1136 and save as .md files.
+  cf upgrade           Upgrade the "cf" to the latest version from GitHub.
 
 File:
   cf will save some data in some files:
