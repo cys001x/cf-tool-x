@@ -1,0 +1,36 @@
+README_zh_CN.md
+  69fd4781bb3eb42f 14,23,58-59,68-71,119,121,123,155,184-185,187-191
+CLAUDE.md
+  69fd4781bb3eb42f 1-35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8-ntes.9",
+  "base_commit_sha": "fb0d2a9c1c2bd4b73f8a488bb1031e05e0c68497",
+  "prompts": {
+    "69fd4781bb3eb42f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e6f58b04-794a-40e1-8850-1fc4ca95514a",
+        "model": "deepseek-flash"
+      },
+      "human_author": "cys",
+      "messages": [],
+      "total_additions": 54,
+      "total_deletions": 9,
+      "accepted_lines": 54,
+      "overriden_lines": 0,
+      "per_file_stats": {
+        "README_zh_CN.md": {
+          "additions": 19,
+          "deletions": 9,
+          "accepted_lines": 19
+        },
+        "CLAUDE.md": {
+          "additions": 35,
+          "accepted_lines": 35
+        }
+      }
+    }
+  }
+}
