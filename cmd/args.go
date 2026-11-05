@@ -13,37 +13,53 @@ import (
 
 // ParsedArgs parsed arguments
 type ParsedArgs struct {
-	Info       client.Info
-	File       string
-	Dir        string   `docopt:"--dir"`
-	Specifier  []string `docopt:"<specifier>"`
-	Alias      string   `docopt:"<alias>"`
-	Accepted   bool     `docopt:"ac"`
-	All        bool     `docopt:"all"`
-	Handle     string   `docopt:"<handle>"`
-	Version    string   `docopt:"{version}"`
-	Config     bool     `docopt:"config"`
-	Submit     bool     `docopt:"submit"`
-	List       bool     `docopt:"list"`
-	Parse      bool     `docopt:"parse"`
-	Gen        bool     `docopt:"gen"`
-	Test       bool     `docopt:"test"`
-	Watch      bool     `docopt:"watch"`
-	Open       bool     `docopt:"open"`
-	Stand      bool     `docopt:"stand"`
-	Sid        bool     `docopt:"sid"`
-	Detail     bool     `docopt:"detail"`
-	Race       bool     `docopt:"race"`
-	Pull       bool     `docopt:"pull"`
-	Sync       bool     `docopt:"sync"`
-	Clone      bool     `docopt:"clone"`
-	Upgrade    bool     `docopt:"upgrade"`
-	Statement  bool     `docopt:"statement"`
-	Material   bool     `docopt:"material"`
-	Completion bool     `docopt:"completion"`
-	Timer      bool     `docopt:"timer"`
-	CountArgs  []string `docopt:"<args>"`
-	Shell      string   `docopt:"<shell>"`
+	Info         client.Info
+	File         string
+	Dir          string   `docopt:"--dir"`
+	Specifier    []string `docopt:"<specifier>"`
+	Alias        string   `docopt:"<alias>"`
+	Accepted     bool     `docopt:"ac"`
+	All          bool     `docopt:"all"`
+	Handle       string   `docopt:"<handle>"`
+	Version      string   `docopt:"{version}"`
+	Config       bool     `docopt:"config"`
+	Submit       bool     `docopt:"submit"`
+	List         bool     `docopt:"list"`
+	Parse        bool     `docopt:"parse"`
+	Gen          bool     `docopt:"gen"`
+	Test         bool     `docopt:"test"`
+	Watch        bool     `docopt:"watch"`
+	Open         bool     `docopt:"open"`
+	Stand        bool     `docopt:"stand"`
+	Sid          bool     `docopt:"sid"`
+	Detail       bool     `docopt:"detail"`
+	Race         bool     `docopt:"race"`
+	Pull         bool     `docopt:"pull"`
+	Sync         bool     `docopt:"sync"`
+	Clone        bool     `docopt:"clone"`
+	Upgrade      bool     `docopt:"upgrade"`
+	Statement    bool     `docopt:"statement"`
+	Material     bool     `docopt:"material"`
+	Completion   bool     `docopt:"completion"`
+	Timer        bool     `docopt:"timer"`
+	DB           bool     `docopt:"db"`
+	LPractice    bool     `docopt:"lpractice"`
+	LRePractice  bool     `docopt:"lrepractice"`
+	LNRePractice bool     `docopt:"lnrepractice"`
+	OPractice    bool     `docopt:"opractice"`
+	Count        int      `docopt:"<count>"`
+	PracticeName string   `docopt:"<name>"`
+	Difficulty   string   `docopt:"--difficulty"`
+	Tags         string   `docopt:"--tags"`
+	FromDate     string   `docopt:"--from"`
+	ToDate       string   `docopt:"--to"`
+	StatusDB     string   `docopt:"--status"`
+	AcceptedOnly bool     `docopt:"--accepted"`
+	RefreshDB    bool     `docopt:"--refresh"`
+	WriteDB      bool     `docopt:"--write"`
+	DBJSON       bool     `docopt:"--json"`
+	CommandArgs  []string `docopt:"<args>"`
+	Shell        string   `docopt:"<shell>"`
 }
 
 // Args global variable

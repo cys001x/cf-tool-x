@@ -22,6 +22,8 @@ Codeforces Tool 是 [Codeforces](https://codeforces.com) 的命令行界面的�
 * 拉取问题的样例
 * 一条命令同步比赛或题目：样例、题面和最新提交代码
 * 全局计时器：为比赛或题目计时，并记录每个时间节点
+* 用 SQL 查询计时数据、统计总用时和按日期统计完成题数
+* 从本地记录或 Codeforces 题库随机生成练习集
 * 本地编译和测试样例
 * 拉取某人的所有代码
 * 从指定模板生成代码（包括时间戳，作者等信息）
@@ -81,6 +83,26 @@ $ go env -w GOPRIVATE=github.com/cys001x/cf-tool-x
 `<题目>/count_time.json`，全局单例状态保存在 `~/.cf/timer.json`。`end` 的描述或 `q`
 时输入的总结会写入对应题目记录的 `summary` 字段。
 
+ `cf db sync`
+
+建立本地 SQLite 索引，并从 Codeforces API 补全比赛信息。`cf db time 1136a` 输出一道题的
+时间节点和总用时；`cf db time 1136` 输出一场比赛里每道题的用时。`cf db stats --from
+2026-01-01 --to 2026-06-30` 统计该时间段内完成的题数，并给出按天分布；加 `--accepted`
+只统计判定为 Accepted 的题目。`cf db sql "SELECT ..."` 对 `~/.cf/timer.db` 执行只读
+SQL，加 `--write` 才允许修改数据。每道题还会根据事件推导出单一状态标签
+（`pending`、`open`、`done`、`tests_passed`、`accepted`）；在 practice 计时
+（`cf timer s p_<set> <题目>`）中再次 Accepted，会依次变成 `practice_1`、
+`practice_2`，最高 `practice_9`。`cf db stats --status done` 可以按状态过滤。
+
+ `cf lpractice 5`
+
+从本地计时数据库随机抽 5 道题，生成到 `cf/practice/<时间戳>-practice` 下。每题包含样例、
+`statement.md` 和用默认模板生成的代码文件。`cf lrepractice` 只抽 Accepted 的题，
+`cf lnrepractice` 只抽从未计时过的题。第二个参数可以指定文件夹名，例如
+`cf lpractice 5 drill`。`cf opractice 5 --difficulty 1200-1600 --tags dp,greedy`
+则从 Codeforces 在线题库中抽取。用 `cf timer s p_drill 1136a "retry"` 开始练习计时，
+这次计时中的 Accepted 会推进该题的 practice 标签。
+
  `cd ./cf/contest/1136/a` （或者是其他的路径，请看屏幕前的提示）
 
 进入 A 题的目录，此时该目录下会包含该题的样例。
@@ -130,6 +152,11 @@ $ go env -w GOPRIVATE=github.com/cys001x/cf-tool-x
   cf pull [ac] [<specifier>...]
   cf sync [<specifier>...]
   cf timer [<args>...]
+  cf db [options] [<args>...]
+  cf lpractice [options] <count> [<name>]
+  cf lrepractice [options] <count> [<name>]
+  cf lnrepractice [options] <count> [<name>]
+  cf opractice [options] <count> [<name>]
   cf clone [ac] [<handle>]
   cf statement [<specifier>...] [-d <dir>] [-f <file>]
   cf material [<specifier>...] [-d <dir>] [-f <file>]
@@ -153,8 +180,20 @@ $ go env -w GOPRIVATE=github.com/cys001x/cf-tool-x
                        你可以任意组合多个 <specifier> 来说明你的需求。
   <alias>              模板的名字，比如 "cpp"。
   <shell>              生成补全脚本的 shell：bash、zsh 或 fish。
-  <args>               计时器命令（start/end/pause/q/status，可简写为 s/e/p/q）与参数。
+  <args>               计时器命令（start/end/pause/q/status，可简写为 s/e/p/q）与参数；
+                       或 cf db 的子命令（sql/time/stats/sync/path）与参数。
   ac                   是否只获取 Accpeted 的代码。
+  --from <date>        "cf db stats" 的起始日期（YYYY-MM-DD）。
+  --to <date>          "cf db stats" 的结束日期（YYYY-MM-DD）。
+  --status <status>    "cf db stats" 只保留 pending/open/done/tests_passed/accepted/practice_N。
+  --accepted           "cf db stats" 只统计 Accepted 的题目。
+  --refresh            "cf db sync" 重新拉取比赛信息。
+  --write              允许 "cf db sql" 修改数据。
+  -j, --json           "cf db" 输出 JSON。
+  --difficulty <range> "cf opractice" 的难度，例如 "1200" 或 "800-1200"。
+  --tags <tags>        "cf opractice" 的标签，逗号分隔。
+  <count>              练习集的题目数量。
+  <name>               练习文件夹名，默认 "<时间戳>-practice"。
 
 例子:
   cf config            配置 cf-tool。
@@ -213,6 +252,27 @@ $ go env -w GOPRIVATE=github.com/cys001x/cf-tool-x
   cf timer pause       暂停或继续计时。
   cf timer q "contest done"
                        关闭计时器并输出总结。
+  cf timer s p_drill 1136a "practice"
+                       在 "{cf}/practice/drill" 中为题目 1136a 开始练习计时；
+                       这次计时中的 Accepted 会推进 practice 标签。
+  cf db sync           把所有 "count_time.json" 索引进 "~/.cf/timer.db"，
+                       并从 Codeforces API 补全比赛信息。
+  cf db time 1136a     输出一道题的时间节点与总用时。
+  cf db time 1136      输出一场比赛中每道题的用时、合计与跨度。
+  cf db stats --from 2026-01-01 --to 2026-06-30
+                       统计该时间段内完成的题数。
+  cf db stats --accepted --from 2026-01-01
+                       只统计判定为 Accepted 的已完成题目。
+  cf db stats --status done --from 2026-01-01
+                       只统计状态为 done 的题目。
+  cf db sql "SELECT type, COUNT(*) FROM event GROUP BY type"
+                       执行只读 SQL；加 --write 才允许修改数据。
+  cf lpractice 5       从本地计时数据库随机抽 5 道题。
+  cf lrepractice 5     从本地数据库随机抽 5 道 Accepted 的题。
+  cf lnrepractice 5    从本地数据库随机抽 5 道从未计时过的题。
+  cf opractice 5 --difficulty 1200-1600 --tags dp,greedy
+                       从 Codeforces 题库随机抽 5 道题。
+  cf lpractice 5 drill 练习集放到 "cf/practice/drill"。
   cf clone xalanq      拉取 xalanq 的所有提交代码。
   cf upgrade           从 GitHub 更新 "cf" 到最新版。
   cf statement         拉取当前题目的题面到当前文件夹下。
@@ -231,8 +291,11 @@ $ go env -w GOPRIVATE=github.com/cys001x/cf-tool-x
   "~/.cf/config"        这是配置文件，包括模版等信息。
   "~/.cf/session"       这是会话文件，包括 cookies、用户名、密码等。
   "~/.cf/timer.json"    全局计时器的状态。
+  "~/.cf/timer.db"      计时记录对应的本地 SQLite 索引。
   "<题目>/count_time.json"
                         "cf timer" 写入的计时数据。
+  "{cf}/practice/<name>"
+                        "cf lpractice" 和 "cf opractice" 生成的练习集。
 
   "~" 这个符号是系统当前用户的主文件夹。
 

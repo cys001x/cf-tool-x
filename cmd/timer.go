@@ -44,7 +44,12 @@ type timeEvent struct {
 	// written by older versions.
 	Elapsed   string `json:"elapsed,omitempty"`
 	ElapsedMS int64  `json:"elapsed_ms,omitempty"`
-	Note      string `json:"note,omitempty"`
+	// DurationMS is the length of the segment closed by an "end" event.
+	DurationMS int64  `json:"duration_ms,omitempty"`
+	Verdict    string `json:"verdict,omitempty"`
+	// Practice is the practice set name when the event happened in practice mode.
+	Practice string `json:"practice,omitempty"`
+	Note     string `json:"note,omitempty"`
 }
 
 // problemTimeRecord is stored in "<problem>/count_time.json".
@@ -63,6 +68,8 @@ type timeSegment struct {
 	Dir            string `json:"dir"`
 	Start          string `json:"start"`
 	StartElapsedMS int64  `json:"start_elapsed_ms"`
+	// Practice holds the practice set name when this segment is a practice run.
+	Practice string `json:"practice,omitempty"`
 }
 
 // timeState is the global singleton timer state (~/.cf/timer.json).
@@ -230,11 +237,15 @@ func printTimeEvent(ev timeEvent) {
 	if ev.Note != "" {
 		note = " (" + ev.Note + ")"
 	}
+	practice := ""
+	if ev.Practice != "" {
+		practice = " [practice " + ev.Practice + "]"
+	}
 	elapsed := ev.Elapsed
 	if elapsed == "" {
 		elapsed = formatElapsedMS(ev.ElapsedMS)
 	}
-	fmt.Printf("  %-7v %v  +%v%v\n", ev.Type, formatEventTime(ev.Time), elapsed, note)
+	fmt.Printf("  %-7v %v  +%v%v%v\n", ev.Type, formatEventTime(ev.Time), elapsed, practice, note)
 }
 
 func loadProblemTimeRecord(path string) (*problemTimeRecord, error) {
@@ -267,7 +278,11 @@ func appendProblemEvent(dir, problem, link string, ev timeEvent) error {
 	if err != nil {
 		return err
 	}
-	return writeFileAtomic(path, append(b, '\n'))
+	if err = writeFileAtomic(path, append(b, '\n')); err != nil {
+		return err
+	}
+	indexProblemRecordQuiet(dir)
+	return nil
 }
 
 // setProblemSummary stores the summary in "<dir>/count_time.json".
@@ -291,7 +306,11 @@ func setProblemSummary(dir, problem, link, summary string) error {
 	if err != nil {
 		return err
 	}
-	return writeFileAtomic(path, append(b, '\n'))
+	if err = writeFileAtomic(path, append(b, '\n')); err != nil {
+		return err
+	}
+	indexProblemRecordQuiet(dir)
+	return nil
 }
 
 func addRecordPath(records []string, path string) []string {
@@ -341,14 +360,26 @@ func timerProblemName(specifier string) string {
 }
 
 // timerStart records the start node of a problem in the global timer.
-func timerStart(specifier, note string) error {
-	info, err := resolveTimerInfo(specifier)
-	if err != nil {
-		return err
+func timerStart(practice, specifier, note string) error {
+	var info client.Info
+	var dir, problem, link, practiceSet string
+	var err error
+	if practice != "" {
+		practiceSet = strings.TrimPrefix(practice, "p_")
+		info, dir, problem, err = resolvePracticeTimer(practice, specifier)
+		if err != nil {
+			return err
+		}
+		link = timerLink(&info)
+	} else {
+		info, err = resolveTimerInfo(specifier)
+		if err != nil {
+			return err
+		}
+		dir = filepath.Clean(info.Path())
+		problem = timerProblemName(specifier)
+		link = timerLink(&info)
 	}
-	dir := filepath.Clean(info.Path())
-	problem := timerProblemName(specifier)
-	link := timerLink(&info)
 
 	_, err = mutateTimeState(true, func(st *timeState, now time.Time) error {
 		if !st.Running {
@@ -361,7 +392,7 @@ func timerStart(specifier, note string) error {
 			}
 		}
 		elapsed := st.elapsed(now)
-		ev := timeEvent{Type: TimeEventStart, Time: now.Format(timeLayout), Elapsed: formatElapsedMS(elapsed), Note: note}
+		ev := timeEvent{Type: TimeEventStart, Time: now.Format(timeLayout), Elapsed: formatElapsedMS(elapsed), Practice: practiceSet, Note: note}
 		if err := appendProblemEvent(dir, problem, link, ev); err != nil {
 			return err
 		}
@@ -372,6 +403,7 @@ func timerStart(specifier, note string) error {
 			Dir:            dir,
 			Start:          now.Format(timeLayout),
 			StartElapsedMS: elapsed,
+			Practice:       practiceSet,
 		})
 		st.Records = addRecordPath(st.Records, filepath.Join(dir, TimeRecordFileName))
 		setNotice(st, fmt.Sprintf("start %v", problem))
@@ -380,20 +412,33 @@ func timerStart(specifier, note string) error {
 	if err != nil {
 		return err
 	}
-	color.Green("Started %v.", problem)
+	if practiceSet != "" {
+		color.Green("Started %v (practice %v).", problem, practiceSet)
+	} else {
+		color.Green("Started %v.", problem)
+	}
 	return nil
 }
 
 // timerEnd records the end node of the problem opened by a matching start.
-func timerEnd(specifier, note string) error {
+func timerEnd(practice, specifier, note string) error {
 	if strings.TrimSpace(specifier) == "" {
 		return errors.New("Missing specifier, e.g. `cf timer end 1136a <note>`")
 	}
-	info, err := resolveTimerInfo(specifier)
-	if err != nil {
-		return err
+	var dir string
+	var err error
+	if practice != "" {
+		_, dir, _, err = resolvePracticeTimer(practice, specifier)
+		if err != nil {
+			return err
+		}
+	} else {
+		info, err := resolveTimerInfo(specifier)
+		if err != nil {
+			return err
+		}
+		dir = filepath.Clean(info.Path())
 	}
-	dir := filepath.Clean(info.Path())
 
 	_, err = mutateTimeState(false, func(st *timeState, now time.Time) error {
 		if !st.Running {
@@ -422,7 +467,7 @@ func timerEnd(specifier, note string) error {
 		if problemElapsed < 0 {
 			problemElapsed = 0
 		}
-		ev := timeEvent{Type: TimeEventEnd, Time: now.Format(timeLayout), Elapsed: formatElapsedMS(total), Note: note}
+		ev := timeEvent{Type: TimeEventEnd, Time: now.Format(timeLayout), Elapsed: formatElapsedMS(total), DurationMS: problemElapsed, Practice: seg.Practice, Note: note}
 		if err := appendProblemEvent(seg.Dir, seg.Problem, seg.Link, ev); err != nil {
 			return err
 		}
@@ -472,7 +517,11 @@ func closeTimeSession(note string) (*timeState, error) {
 		}
 		elapsed := st.elapsed(now)
 		for _, seg := range st.Open {
-			ev := timeEvent{Type: TimeEventEnd, Time: now.Format(timeLayout), Elapsed: formatElapsedMS(elapsed), Note: endNote}
+			duration := elapsed - seg.StartElapsedMS
+			if duration < 0 {
+				duration = 0
+			}
+			ev := timeEvent{Type: TimeEventEnd, Time: now.Format(timeLayout), Elapsed: formatElapsedMS(elapsed), DurationMS: duration, Practice: seg.Practice, Note: endNote}
 			if err := appendProblemEvent(seg.Dir, seg.Problem, seg.Link, ev); err != nil {
 				return err
 			}
@@ -565,6 +614,9 @@ func openProblemNames(st *timeState) string {
 	names := make([]string, len(st.Open))
 	for i, seg := range st.Open {
 		names[i] = seg.Problem
+		if seg.Practice != "" {
+			names[i] += " (p_" + seg.Practice + ")"
+		}
 	}
 	return strings.Join(names, ", ")
 }
@@ -626,7 +678,10 @@ func appendAutoTimeEvent(eventType, note string) bool {
 			continue
 		}
 		elapsed := st.elapsed(now)
-		ev := timeEvent{Type: eventType, Time: now.Format(timeLayout), Elapsed: formatElapsedMS(elapsed), Note: note}
+		ev := timeEvent{Type: eventType, Time: now.Format(timeLayout), Elapsed: formatElapsedMS(elapsed), Practice: seg.Practice, Note: note}
+		if eventType == TimeEventSubmit {
+			ev.Verdict = verdictFromNote(note)
+		}
 		if err := appendProblemEvent(seg.Dir, seg.Problem, seg.Link, ev); err != nil {
 			return false
 		}
@@ -818,7 +873,7 @@ func runTimeMonitor() error {
 		if err != nil {
 			color.Red(err.Error())
 		}
-		cmd, _, _ := parseTimerArgs(strings.Fields(line))
+		cmd, _, _, _ := parseTimerArgs(strings.Fields(line))
 		done := cmd == "q"
 		if !done {
 			enterRaw()
@@ -944,8 +999,8 @@ func runTimeMonitor() error {
 
 // runTimeCommand executes one timer command line (used by the monitor).
 func runTimeCommand(line string) error {
-	cmd, specifier, note := parseTimerArgs(strings.Fields(line))
-	return runTimerCommand(cmd, specifier, note)
+	cmd, practice, specifier, note := parseTimerArgs(strings.Fields(line))
+	return runTimerCommand(cmd, practice, specifier, note)
 }
 
 // normalizeTimerCommand accepts the first letter of start, end, pause and q.
@@ -963,18 +1018,24 @@ func normalizeTimerCommand(command string) string {
 	return strings.ToLower(command)
 }
 
-// parseTimerArgs splits "<command> <specifier> <note words...>".
-func parseTimerArgs(args []string) (command, specifier, note string) {
+// parseTimerArgs splits "<command> [p_<set>] <specifier> <note words...>".
+func parseTimerArgs(args []string) (command, practice, specifier, note string) {
 	rest := args
 	if len(rest) > 0 {
 		command = normalizeTimerCommand(rest[0])
 	}
 	if command == "start" || command == "end" {
-		if len(rest) > 1 {
-			specifier = rest[1]
+		index := 1
+		if index < len(rest) && strings.HasPrefix(rest[index], "p_") {
+			practice = rest[index]
+			index++
 		}
-		if len(rest) > 2 {
-			note = strings.Trim(strings.Join(rest[2:], " "), `"'`)
+		if index < len(rest) {
+			specifier = rest[index]
+			index++
+		}
+		if index < len(rest) {
+			note = strings.Trim(strings.Join(rest[index:], " "), `"'`)
 		}
 	}
 	if command == "q" {
@@ -985,14 +1046,14 @@ func parseTimerArgs(args []string) (command, specifier, note string) {
 	return
 }
 
-func runTimerCommand(command, specifier, note string) error {
+func runTimerCommand(command, practice, specifier, note string) error {
 	switch command {
 	case "", "open":
 		return timerOpen()
 	case "start":
-		return timerStart(specifier, note)
+		return timerStart(practice, specifier, note)
 	case "end":
-		return timerEnd(specifier, note)
+		return timerEnd(practice, specifier, note)
 	case "pause":
 		return timerPause()
 	case "q":
@@ -1061,6 +1122,6 @@ func timerOpen() error {
 
 // Timer command
 func Timer() (err error) {
-	command, specifier, note := parseTimerArgs(Args.CountArgs)
-	return runTimerCommand(command, specifier, note)
+	command, practice, specifier, note := parseTimerArgs(Args.CommandArgs)
+	return runTimerCommand(command, practice, specifier, note)
 }

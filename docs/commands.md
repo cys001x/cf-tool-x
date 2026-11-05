@@ -10,6 +10,8 @@ document describes every command, its arguments, and the files it creates.
   - [cf config](#cf-config)
   - [cf sync](#cf-sync)
   - [cf timer](#cf-timer)
+  - [cf db](#cf-db)
+  - [cf practice commands](#cf-practice-commands)
   - [cf pull](#cf-pull-ac)
   - [cf clone](#cf-clone)
   - [cf parse](#cf-parse)
@@ -172,8 +174,8 @@ any other terminal:
 
 | Command | Effect |
 |---------|--------|
-| `start <specifier> <note>` (`s`) | Start timing a problem or a contest. Several problems can run at the same time; only a duplicate start of the same problem is rejected. The timer is created automatically when it does not exist. |
-| `end <specifier> <note>` (`e`) | Stop the running problem that matches the specifier. The specifier must resolve to the same folder as one of the open `start` events; otherwise the command is rejected. The note is stored as that problem's summary. The elapsed time of that problem and the timer total are printed. |
+| `start <specifier> <note>` (`s`) | Start timing a problem or a contest. Several problems can run at the same time; only a duplicate start of the same problem is rejected. The timer is created automatically when it does not exist. Prefix the specifier with `p_<set>` to record a practice run inside `{cf}/practice/<set>`, for example `cf timer s p_drill 1136a "retry"`. |
+| `end <specifier> <note>` (`e`) | Stop the running problem that matches the specifier. The specifier must resolve to the same folder as one of the open `start` events; otherwise the command is rejected. For a practice run use the same `p_<set>` prefix. The note is stored as that problem's summary. The elapsed time of that problem and the timer total are printed. |
 | `pause` (`p`) | Pause the timer. Running `pause` again resumes it. |
 | `q [<note>]` (`exit` is an alias) | Close the timer and print the summary. The note is stored as the session summary and as the summary of every open problem. A running problem is ended automatically with the note, or `auto end on quit`. |
 | `status` | Print the current elapsed time, active problem and state. |
@@ -184,6 +186,8 @@ cf timer start 1136a "read the problem"   # from any terminal
 cf timer end 1136a "solved"
 cf timer pause
 cf timer q "contest done"
+cf timer s p_drill 1136a "practice run"
+cf timer e p_drill 1136a "still wrong"
 ```
 
 Automatically recorded nodes:
@@ -197,6 +201,8 @@ Files:
 
 - `~/.cf/timer.json` — singleton timer state: session start, paused flag,
   accumulated elapsed time, active problem, and the list of touched records.
+- `~/.cf/timer.db` — SQLite index of the records, maintained by `cf db`; see
+  [cf db](#cf-db).
 - `<problem>/count_time.json` — time nodes of that problem:
 
 ```json
@@ -223,7 +229,10 @@ Files:
 
 Event types are `start`, `end`, `test` and `submit`. Every event carries the
 absolute timestamp and `elapsed` in `HH:MM:SS`, measured from the timer session
-start and excluding paused periods. The record-level `summary` is the note of the last
+start and excluding paused periods. Events recorded during a `p_<set>` timer
+run also carry `practice` with the set name. `end` events also carry
+`duration_ms`, the length of that timing segment. `submit` events carry
+`verdict` when it is known. The record-level `summary` is the note of the last
 `end` for that problem, or the note given to `q`. The session summary is
 also stored in `~/.cf/timer.json`.
 
@@ -239,6 +248,175 @@ Notes:
 - No process stays alive in the background. Every command is a short-lived
   process that reads and updates `~/.cf/timer.json`; elapsed time is computed
   from timestamps when the state is read.
+
+### cf db
+
+```
+cf db sql [-j] [--write] <SQL>
+cf db time [-j] [<specifier>...]
+cf db stats [-j] [--from <date>] [--to <date>] [--accepted] [<specifier>...]
+cf db sync [--refresh] [<specifier>...]
+cf db path
+```
+
+A local SQLite index of the timer data. The `count_time.json` files remain the
+source of truth; the database is derived from them. Every timer change also
+writes through to the database, and `cf db sync` rebuilds or completes it.
+
+`cf db time` and `cf db stats` require the database to exist. If a record was
+written before the database was added, run `cf db sync` once.
+
+Commands:
+
+| Command | Effect |
+|---------|--------|
+| `sql <SQL>` | Run one SQL statement. The connection is read-only unless `--write` is given. |
+| `time [<specifier>...]` | Print the time nodes and total time of a problem, or the per-problem totals, sum, and span of a contest. Without a specifier the current problem is used. |
+| `stats` | Count the problems that have an `end` event in the date range, with a per-day breakdown and the total time. `--accepted` keeps only problems with an accepted submit. |
+| `sync` | Index every reachable `count_time.json` and fetch missing contest metadata. Reachable means the records referenced by the timer state, the `cf` folder tree around the current directory, and any given specifiers. `--refresh` fetches metadata again. |
+| `path` | Print the database path. |
+
+```plain
+cf db sync
+cf db time 1136a
+cf db time 1136
+cf db stats --from 2026-01-01 --to 2026-06-30
+cf db stats --accepted --from 2026-01-01
+cf db stats --status done --from 2026-01-01
+cf db sql "SELECT type, COUNT(*) FROM event GROUP BY type"
+cf db sql --write "UPDATE problem SET summary = 'reviewed' WHERE key = 'contest:1136:a'"
+```
+
+Flags:
+
+- `-j`, `--json` prints JSON instead of a table.
+- `--from` and `--to` use `YYYY-MM-DD` in the local time zone. Both ends are
+  inclusive; a missing `--from` means the beginning of time, a missing `--to`
+  means no upper bound.
+- `--accepted` changes the `stats` filter: the problem must also have a
+  `submit` event with verdict `OK`.
+- `--status` keeps only problems in the given state: `pending`, `open`, `done`,
+  `tests_passed`, `accepted`, or `practice_1` through `practice_9`.
+- `--write` allows `INSERT`, `UPDATE`, `DELETE`, and DDL in `cf db sql`.
+  Without it the connection is opened read-only.
+- `--refresh` re-fetches contest metadata during `cf db sync`.
+
+Database schema:
+
+| Table | Columns |
+|-------|---------|
+| `contest` | key, type (contest/gym/group/acmsguru), contest_id, group_id, name, div, start_at, end_at, link, updated_at |
+| `problem` | key, contest_key, problem_id, display, name, link, dir, summary, status, practice |
+| `event` | problem_key, type (start/end/test/submit), at_ms, elapsed_ms, duration_ms, verdict, note |
+
+Keys are canonical: `contest:1136:a`, `gym:100001:b`,
+`group:Cw4JRyRGXR:269760:a`, and `acmsguru:99999:100`. Two views are provided:
+`problem_time` (total_ms, event_count, first_start_ms, last_end_ms) and
+`contest_time` (total_ms, problem_count).
+
+Total time is the sum of `duration_ms` over `end` events. `duration_ms` is the
+time between the matching `start` and `end`, excluding paused periods. For a
+contest, `Sum` adds the problem times; `Span` is the wall-clock time from the
+first start to the last end. With parallel problems the sum can be larger than
+the span.
+
+Every problem has one derived status label:
+
+- `accepted`: at least one `submit` with verdict `OK`, and no counted
+  practice submits.
+- `practice_1` through `practice_9`: accepted submits made during a practice
+  timing run (`cf timer s p_<set> ...`), excluding the first accepted submit.
+  The number is the practice-accepted count, capped at 9.
+- `tests_passed`: at least one `test` event exists. `cf test` only writes that
+  event when every sample passes.
+- `open`: the last `start` has no matching `end`.
+- `done`: there is an `end` and no higher state applies.
+- `pending`: no `start`, `end`, or `test` event.
+
+The precedence is `practice_N` > `accepted` > `tests_passed` > `open` >
+`done` > `pending`.
+
+`cf db sync` fetches contest names, divisions, schedules, and problem names
+from the public Codeforces API (`contest.standings`). The API does not expose
+group contests or acmsguru, so those rows keep empty metadata. Metadata calls
+are rate-limited to about one request per 600 ms.
+
+Files:
+
+- `~/.cf/timer.db` — SQLite database. Override it with `CF_TIMER_DB`.
+- `~/.cf/timer.db-wal`, `~/.cf/timer.db-shm` — SQLite WAL files. They are
+  created temporarily while the database is in use.
+
+### cf practice commands
+
+```
+cf lpractice [options] <count> [<name>]
+cf lrepractice [options] <count> [<name>]
+cf lnrepractice [options] <count> [<name>]
+cf opractice [options] <count> [<name>]
+```
+
+Create a randomized practice set. Picked problems are materialized as folders
+containing samples, `statement.md`, an optional code file from the default
+template, and a shared `practice.json` manifest.
+
+| Command | Source | Selection |
+|---------|--------|-----------|
+| `lpractice` | local timer database | any problem |
+| `lrepractice` | local timer database | `status = accepted` |
+| `lnrepractice` | local timer database | `status = pending`, meaning never timed or tested |
+| `opractice` | Codeforces problemset API | rating and tags filters |
+
+Local commands read `~/.cf/timer.db`, so run `cf db sync` first. They do not
+accept difficulty or tag filters because the timer database does not store
+rating/tag data.
+
+`opractice` fetches `/api/problemset.problems` and filters by:
+
+- `--difficulty <range>`: a single rating (`1200`) or an inclusive range
+  (`800-1200`, `800..1200`). Without it, every rating is allowed.
+- `--tags <tags>`: comma- or space-separated tags. A problem matches when it
+  has at least one of the requested tags.
+
+The selection is shuffled and truncated to `<count>`. If fewer problems match,
+all of them are used and a warning is printed.
+
+Output layout:
+
+```
+cf/
+├── contest/
+└── practice/
+    └── 20261105-153000-practice/   # default name
+        ├── practice.json
+        ├── 1136a/
+        │   ├── in1.txt
+        │   ├── ans1.txt
+        │   ├── statement.md
+        │   └── 1136a.cpp
+        └── 1136c/
+```
+
+- The parent is always `<root>/practice`, a sibling of `contest/`, `gym/`, and
+  `group/`.
+- The default subfolder name is `<YYYYMMDD-HHMMSS>-practice`. Pass `<name>` to
+  choose another one. Unsafe characters are replaced with `_`.
+- Each problem folder is named after `<contest-id><problem-index>`, for example
+  `1136a`.
+- Samples require a valid Codeforces session. Statement failures are reported
+  but do not abort the set.
+- A code file is generated only when a default template exists.
+- To record a practice run, start the timer from the set with
+  `cf timer s p_<set> <problem>`. Only accepted submits made during that timer
+  segment advance the problem's `practice` count and status.
+
+```plain
+cf lpractice 5
+cf lrepractice 3 review
+cf lnrepractice 10
+cf opractice 5 --difficulty 1200-1600 --tags dp,greedy
+cf opractice 3 --tags implementation --difficulty 800
+```
 
 ### cf pull [ac]
 
@@ -508,8 +686,9 @@ $ cf completion fish > ~/.config/fish/completions/cf.fish
 ```
 
 After reloading the shell, typing `cf sta<Tab>` completes to `cf stand`. The
-scripts also complete `ac` for `pull` and `clone`, `all` for `watch`, and (in
-bash) file or directory paths after `-f` and `-d`.
+scripts also complete `ac` for `pull` and `clone`, `all` for `watch`, timer
+commands (`start end pause q status s e p`), `db` commands (`sql time stats
+sync path`), and (in bash) file or directory paths after `-f` and `-d`.
 
 Shell autosuggestion plugins such as zsh-autosuggestions or the fish
 autosuggestion feature reuse these completion definitions to show inline hints
@@ -521,6 +700,7 @@ while typing.
 |----------|--------|
 | `CF_UA` | Overrides the browser User-Agent used for every request. Takes precedence over the value stored in `~/.cf/config`. |
 | `CF_TIMER_STATE` | Overrides the path of the timer state file (default `~/.cf/timer.json`). |
+| `CF_TIMER_DB` | Overrides the path of the timer database (default `~/.cf/timer.db`). |
 
 Configuration and session files:
 

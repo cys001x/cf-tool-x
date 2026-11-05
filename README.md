@@ -22,6 +22,8 @@ It's fast, small, cross-platform and powerful.
 * Fetch problems' samples.
 * Sync a contest or a problem in one command: samples, statements, and the latest submission code.
 * Time a contest or a problem and record every time node.
+* Query timer data with SQL, totals, and date-range statistics.
+* Generate random practice sets from local history or the Codeforces problemset.
 * Compile and test locally.
 * Clone all codes of someone.
 * Generate codes from the specified template (including timestamp, author, etc.)
@@ -88,6 +90,32 @@ in `<problem>/count_time.json`; the singleton state lives in
 `~/.cf/timer.json`. The note of `end`, or the summary typed at `q`, is stored
 as the `summary` field of that problem's record.
 
+ `cf db sync`
+
+Build the local SQLite index from the timer records and fetch contest
+metadata. `cf db time 1136a` prints the time nodes and total time of a problem;
+`cf db time 1136` prints per-problem totals for a contest. `cf db stats
+--from 2026-01-01 --to 2026-06-30` counts the problems completed in a range,
+with a per-day breakdown; add `--accepted` to keep only accepted problems.
+`cf db sql "SELECT ..."` runs read-only SQL against `~/.cf/timer.db`, and
+`--write` allows changes. Each problem also gets one derived status label
+(`pending`, `open`, `done`, `tests_passed`, `accepted`). Accepted submits made
+during a practice timing run (`cf timer s p_<set> <problem>`) change it to
+`practice_1`, `practice_2`, and so on up to `practice_9`. `cf db stats --status
+done` filters by status.
+
+ `cf lpractice 5`
+
+Pick 5 random problems from the local timer database and create the practice
+set under `cf/practice/<timestamp>-practice`. Each problem gets its samples,
+`statement.md`, and a code file from the default template. `cf lrepractice`
+picks only accepted problems; `cf lnrepractice` picks only problems never
+timed. Add a second argument to name the folder, for example `cf lpractice 5
+drill`. `cf opractice 5 --difficulty 1200-1600 --tags dp,greedy` selects from
+the online Codeforces problemset instead. Start a practice run with
+`cf timer s p_drill 1136a "retry"`; accepted submits during that run advance
+the problem's practice label.
+
  `cd ./cf/contest/1136/a` (May be different from this, please notice the message on your screen)
 
 Enter the directory of problem A, the directory should contain all samples of the problem.
@@ -138,6 +166,11 @@ Usage:
   cf pull [ac] [<specifier>...]
   cf sync [<specifier>...]
   cf timer [<args>...]
+  cf db [options] [<args>...]
+  cf lpractice [options] <count> [<name>]
+  cf lrepractice [options] <count> [<name>]
+  cf lnrepractice [options] <count> [<name>]
+  cf opractice [options] <count> [<name>]
   cf clone [ac] [<handle>]
   cf statement [<specifier>...] [-d <dir>] [-f <file>]
   cf material [<specifier>...] [-d <dir>] [-f <file>]
@@ -162,7 +195,21 @@ Options:
                        want.
   <alias>              Template's alias. E.g. "cpp"
   <shell>              Shell to generate completion for: bash, zsh or fish.
+  <args>               Timer commands (start/end/pause/q/status, or s/e/p/q) or
+                       db commands (sql/time/stats/sync/path) and arguments.
   ac                   The status of the submission is Accepted.
+  --from <date>        Start date (YYYY-MM-DD) for "cf db stats".
+  --to <date>          End date (YYYY-MM-DD) for "cf db stats".
+  --status <status>    Keep only pending/open/done/tests_passed/accepted/
+                       practice_N in "cf db stats".
+  --accepted           Only count accepted problems in "cf db stats".
+  --refresh            Refresh contest metadata in "cf db sync".
+  --write              Allow writes in "cf db sql".
+  -j, --json           Print JSON in "cf db".
+  --difficulty <range> Problem rating for "cf opractice": "1200" or "800-1200".
+  --tags <tags>        Comma-separated Codeforces tags for "cf opractice".
+  <count>              Number of problems in the practice set.
+  <name>               Practice folder name. Default "<timestamp>-practice".
 
 Examples:
   cf config            Configure the cf-tool.
@@ -240,6 +287,29 @@ Examples:
                        be written as "exit"; commands can be shortened to their
                        first letter: s, e, p, q. The same commands work from
                        any terminal while the timer is open.
+  cf timer s p_drill 1136a "practice"
+                       Start a practice run for problem 1136a in the set
+                       "{cf}/practice/drill". Accepted submits in this run
+                       advance the practice label.
+  cf db sync           Index every "count_time.json" into "~/.cf/timer.db"
+                       and fill contest metadata from the Codeforces API.
+  cf db time 1136a     Print the time nodes and total time of a problem.
+  cf db time 1136      Print per-problem totals, sum and span of a contest.
+  cf db stats --from 2026-01-01 --to 2026-06-30
+                       Count problems completed in a date range.
+  cf db stats --accepted --from 2026-01-01
+                       Count only completed problems with an accepted submit.
+  cf db stats --status done --from 2026-01-01
+                       Count only problems whose derived status is "done".
+  cf db sql "SELECT type, COUNT(*) FROM event GROUP BY type"
+                       Run a read-only SQL query. Add --write to modify data.
+  cf lpractice 5       Pick 5 random problems from the local timer database.
+  cf lrepractice 5     Pick 5 random accepted problems from the local database.
+  cf lnrepractice 5    Pick 5 random problems never timed locally.
+  cf opractice 5 --difficulty 1200-1600 --tags dp,greedy
+                       Pick 5 random Codeforces problemset problems.
+  cf lpractice 5 drill Create "cf/practice/drill" instead of a timestamped
+                       folder.
   cf clone xalanq      Clone all codes of xalanq.
   cf statement         Fetch problem statement of current problem as statement.md.
   cf statement 1136a   Fetch statement of contest 1136 problem a.
@@ -259,8 +329,11 @@ File:
   "~/.cf/config"        Configuration file, including templates, etc.
   "~/.cf/session"       Session file, including cookies, handle, password, etc.
   "~/.cf/timer.json"     State of the global timer.
+  "~/.cf/timer.db"       Local SQLite index of the timer records.
   "<problem>/count_time.json"
                         Timer data written by "cf timer".
+  "{cf}/practice/<name>"
+                        Practice sets created by "cf lpractice" and "cf opractice".
 
   "~" is the home directory of current user in your system.
 
