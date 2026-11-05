@@ -1,6 +1,7 @@
 package client
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"html"
@@ -39,6 +40,26 @@ const ErrorSkip = "Exists, skip"
 // ErrorTooManyRequest error
 const ErrorTooManyRequest = "Too many requests"
 
+// FetchSubmissionCode downloads a submission page and returns the source code
+// shown in it.
+func (c *Client) FetchSubmissionCode(URL string) (code string, err error) {
+	body, err := util.GetBody(c.client, URL)
+	if err != nil {
+		return
+	}
+
+	if bytes.Contains(body, []byte("Just a moment")) {
+		return "", errors.New("Cloudflare returned a challenge page instead of codeforces.\n" +
+			"Refresh the cookies and check the browser User-Agent with `cf config`")
+	}
+
+	if message, e := findMessage(body); e == nil {
+		return "", errors.New(message)
+	}
+
+	return findCode(body)
+}
+
 // PullCode pull problem's code to path
 func (c *Client) PullCode(URL, path, ext string, rename bool) (filename string, err error) {
 	filename = path + ext
@@ -53,17 +74,7 @@ func (c *Client) PullCode(URL, path, ext string, rename bool) (filename string, 
 		return "", errors.New(ErrorSkip)
 	}
 
-	body, err := util.GetBody(c.client, URL)
-	if err != nil {
-		return
-	}
-
-	message, err := findMessage(body)
-	if err == nil {
-		return "", errors.New(message)
-	}
-
-	code, err := findCode(body)
+	code, err := c.FetchSubmissionCode(URL)
 	if err != nil {
 		return
 	}
@@ -101,7 +112,7 @@ func (c *Client) Pull(info Info, rootPath string, ac bool) (err error) {
 		if ac && !(strings.Contains(submission.status, "Accepted") || strings.Contains(submission.status, "Pretests passed")) {
 			continue
 		}
-		ext, ok := LangsExt[submission.lang]
+		ext, ok := LanguageExt(submission.lang)
 		if !ok {
 			continue
 		}

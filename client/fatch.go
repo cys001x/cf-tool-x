@@ -161,16 +161,23 @@ func (c *Client) fetchProblemTutorial(problemCode, csrf, referer string) string 
 	return result.HTML
 }
 
-// FetchStatement fetches the codeforce content to md file
+// FetchUrlContentToMdFile fetches the Codeforces page at URL and renders it
+// as a markdown file.
 func (c *Client) FetchUrlContentToMdFile(URL, path string, fileName string, mu *sync.Mutex) error {
 	body, err := util.GetBody(c.client, URL)
 	if err != nil {
 		return err
 	}
+	return c.writeContentToMdFile(body, URL, path, fileName)
+}
+
+// writeContentToMdFile renders an already fetched problem page as markdown.
+// Splitting the fetch from the rendering lets Sync reuse a single request for
+// both the samples and the statement.
+func (c *Client) writeContentToMdFile(body []byte, URL, path string, fileName string) error {
 	csrf := extractCSRF(body)
 
-	_, err = findHandle(body)
-	if err != nil {
+	if _, err := findHandle(body); err != nil {
 		return err
 	}
 

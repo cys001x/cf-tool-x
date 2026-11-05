@@ -49,6 +49,8 @@ func Eval(opts docopt.Opts) error {
 		return Race()
 	} else if Args.Pull {
 		return Pull()
+	} else if Args.Sync {
+		return Sync()
 	} else if Args.Clone {
 		return Clone()
 	} else if Args.Statement {

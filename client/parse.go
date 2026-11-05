@@ -50,18 +50,8 @@ func findSample(body []byte) (input [][]byte, output [][]byte, err error) {
 	return
 }
 
-// ParseProblem parse problem to path. mu can be nil
-func (c *Client) ParseProblem(URL, path string, mu *sync.Mutex) (samples int, standardIO bool, err error) {
-	body, err := util.GetBody(c.client, URL)
-	if err != nil {
-		return
-	}
-
-	_, err = findHandle(body)
-	if err != nil {
-		return
-	}
-
+// writeSamples writes the sample inputs and outputs found in body into path.
+func writeSamples(body []byte, path string, mu *sync.Mutex) (samples int, standardIO bool, err error) {
 	input, output, err := findSample(body)
 	if err != nil {
 		return
@@ -101,6 +91,21 @@ func (c *Client) ParseProblem(URL, path string, mu *sync.Mutex) (samples int, st
 		}
 	}
 	return len(input), standardIO, nil
+}
+
+// ParseProblem parse problem to path. mu can be nil
+func (c *Client) ParseProblem(URL, path string, mu *sync.Mutex) (samples int, standardIO bool, err error) {
+	body, err := util.GetBody(c.client, URL)
+	if err != nil {
+		return
+	}
+
+	_, err = findHandle(body)
+	if err != nil {
+		return
+	}
+
+	return writeSamples(body, path, mu)
 }
 
 // Parse parse

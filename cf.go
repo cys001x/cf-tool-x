@@ -41,6 +41,7 @@ Usage:
   cf detail [<specifier>...]
   cf race [<specifier>...]
   cf pull [ac] [<specifier>...]
+  cf sync [<specifier>...]
   cf clone [ac] [<handle>]
   cf statement [<specifier>...] [-d <dir>] [-f <file>]
   cf material [<specifier>...] [-d <dir>] [-f <file>]
@@ -121,6 +122,12 @@ Examples:
                        "a" of contest 100.
   cf pull              Pull the latest codes of current problem into current
                        path.
+  cf sync 1136         Sync all problems of contest 1136: fetch samples and
+                       statements, pull the latest submission code, or
+                       generate a code from the default template when there is
+                       no submission and no local code.
+  cf sync 1136a        Sync problem "a" of contest 1136.
+  cf sync              Sync the current problem.
   cf clone xalanq      Clone all codes of xalanq.
   cf statement         Fetch problem statement of current problem as statement.md.
   cf statement 1136a   Fetch statement of contest 1136 problem a.

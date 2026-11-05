@@ -142,7 +142,7 @@ func (c *Client) Clone(handle, rootPath string, ac bool) (err error) {
 				mu.Unlock()
 				return
 			}
-			ext, ok := LangsExt[lang]
+			ext, ok := LanguageExt(lang)
 			if !ok {
 				mu.Lock()
 				count++
