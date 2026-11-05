@@ -23,6 +23,7 @@ document describes every command, its arguments, and the files it creates.
   - [cf watch](#cf-watch)
   - [cf detail](#cf-detail)
   - [cf list](#cf-list)
+  - [cf ncontests](#cf-ncontests)
   - [cf open / stand / sid](#cf-open--stand--sid)
   - [cf race](#cf-race)
   - [cf upgrade](#cf-upgrade)
@@ -363,7 +364,7 @@ template, and a shared `practice.json` manifest.
 | Command | Source | Selection |
 |---------|--------|-----------|
 | `lpractice` | local timer database | any problem |
-| `lrepractice` | local timer database | `status = accepted` |
+| `lrepractice` | local timer database | `status = accepted` or `practice_N` |
 | `lnrepractice` | local timer database | `status = pending`, meaning never timed or tested |
 | `opractice` | Codeforces problemset API | rating and tags filters |
 
@@ -405,7 +406,8 @@ cf/
   `1136a`.
 - Samples require a valid Codeforces session. Statement failures are reported
   but do not abort the set.
-- A code file is generated only when a default template exists.
+- A code file is generated only when a default template exists. An empty
+  `analysis.md` is created next to it if missing.
 - To record a practice run, start the timer from the set with
   `cf timer s p_<set> <problem>`. Only accepted submits made during that timer
   segment advance the problem's `practice` count and status.
@@ -536,7 +538,8 @@ cf gen [<alias>]
 
 Generates a source file from a configured template in the current directory.
 The file is named after the current directory (the problem id). If no alias is
-given, the default template is used.
+given, the default template is used. An empty `analysis.md` is also created in
+the same directory; an existing file is kept unchanged.
 
 ```plain
 cf gen
@@ -626,6 +629,24 @@ Lists the problems of a contest with their limits and accepted counts.
 cf list
 cf list 1119
 ```
+
+### cf ncontests
+
+```
+cf ncontests
+```
+
+Lists the 20 most recently finished Codeforces contests. Each row contains the
+contest link, division, and name.
+
+```plain
+cf ncontests
+```
+
+The list comes from the public `/api/contest.list` endpoint, keeps only
+finished regular contests (gym contests are excluded), and sorts them by start
+time, newest first. The division is parsed from the contest name, for example
+`Div. 1`, `Div. 2`, or `Div. 1 + Div. 2`; contests without a division show `-`.
 
 ### cf open / stand / sid
 

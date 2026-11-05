@@ -28,6 +28,7 @@ Codeforces Tool 是 [Codeforces](https://codeforces.com) 的命令行界面的�
 * 拉取某人的所有代码
 * 从指定模板生成代码（包括时间戳，作者等信息）
 * 列出某场比赛的所有题目的整体信息
+* 列出最近 20 场比赛的链接和 div 等级
 * 用默认的网页浏览器打开题目页面、榜单、提交页面等
 * 设置网络代理，设置镜像站
 * 丰富多彩的命令行
@@ -97,9 +98,8 @@ SQL，加 `--write` 才允许修改数据。每道题还会根据事件推导出
  `cf lpractice 5`
 
 从本地计时数据库随机抽 5 道题，生成到 `cf/practice/<时间戳>-practice` 下。每题包含样例、
-`statement.md` 和用默认模板生成的代码文件。`cf lrepractice` 只抽 Accepted 的题，
-`cf lnrepractice` 只抽从未计时过的题。第二个参数可以指定文件夹名，例如
-`cf lpractice 5 drill`。`cf opractice 5 --difficulty 1200-1600 --tags dp,greedy`
+`statement.md` 和用默认模板生成的代码文件。`cf lrepractice` 只抽 Accepted（含 `practice_N`）的题，
+`cf lnrepractice` 只抽从未计时过的题。第二个参数可以指定文件夹名，例如`cf lpractice 5 drill`。`cf opractice 5 --difficulty 1200-1600 --tags dp,greedy`
 则从 Codeforces 在线题库中抽取。用 `cf timer s p_drill 1136a "retry"` 开始练习计时，
 这次计时中的 Accepted 会推进该题的 practice 标签。
 
@@ -109,7 +109,7 @@ SQL，加 `--write` 才允许修改数据。每道题还会根据事件推导出
 
  `cf gen` 
 
-用默认模板生成一份代码，代码文件名默认是题目的 ID。
+用默认模板生成一份代码，代码文件名默认是题目的 ID。同目录下会创建一个空的 `analysis.md`。
 
  `vim a.cpp` 
 
@@ -127,6 +127,10 @@ SQL，加 `--write` 才允许修改数据。每道题还会根据事件推导出
 
 查看当前比赛各个题目的信息。
 
+ `cf ncontests`
+
+列出最近 20 场已结束比赛的链接、div 等级和名字。
+
  `cf stand` 
 
 用浏览器打开榜单，查看排名。
@@ -140,6 +144,7 @@ SQL，加 `--write` 才允许修改数据。每道题还会根据事件推导出
   cf config
   cf submit [-f <file>] [<specifier>...]
   cf list [<specifier>...]
+  cf ncontests
   cf parse [<specifier>...]
   cf gen [<alias>]
   cf test [-f <file>] [-d <dir>] [<specifier>...]
@@ -206,6 +211,7 @@ SQL，加 `--write` 才允许修改数据。每道题还会根据事件推导出
   cf submit gym 100001 a
   cf list              列出当前比赛的题目通过、时限等信息。
   cf list 1119         
+  cf ncontests         列出最近 20 场已结束比赛的链接、div 等级和名字。
   cf parse 100         获取 contest 100 的所有题目的样例到文件夹
                        "{cf}/{contest}/100/<题目>" 中。
   cf parse gym 100001a
@@ -215,7 +221,7 @@ SQL，加 `--write` 才允许修改数据。每道题还会根据事件推导出
                        获取 gym 100001 的所有题目的样例到文件夹
                        "{cf}/{gym}/100001" 中。
   cf parse             获取当前比赛的当前题目到当前文件夹下。
-  cf gen               用默认的模板生成一份代码到当前文件夹下。
+  cf gen               用默认的模板生成一份代码到当前文件夹下，并创建空的 analysis.md。
   cf gen cpp           用名字为 "cpp" 的模板来生成一份代码到当前文件夹下。
   cf test              在当前目录下执行模板里的命令，并测试全部样例。如果你想加一组新的测试数据，
                        新建两个文件 "inK.txt" 和 "ansK.txt" 即可，其中 K 是包含 0~9 的字符串。

@@ -29,6 +29,8 @@ func Eval(opts docopt.Opts) error {
 		return Submit()
 	} else if Args.List {
 		return List()
+	} else if Args.NContests {
+		return NContests()
 	} else if Args.Parse {
 		return Parse()
 	} else if Args.Gen {

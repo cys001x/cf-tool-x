@@ -15,7 +15,7 @@ import (
 	docopt "github.com/docopt/docopt-go"
 )
 
-const version = "v1.3.0"
+const version = "v1.3.1"
 const configPath = "~/.cf/config"
 const sessionPath = "~/.cf/session"
 
@@ -46,6 +46,7 @@ Usage:
   cf config
   cf submit [-f <file>] [<specifier>...]
   cf list [<specifier>...]
+  cf ncontests
   cf parse [<specifier>...]
   cf gen [<alias>]
   cf test [-f <file>] [-d <dir>] [<specifier>...]
@@ -117,6 +118,8 @@ Examples:
                        save them as inK.txt/ansK.txt for "cf test".
   cf list              List all problems' stats of a contest.
   cf list 1119
+  cf ncontests         List the 20 most recent finished contests with their
+                       link, division and name.
   cf parse 100         Fetch all problems' samples of contest 100 into
                        "{cf}/{contest}/100/<problem-id>".
   cf parse gym 100001a
@@ -126,7 +129,8 @@ Examples:
                        Fetch all problems' samples of gym 100001 into
                        "{cf}/{gym}/100001".
   cf parse             Fetch samples of current problem into current path.
-  cf gen               Generate a code from default template.
+  cf gen               Generate a code from default template and create an
+                       empty analysis.md next to it.
   cf gen cpp           Generate a code from the template whose alias is "cpp"
                        into current path.
   cf test              Run the commands of a template in current path. Then

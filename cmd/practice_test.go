@@ -91,6 +91,7 @@ func TestSelectLocalPractice(t *testing.T) {
 		{"contest:1136:a", "1136a", problemStatusAccepted},
 		{"contest:1136:b", "1136b", problemStatusDone},
 		{"contest:1136:c", "1136c", problemStatusPending},
+		{"contest:1136:d", "1136d", practiceStatus(2)},
 	}
 	for _, row := range rows {
 		if _, err = db.Exec(`INSERT INTO problem(key, contest_key, problem_id, display, status) VALUES(?, ?, ?, ?, ?)`,
@@ -101,12 +102,19 @@ func TestSelectLocalPractice(t *testing.T) {
 	db.Close()
 
 	all, err := selectLocalPractice("", 10)
-	if err != nil || len(all) != 3 {
+	if err != nil || len(all) != 4 {
 		t.Fatalf("select all = %v, %v", len(all), err)
 	}
 	accepted, err := selectLocalPractice(problemStatusAccepted, 10)
-	if err != nil || len(accepted) != 1 || accepted[0].Key != "contest:1136:a" {
+	if err != nil || len(accepted) != 2 {
 		t.Fatalf("select accepted = %+v, %v", accepted, err)
+	}
+	acceptedKeys := map[string]bool{}
+	for _, problem := range accepted {
+		acceptedKeys[problem.Key] = true
+	}
+	if !acceptedKeys["contest:1136:a"] || !acceptedKeys["contest:1136:d"] {
+		t.Fatalf("accepted selection = %+v", accepted)
 	}
 	pending, err := selectLocalPractice(problemStatusPending, 10)
 	if err != nil || len(pending) != 1 || pending[0].Key != "contest:1136:c" {

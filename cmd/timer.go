@@ -428,9 +428,23 @@ func timerEnd(practice, specifier, note string) error {
 	var dir string
 	var err error
 	if practice != "" {
-		_, dir, _, err = resolvePracticeTimer(practice, specifier)
-		if err != nil {
-			return err
+		set := strings.TrimPrefix(strings.TrimSpace(practice), "p_")
+		name := timerProblemName(specifier)
+		// Prefer the open segment: it already carries the absolute folder, so
+		// "end" works even when the current directory is outside the root.
+		if st, e := loadTimeState(); e == nil {
+			for _, seg := range st.Open {
+				if strings.EqualFold(seg.Practice, set) && (seg.Specifier == specifier || seg.Problem == name) {
+					dir = seg.Dir
+					break
+				}
+			}
+		}
+		if dir == "" {
+			_, dir, _, err = resolvePracticeTimer(practice, specifier)
+			if err != nil {
+				return err
+			}
 		}
 	} else {
 		info, err := resolveTimerInfo(specifier)

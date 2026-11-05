@@ -192,7 +192,11 @@ func selectLocalPractice(status string, count int) ([]practiceProblem, error) {
 	defer db.Close()
 	query := `SELECT key, display, name, link, status FROM problem`
 	var params []interface{}
-	if status != "" {
+	if status == problemStatusAccepted {
+		// lrepractice also includes problems accepted again in practice mode.
+		query += ` WHERE (status = ? OR status LIKE ?)`
+		params = append(params, status, problemStatusPractice+"%")
+	} else if status != "" {
 		query += ` WHERE status = ?`
 		params = append(params, status)
 	}

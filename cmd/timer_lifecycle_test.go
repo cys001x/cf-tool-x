@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -99,6 +100,27 @@ func TestTimerStartEndLifecycle(t *testing.T) {
 	st, _ = loadTimeState()
 	if len(st.Open) != 0 || !st.Running {
 		t.Fatalf("unexpected state after closing all problems: %+v", st)
+	}
+}
+
+func TestTimerEndPracticeFromOutsideRoot(t *testing.T) {
+	work := setupTimerTest(t)
+	if err := os.MkdirAll(filepath.Join(work, "cf", "practice", "drill", "1136a"), 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := timerStart("p_drill", "1136a", "practice"); err != nil {
+		t.Fatal(err)
+	}
+	t.Chdir(t.TempDir())
+	if err := timerEnd("p_drill", "1136a", "done"); err != nil {
+		t.Fatal(err)
+	}
+	st, err := loadTimeState()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(st.Open) != 0 {
+		t.Fatalf("practice segment still open: %+v", st.Open)
 	}
 }
 

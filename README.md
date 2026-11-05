@@ -28,6 +28,7 @@ It's fast, small, cross-platform and powerful.
 * Clone all codes of someone.
 * Generate codes from the specified template (including timestamp, author, etc.)
 * List problems' stats of one contest.
+* List the 20 most recent contests with links and divisions.
 * Use default web browser to open problems' pages, standings' page, etc.
 * Setup a network proxy. Setup a mirror host.
 * Colorful CLI.
@@ -109,7 +110,8 @@ done` filters by status.
 Pick 5 random problems from the local timer database and create the practice
 set under `cf/practice/<timestamp>-practice`. Each problem gets its samples,
 `statement.md`, and a code file from the default template. `cf lrepractice`
-picks only accepted problems; `cf lnrepractice` picks only problems never
+picks only accepted problems, including ones accepted again in practice
+(`practice_N`); `cf lnrepractice` picks only problems never
 timed. Add a second argument to name the folder, for example `cf lpractice 5
 drill`. `cf opractice 5 --difficulty 1200-1600 --tags dp,greedy` selects from
 the online Codeforces problemset instead. Start a practice run with
@@ -122,7 +124,7 @@ Enter the directory of problem A, the directory should contain all samples of th
 
  `cf gen` 
 
-Generate a code with the default template. The filename of the code is problem id by default.
+Generate a code with the default template. The filename of the code is problem id by default. An empty `analysis.md` is created next to it.
 
  `vim a.cpp` 
 
@@ -140,6 +142,10 @@ Submit the code.
 
 List problems' stats of the contest.
 
+ `cf ncontests`
+
+List the 20 most recent finished contests with their link, division, and name.
+
  `cf stand` 
 
 Open the standings' page of the contest.
@@ -154,6 +160,7 @@ Usage:
   cf config
   cf submit [-f <file>] [<specifier>...]
   cf list [<specifier>...]
+  cf ncontests
   cf parse [<specifier>...]
   cf gen [<alias>]
   cf test [-f <file>] [-d <dir>] [<specifier>...]
@@ -225,6 +232,8 @@ Examples:
                        save them as inK.txt/ansK.txt for "cf test".
   cf list              List all problems' stats of a contest.
   cf list 1119
+  cf ncontests         List the 20 most recent finished contests with their
+                       link, division and name.
   cf parse 100         Fetch all problems' samples of contest 100 into
                        "{cf}/{contest}/100/<problem-id>".
   cf parse gym 100001a
@@ -234,7 +243,8 @@ Examples:
                        Fetch all problems' samples of gym 100001 into
                        "{cf}/{gym}/100001".
   cf parse             Fetch samples of current problem into current path.
-  cf gen               Generate a code from default template.
+  cf gen               Generate a code from default template and create an
+                       empty analysis.md next to it.
   cf gen cpp           Generate a code from the template whose alias is "cpp"
                        into current path.
   cf test              Run the commands of a template in current path. Then

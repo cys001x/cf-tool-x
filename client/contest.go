@@ -91,6 +91,57 @@ func (c *Client) ProblemsetProblems() ([]ProblemsetProblem, error) {
 	return resp.Result.Problems, nil
 }
 
+// ContestInfo is one entry of the Codeforces contest.list API.
+type ContestInfo struct {
+	ID               int64  `json:"id"`
+	Name             string `json:"name"`
+	Phase            string `json:"phase"`
+	StartTimeSeconds int64  `json:"startTimeSeconds"`
+	DurationSeconds  int64  `json:"durationSeconds"`
+	Div              string `json:"-"`
+}
+
+// Contests fetches every contest known to the contest.list API.
+func (c *Client) Contests() ([]ContestInfo, error) {
+	if c == nil || c.client == nil {
+		return nil, errors.New("Codeforces client is not initialized")
+	}
+	endpoint := strings.TrimRight(c.host, "/") + "/api/contest.list"
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return nil, err
+	}
+	httpResp, err := c.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer httpResp.Body.Close()
+	body, err := io.ReadAll(httpResp.Body)
+	if err != nil {
+		return nil, err
+	}
+	var resp struct {
+		Status  string        `json:"status"`
+		Comment string        `json:"comment"`
+		Result  []ContestInfo `json:"result"`
+	}
+	if err = json.Unmarshal(body, &resp); err != nil {
+		return nil, err
+	}
+	if resp.Status != "OK" {
+		if resp.Comment == "" {
+			resp.Comment = "contest.list failed"
+		}
+		return nil, errors.New(resp.Comment)
+	}
+	for i := range resp.Result {
+		resp.Result[i].Div = parseContestDiv(resp.Result[i].Name)
+	}
+	return resp.Result, nil
+}
+
 // ContestMeta fetches a contest title, schedule, division and problem names
 // from the public Codeforces API. Group contests and acmsguru are not covered
 // by the API; callers should treat the error as "metadata unavailable".

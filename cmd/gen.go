@@ -36,6 +36,21 @@ func readTemplateSource(path string, cln *client.Client) (source string, err err
 	return
 }
 
+// ensureAnalysisFile creates an empty analysis.md when it is missing. An
+// existing file is never overwritten.
+func ensureAnalysisFile(currentPath string) bool {
+	path := filepath.Join(currentPath, "analysis.md")
+	file, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0644)
+	if err == nil {
+		file.Close()
+		return true
+	}
+	if !os.IsExist(err) {
+		color.Yellow("Cannot create %v: %v", path, err)
+	}
+	return false
+}
+
 func gen(source, currentPath, ext string) error {
 	path := filepath.Join(currentPath, filepath.Base(currentPath))
 
@@ -50,6 +65,9 @@ func gen(source, currentPath, ext string) error {
 
 	err := ioutil.WriteFile(savePath, []byte(source), 0644)
 	if err == nil {
+		if ensureAnalysisFile(currentPath) {
+			color.Green("Created analysis.md.")
+		}
 		color.Green("Generated! See %v", filepath.Base(savePath))
 	}
 	return err
