@@ -1,0 +1,147 @@
+docs/leftover-tests.md
+  69fd4781bb3eb42f 1-53
+README_zh_CN.md
+  69fd4781bb3eb42f 25-26,86-105,155-159,183-184,186-196,255-275,294,297-298
+cmd/args.go
+  69fd4781bb3eb42f 16-62
+cf.go
+  69fd4781bb3eb42f 18,23-36,61-65,90-91,93-104,182-204,224,227-228
+docs/commands.md
+  69fd4781bb3eb42f 13-14,177-178,189-190,204-205,232-235,252-420,689-691,703
+README.md
+  69fd4781bb3eb42f 25-26,93-118,169-173,198-199,201-212,290-312,332,335-336
+cmd/db_test.go
+  69fd4781bb3eb42f 1-252
+cmd/db.go
+  69fd4781bb3eb42f 1-685
+client/contest.go
+  69fd4781bb3eb42f 1-143
+cmd/db_cmd.go
+  69fd4781bb3eb42f 1-603
+cmd/cmd.go
+  69fd4781bb3eb42f 66-69
+cmd/timer.go
+  69fd4781bb3eb42f 47-52,71-72,240-243,248,281-285,309-313,363-381,395,406,415-419,424,428-440,470,520-524,617-619,681-684,876,1002-1003,1021-1022,1028-1035,1037-1038,1049,1054,1056,1125-1126
+client/contest_test.go
+  69fd4781bb3eb42f 1-18
+cmd/completion.go
+  69fd4781bb3eb42f 16-17,54-56,88-92,110-112,124
+cmd/timer_test.go
+  69fd4781bb3eb42f 39,81-85,87-97,100-103,111,120,148-150
+cmd/practice_test.go
+  69fd4781bb3eb42f 1-175
+go.mod
+  69fd4781bb3eb42f 16-18,24,26,28,30-31,35-38
+cmd/practice.go
+  69fd4781bb3eb42f 1-433
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8-ntes.9",
+  "base_commit_sha": "7b5073a5242bf13504e530c6c9a135ca98e27149",
+  "prompts": {
+    "69fd4781bb3eb42f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e6f58b04-794a-40e1-8850-1fc4ca95514a",
+        "model": "deepseek-flash"
+      },
+      "human_author": "cys",
+      "messages": [],
+      "total_additions": 3372,
+      "total_deletions": 526,
+      "accepted_lines": 2943,
+      "overriden_lines": 0,
+      "per_file_stats": {
+        "cmd/practice_test.go": {
+          "additions": 185,
+          "deletions": 10,
+          "accepted_lines": 175
+        },
+        "cmd/db_cmd.go": {
+          "additions": 783,
+          "deletions": 180,
+          "accepted_lines": 603
+        },
+        "cmd/timer.go": {
+          "additions": 100,
+          "deletions": 39,
+          "accepted_lines": 96
+        },
+        "cmd/practice.go": {
+          "additions": 443,
+          "deletions": 10,
+          "accepted_lines": 433
+        },
+        "go.mod": {
+          "additions": 13,
+          "deletions": 5,
+          "accepted_lines": 12
+        },
+        "cmd/args.go": {
+          "additions": 81,
+          "deletions": 65,
+          "accepted_lines": 47
+        },
+        "docs/commands.md": {
+          "additions": 212,
+          "deletions": 32,
+          "accepted_lines": 185
+        },
+        "client/contest_test.go": {
+          "additions": 23,
+          "deletions": 5,
+          "accepted_lines": 18
+        },
+        "cmd/db_test.go": {
+          "additions": 303,
+          "deletions": 51,
+          "accepted_lines": 252
+        },
+        "README.md": {
+          "additions": 87,
+          "deletions": 14,
+          "accepted_lines": 73
+        },
+        "cmd/db.go": {
+          "additions": 752,
+          "deletions": 67,
+          "accepted_lines": 685
+        },
+        "client/contest.go": {
+          "additions": 149,
+          "deletions": 6,
+          "accepted_lines": 143
+        },
+        "cmd/timer_test.go": {
+          "additions": 26,
+          "deletions": 17,
+          "accepted_lines": 26
+        },
+        "cf.go": {
+          "additions": 69,
+          "deletions": 12,
+          "accepted_lines": 60
+        },
+        "cmd/completion.go": {
+          "additions": 14,
+          "deletions": 1,
+          "accepted_lines": 14
+        },
+        "cmd/cmd.go": {
+          "additions": 4,
+          "accepted_lines": 4
+        },
+        "README_zh_CN.md": {
+          "additions": 75,
+          "deletions": 12,
+          "accepted_lines": 64
+        },
+        "docs/leftover-tests.md": {
+          "additions": 53,
+          "accepted_lines": 53
+        }
+      }
+    }
+  }
+}
