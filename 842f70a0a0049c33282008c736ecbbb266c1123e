@@ -1,0 +1,109 @@
+cmd/cmd.go
+  69fd4781bb3eb42f 64-65
+cmd/completion.go
+  69fd4781bb3eb42f 16,50-52,83,98-100,111
+docs/commands.md
+  69fd4781bb3eb42f 12,153-237,518
+README_zh_CN.md
+  69fd4781bb3eb42f 24,73-83,132,156-157,209-217,235-237
+cmd/args.go
+  69fd4781bb3eb42f 44-46,70-85,89,95,101,107,113,160
+cmd/timer.go
+  69fd4781bb3eb42f 1-410,413-457,460-505,509-704,706-914,917-1015
+cf.go
+  69fd4781bb3eb42f 18,23-25,48-49,72,137-150,169-171
+cmd/timer_test.go
+  69fd4781bb3eb42f 1-159
+README.md
+  69fd4781bb3eb42f 24,74,76-89,139-140,163,228-241,260-262
+cmd/test.go
+  69fd4781bb3eb42f 64-65,70,82,96,124,149,199,202-206,208-209,215-219,221
+cmd/submit.go
+  69fd4781bb3eb42f 41
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8-ntes.9",
+  "base_commit_sha": "21363a14108050bb0dcee9821a9a949c07637b21",
+  "prompts": {
+    "69fd4781bb3eb42f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e6f58b04-794a-40e1-8850-1fc4ca95514a",
+        "model": "deepseek-flash"
+      },
+      "human_author": null,
+      "messages": [],
+      "total_additions": 3317,
+      "total_deletions": 1938,
+      "accepted_lines": 3525,
+      "overriden_lines": 0,
+      "per_file_stats": {
+        "cmd/counttime.go": {
+          "additions": 1256,
+          "deletions": 1256,
+          "accepted_lines": 638
+        },
+        "cmd/timer.go": {
+          "additions": 1186,
+          "deletions": 172,
+          "accepted_lines": 1173
+        },
+        "cf.go": {
+          "additions": 49,
+          "deletions": 28,
+          "accepted_lines": 37
+        },
+        "cmd/completion.go": {
+          "additions": 26,
+          "deletions": 17,
+          "accepted_lines": 18
+        },
+        "cmd/cmd.go": {
+          "additions": 5,
+          "deletions": 3,
+          "accepted_lines": 4
+        },
+        "README_zh_CN.md": {
+          "additions": 46,
+          "deletions": 19,
+          "accepted_lines": 46
+        },
+        "cmd/submit.go": {
+          "additions": 1,
+          "accepted_lines": 1
+        },
+        "cmd/test.go": {
+          "additions": 23,
+          "deletions": 10,
+          "accepted_lines": 23
+        },
+        "README.md": {
+          "additions": 76,
+          "deletions": 41,
+          "accepted_lines": 63
+        },
+        "cmd/args.go": {
+          "additions": 27,
+          "deletions": 15,
+          "accepted_lines": 26
+        },
+        "cmd/timer_test.go": {
+          "additions": 164,
+          "deletions": 5,
+          "accepted_lines": 161
+        },
+        "cmd/counttime_test.go": {
+          "additions": 295,
+          "deletions": 295,
+          "accepted_lines": 182
+        },
+        "docs/commands.md": {
+          "additions": 163,
+          "deletions": 77,
+          "accepted_lines": 147
+        }
+      }
+    }
+  }
+}
