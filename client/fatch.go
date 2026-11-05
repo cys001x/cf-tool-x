@@ -22,7 +22,7 @@ func nodeText(sel *goquery.Selection, visited map[*html.Node]bool) string {
 	var sb strings.Builder
 	sel.Contents().Each(func(_ int, s *goquery.Selection) {
 		node := s.Get(0)
-		// 对于 div 元素，检查是否已被处理过，避免重复解析
+		// For div elements, skip nodes already visited to avoid parsing them twice
 		if goquery.NodeName(s) == "div" {
 			if visited[node] {
 				return
@@ -40,7 +40,7 @@ func nodeText(sel *goquery.Selection, visited map[*html.Node]bool) string {
 			sb.WriteByte('\n')
 			sb.WriteByte('\n')
 		case "ul", "ol":
-			// 嵌套列表在 <li> 内部时，先加换行使子项另起一行
+			// When a nested list sits inside <li>, add a line break so its items start on a new line
 			if goquery.NodeName(sel) == "li" {
 				sb.WriteByte('\n')
 				sb.WriteByte('\n')
