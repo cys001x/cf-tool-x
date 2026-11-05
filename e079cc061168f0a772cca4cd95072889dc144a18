@@ -1,0 +1,317 @@
+cmd/parse.go
+  69fd4781bb3eb42f 1-46
+client/submit.go
+  69fd4781bb3eb42f 1-130
+cmd/pull.go
+  69fd4781bb3eb42f 1-24
+cf.go
+  69fd4781bb3eb42f 1-185
+client/fatch.go
+  69fd4781bb3eb42f 1-275
+go.mod
+  69fd4781bb3eb42f 1-31
+client/watch.go
+  69fd4781bb3eb42f 1-319
+cmd/browser.go
+  69fd4781bb3eb42f 1-44
+client/client.go
+  69fd4781bb3eb42f 1-133
+cmd/args.go
+  69fd4781bb3eb42f 1-252
+config/template.go
+  69fd4781bb3eb42f 1-188
+cookiejar/jar.go
+  69fd4781bb3eb42f 1-555
+client/login.go
+  69fd4781bb3eb42f 1-291
+cmd/config.go
+  69fd4781bb3eb42f 1-56
+Gopkg.toml
+  69fd4781bb3eb42f 1-70
+client/statement.go
+  69fd4781bb3eb42f 1-76
+cmd/material.go
+  69fd4781bb3eb42f 1-29
+client/race.go
+  69fd4781bb3eb42f 1-72
+cmd/submit.go
+  69fd4781bb3eb42f 1-79
+cmd/test.go
+  69fd4781bb3eb42f 1-209
+README.md
+  69fd4781bb3eb42f 1-297
+cmd/list.go
+  69fd4781bb3eb42f 1-60
+LICENSE
+  69fd4781bb3eb42f 1-21
+CLOUDFLARE_FIX.md
+  69fd4781bb3eb42f 1-114
+cmd/statement.go
+  69fd4781bb3eb42f 1-20
+.gitignore
+  69fd4781bb3eb42f 1-22
+client/detail.go
+  69fd4781bb3eb42f 1-248
+cmd/gen.go
+  69fd4781bb3eb42f 1-99
+util/util.go
+  69fd4781bb3eb42f 1-145
+cmd/detail.go
+  69fd4781bb3eb42f 1-222
+config/config.go
+  69fd4781bb3eb42f 1-102
+README_zh_CN.md
+  69fd4781bb3eb42f 1-278
+.github/workflows/build.yml
+  69fd4781bb3eb42f 1-23
+client/parse.go
+  69fd4781bb3eb42f 1-169
+cookiejar/punycode.go
+  69fd4781bb3eb42f 1-159
+cmd/race.go
+  69fd4781bb3eb42f 1-31
+cmd/upgrade.go
+  69fd4781bb3eb42f 1-224
+client/clone.go
+  69fd4781bb3eb42f 1-169
+client/info.go
+  69fd4781bb3eb42f 1-251
+scripts/upload_release_assets.py
+  69fd4781bb3eb42f 1-150
+client/langs.go
+  69fd4781bb3eb42f 1-107
+client/statis.go
+  69fd4781bb3eb42f 1-100
+config/misc.go
+  69fd4781bb3eb42f 1-125
+build.bat
+  69fd4781bb3eb42f 1-2
+cmd/watch.go
+  69fd4781bb3eb42f 1-21
+client/pull.go
+  69fd4781bb3eb42f 1-142
+client/material.go
+  69fd4781bb3eb42f 1-97
+cmd/clone.go
+  69fd4781bb3eb42f 1-25
+cmd/cmd.go
+  69fd4781bb3eb42f 1-179
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8-ntes.9",
+  "base_commit_sha": "e079cc061168f0a772cca4cd95072889dc144a18",
+  "prompts": {
+    "69fd4781bb3eb42f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e6f58b04-794a-40e1-8850-1fc4ca95514a",
+        "model": "deepseek-flash"
+      },
+      "human_author": "cys",
+      "messages": [],
+      "total_additions": 6666,
+      "total_deletions": 0,
+      "accepted_lines": 6666,
+      "overriden_lines": 0,
+      "per_file_stats": {
+        "README.md": {
+          "additions": 297,
+          "accepted_lines": 297
+        },
+        "client/info.go": {
+          "additions": 251,
+          "accepted_lines": 251
+        },
+        "cmd/list.go": {
+          "additions": 60,
+          "accepted_lines": 60
+        },
+        "client/client.go": {
+          "additions": 133,
+          "accepted_lines": 133
+        },
+        "README_zh_CN.md": {
+          "additions": 278,
+          "accepted_lines": 278
+        },
+        "Gopkg.toml": {
+          "additions": 70,
+          "accepted_lines": 70
+        },
+        "cmd/material.go": {
+          "additions": 29,
+          "accepted_lines": 29
+        },
+        "client/race.go": {
+          "additions": 72,
+          "accepted_lines": 72
+        },
+        "LICENSE": {
+          "additions": 21,
+          "accepted_lines": 21
+        },
+        "util/util.go": {
+          "additions": 145,
+          "accepted_lines": 145
+        },
+        "cmd/watch.go": {
+          "additions": 21,
+          "accepted_lines": 21
+        },
+        "client/clone.go": {
+          "additions": 169,
+          "accepted_lines": 169
+        },
+        "go.mod": {
+          "additions": 31,
+          "accepted_lines": 31
+        },
+        "client/statement.go": {
+          "additions": 76,
+          "accepted_lines": 76
+        },
+        "client/parse.go": {
+          "additions": 169,
+          "accepted_lines": 169
+        },
+        "cmd/upgrade.go": {
+          "additions": 224,
+          "accepted_lines": 224
+        },
+        "cmd/statement.go": {
+          "additions": 20,
+          "accepted_lines": 20
+        },
+        "config/misc.go": {
+          "additions": 125,
+          "accepted_lines": 125
+        },
+        "cmd/args.go": {
+          "additions": 252,
+          "accepted_lines": 252
+        },
+        "cmd/gen.go": {
+          "additions": 99,
+          "accepted_lines": 99
+        },
+        "client/material.go": {
+          "additions": 97,
+          "accepted_lines": 97
+        },
+        "client/login.go": {
+          "additions": 291,
+          "accepted_lines": 291
+        },
+        "CLOUDFLARE_FIX.md": {
+          "additions": 114,
+          "accepted_lines": 114
+        },
+        "client/fatch.go": {
+          "additions": 275,
+          "accepted_lines": 275
+        },
+        "config/template.go": {
+          "additions": 188,
+          "accepted_lines": 188
+        },
+        "build.bat": {
+          "additions": 2,
+          "accepted_lines": 2
+        },
+        "client/submit.go": {
+          "additions": 130,
+          "accepted_lines": 130
+        },
+        "cookiejar/jar.go": {
+          "additions": 555,
+          "accepted_lines": 555
+        },
+        "client/statis.go": {
+          "additions": 100,
+          "accepted_lines": 100
+        },
+        "cmd/cmd.go": {
+          "additions": 179,
+          "accepted_lines": 179
+        },
+        "config/config.go": {
+          "additions": 102,
+          "accepted_lines": 102
+        },
+        "cmd/parse.go": {
+          "additions": 46,
+          "accepted_lines": 46
+        },
+        "cmd/submit.go": {
+          "additions": 79,
+          "accepted_lines": 79
+        },
+        ".github/workflows/build.yml": {
+          "additions": 23,
+          "accepted_lines": 23
+        },
+        "cmd/clone.go": {
+          "additions": 25,
+          "accepted_lines": 25
+        },
+        "cmd/race.go": {
+          "additions": 31,
+          "accepted_lines": 31
+        },
+        "cmd/detail.go": {
+          "additions": 222,
+          "accepted_lines": 222
+        },
+        "cf.go": {
+          "additions": 185,
+          "accepted_lines": 185
+        },
+        "cmd/config.go": {
+          "additions": 56,
+          "accepted_lines": 56
+        },
+        "client/watch.go": {
+          "additions": 319,
+          "accepted_lines": 319
+        },
+        "cmd/browser.go": {
+          "additions": 44,
+          "accepted_lines": 44
+        },
+        "cmd/test.go": {
+          "additions": 209,
+          "accepted_lines": 209
+        },
+        ".gitignore": {
+          "additions": 22,
+          "accepted_lines": 22
+        },
+        "client/langs.go": {
+          "additions": 107,
+          "accepted_lines": 107
+        },
+        "client/pull.go": {
+          "additions": 142,
+          "accepted_lines": 142
+        },
+        "cookiejar/punycode.go": {
+          "additions": 159,
+          "accepted_lines": 159
+        },
+        "scripts/upload_release_assets.py": {
+          "additions": 150,
+          "accepted_lines": 150
+        },
+        "cmd/pull.go": {
+          "additions": 24,
+          "accepted_lines": 24
+        },
+        "client/detail.go": {
+          "additions": 248,
+          "accepted_lines": 248
+        }
+      }
+    }
+  }
+}
