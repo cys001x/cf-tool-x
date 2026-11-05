@@ -308,7 +308,7 @@ Database schema:
 |-------|---------|
 | `contest` | key, type (contest/gym/group/acmsguru), contest_id, group_id, name, div, start_at, end_at, link, updated_at |
 | `problem` | key, contest_key, problem_id, display, name, link, dir, summary, status, practice |
-| `event` | problem_key, type (start/end/test/submit), at_ms, elapsed_ms, duration_ms, verdict, note |
+| `event` | problem_key, type (start/end/test/submit), at_ms, elapsed_ms, duration_ms, verdict, note, practice |
 
 Keys are canonical: `contest:1136:a`, `gym:100001:b`,
 `group:Cw4JRyRGXR:269760:a`, and `acmsguru:99999:100`. Two views are provided:

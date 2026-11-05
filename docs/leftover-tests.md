@@ -51,3 +51,30 @@
 - 首次 Accepted 即使发生在 practice 计时中仍记 `accepted`，practice 计数从下一次 practice Accepted 开始。
 - `cf timer start gym 100001a` 这类多 token specifier 仍只解析第一个 token（既有行为，本次未改）。
 - 新增 SQLite 依赖后 `vendor/` 由约 11M 增至约 140M，二进制由约 8M 增至约 12M。
+
+## 2026-11-05 复测记录
+
+已通过：
+
+- 真实提交 `397455477`、`397457290` 均为 Accepted，practice 状态从 `practice_1` 递增到 `practice_2`。
+- Accepted 后输入 `y` 的分支：关闭计时器、写入 session summary、end 事件带 `practice`。
+- 默认时间戳练习集、gym、group、acmsguru 的 `p_<set>` 开始/结束。
+- `lrepractice`、`lnrepractice`、`lpractice`、`opractice` 生成练习集；数量不足警告。
+- 中文与斜杠的练习集名清洗为 `练习_集`。
+- `db stats --status practice_2`、JSON 输出、非法 `practice_10` 报错、只读写入拒绝。
+- 两个 `cf db sync` 并发执行；计时器写入与 `cf db sql --write` 并发执行。
+- 旧库迁移：补 `status`、`practice`（problem/event 两表），删除 `tests_passed`。
+- 删除数据库后 `db sync` 重建，practice 状态恢复。
+
+复测中发现并修复：
+
+1. 同一题存在多个 `count_time.json` 时，后索引的记录会覆盖先前记录的状态。改为按 `problem_key` 聚合数据库中的全部事件后重算 `status`/`practice`。
+2. `event` 表缺少 `practice` 列，无法跨记录聚合。新增列、迁移，并用 upsert 回填旧事件。
+3. 仅由比赛元数据导入的题目 `display` 为空，练习集目录退化为单字母（如 `c`）。改为回退 `<contestId><index>`。
+
+仍未测：
+
+- 真实连续提交到 `practice_3` 至 `practice_9`；当前由单元测试覆盖递增与上限。
+- 真实“首次 Accepted 发生在 practice 计时中”的场景；单元测试覆盖仍记 `accepted`。
+- `cf test` 自动 test 事件；本地模板脚本缺少 `./`，Go `exec` 拒绝相对 PATH 可执行文件。
+- v1.3.1 发行版不包含本次复测的 3 个修复，需要下一个版本发布。

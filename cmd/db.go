@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS event (
 	duration_ms INTEGER NOT NULL DEFAULT 0,
 	verdict     TEXT NOT NULL DEFAULT '',
 	note        TEXT NOT NULL DEFAULT '',
+	practice    TEXT NOT NULL DEFAULT '',
 	UNIQUE(problem_key, type, at_ms, note)
 );
 
@@ -129,6 +130,9 @@ func initTimerDBSchema(db *sql.DB) error {
 	if err := ensureProblemColumns(db); err != nil {
 		return err
 	}
+	if err := ensureEventColumns(db); err != nil {
+		return err
+	}
 	_, err := db.Exec(fmt.Sprintf("PRAGMA user_version = %v", timerDBVersion))
 	return err
 }
@@ -170,6 +174,36 @@ func ensureProblemColumns(db *sql.DB) error {
 		}
 	}
 	return nil
+}
+
+func ensureEventColumns(db *sql.DB) error {
+	rows, err := db.Query(`PRAGMA table_info(event)`)
+	if err != nil {
+		return err
+	}
+	found := false
+	for rows.Next() {
+		var cid int
+		var name, columnType string
+		var notNull, pk int
+		var defaultValue interface{}
+		if err = rows.Scan(&cid, &name, &columnType, &notNull, &defaultValue, &pk); err != nil {
+			rows.Close()
+			return err
+		}
+		if name == "practice" {
+			found = true
+		}
+	}
+	rows.Close()
+	if err = rows.Err(); err != nil {
+		return err
+	}
+	if found {
+		return nil
+	}
+	_, err = db.Exec(`ALTER TABLE event ADD COLUMN practice TEXT NOT NULL DEFAULT ''`)
+	return err
 }
 
 // timerKeys is the canonical identity of a contest/problem in the database.
@@ -436,7 +470,6 @@ func indexProblemRecordDB(db *sql.DB, dir string, rec *problemTimeRecord) error 
 	if display == "" {
 		display = keys.ProblemID
 	}
-	status, practice := deriveProblemState(rec.Events)
 	tx, err := db.Begin()
 	if err != nil {
 		return err
@@ -456,18 +489,16 @@ func indexProblemRecordDB(db *sql.DB, dir string, rec *problemTimeRecord) error 
 		return err
 	}
 
-	if _, err = tx.Exec(`INSERT INTO problem(key, contest_key, problem_id, display, link, dir, summary, status, practice)
-		VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)
+	if _, err = tx.Exec(`INSERT INTO problem(key, contest_key, problem_id, display, link, dir, summary)
+		VALUES(?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(key) DO UPDATE SET
 			contest_key = excluded.contest_key,
 			problem_id = excluded.problem_id,
 			display = CASE WHEN excluded.display <> '' THEN excluded.display ELSE problem.display END,
 			link = CASE WHEN excluded.link <> '' THEN excluded.link ELSE problem.link END,
 			dir = CASE WHEN excluded.dir <> '' THEN excluded.dir ELSE problem.dir END,
-			summary = CASE WHEN excluded.summary <> '' THEN excluded.summary ELSE problem.summary END,
-			status = excluded.status,
-			practice = excluded.practice`,
-		keys.ProblemKey, keys.ContestKey, keys.ProblemID, display, rec.Link, dir, rec.Summary, status, practice); err != nil {
+			summary = CASE WHEN excluded.summary <> '' THEN excluded.summary ELSE problem.summary END`,
+		keys.ProblemKey, keys.ContestKey, keys.ProblemID, display, rec.Link, dir, rec.Summary); err != nil {
 		return err
 	}
 
@@ -496,9 +527,41 @@ func indexProblemRecordDB(db *sql.DB, dir string, rec *problemTimeRecord) error 
 		if verdict == "" && ev.Type == TimeEventSubmit {
 			verdict = verdictFromNote(ev.Note)
 		}
-		if _, err = tx.Exec(`INSERT OR IGNORE INTO event(problem_key, type, at_ms, elapsed_ms, duration_ms, verdict, note)
-			VALUES(?, ?, ?, ?, ?, ?, ?)`,
-			keys.ProblemKey, ev.Type, atMS, elapsed, duration, verdict, ev.Note); err != nil {
+		if _, err = tx.Exec(`INSERT INTO event(problem_key, type, at_ms, elapsed_ms, duration_ms, verdict, note, practice)
+			VALUES(?, ?, ?, ?, ?, ?, ?, ?)
+			ON CONFLICT(problem_key, type, at_ms, note) DO UPDATE SET
+				elapsed_ms = excluded.elapsed_ms,
+				duration_ms = CASE WHEN excluded.duration_ms > 0 THEN excluded.duration_ms ELSE event.duration_ms END,
+				verdict = CASE WHEN excluded.verdict <> '' THEN excluded.verdict ELSE event.verdict END,
+				practice = CASE WHEN excluded.practice <> '' THEN excluded.practice ELSE event.practice END`,
+			keys.ProblemKey, ev.Type, atMS, elapsed, duration, verdict, ev.Note, ev.Practice); err != nil {
+			return err
+		}
+	}
+
+	// Records are per folder, so the same problem can have several files.
+	// Aggregate every stored event instead of trusting the last indexed file.
+	rows, err := tx.Query(`SELECT type, verdict, practice FROM event WHERE problem_key = ? ORDER BY at_ms, id`, keys.ProblemKey)
+	if err != nil {
+		return err
+	}
+	var allEvents []timeEvent
+	for rows.Next() {
+		var ev timeEvent
+		if err = rows.Scan(&ev.Type, &ev.Verdict, &ev.Practice); err != nil {
+			rows.Close()
+			return err
+		}
+		allEvents = append(allEvents, ev)
+	}
+	rows.Close()
+	if err = rows.Err(); err != nil {
+		return err
+	}
+	if len(allEvents) > 0 {
+		status, practice := deriveProblemState(allEvents)
+		if _, err = tx.Exec(`UPDATE problem SET status = ?, practice = ? WHERE key = ?`,
+			status, practice, keys.ProblemKey); err != nil {
 			return err
 		}
 	}
@@ -672,12 +735,13 @@ func refreshContestMeta(db *sql.DB, refresh bool) (fetched, failed int) {
 			if URL, err := info.ProblemURL(host); err == nil {
 				link = URL
 			}
-			db.Exec(`INSERT INTO problem(key, contest_key, problem_id, name, link)
-				VALUES(?, ?, ?, ?, ?)
+			db.Exec(`INSERT INTO problem(key, contest_key, problem_id, display, name, link)
+				VALUES(?, ?, ?, ?, ?, ?)
 				ON CONFLICT(key) DO UPDATE SET
+					display = CASE WHEN excluded.display <> '' THEN excluded.display ELSE problem.display END,
 					name = CASE WHEN excluded.name <> '' THEN excluded.name ELSE problem.name END,
 					link = CASE WHEN excluded.link <> '' THEN excluded.link ELSE problem.link END`,
-				problemKey, row.key, problemID, problem.Name, link)
+				problemKey, row.key, problemID, strings.ToLower(row.contestID+problem.Index), problem.Name, link)
 		}
 		fetched++
 	}

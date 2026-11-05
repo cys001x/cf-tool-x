@@ -249,6 +249,47 @@ func TestDeriveProblemState(t *testing.T) {
 	}
 }
 
+func TestProblemStatusAggregatesAcrossRecords(t *testing.T) {
+	t.Setenv("CF_TIMER_DB", filepath.Join(t.TempDir(), "timer.db"))
+	link := "https://codeforces.com/contest/1136/problem/a"
+	start := time.Date(2026, 11, 5, 12, 0, 0, 0, time.Local)
+
+	flow := t.TempDir()
+	for _, ev := range []timeEvent{
+		{Type: TimeEventSubmit, Time: start.Format(timeLayout), Elapsed: "00:01:00", Verdict: "OK", Note: "verdict OK submission 1"},
+		{Type: TimeEventSubmit, Time: start.Add(time.Second).Format(timeLayout), Elapsed: "00:01:01", Verdict: "OK", Practice: "drill", Note: "verdict OK submission 2"},
+	} {
+		if err := appendProblemEvent(flow, "1136a", link, ev); err != nil {
+			t.Fatal(err)
+		}
+	}
+	// A second record for the same problem, without accepted submits, must not
+	// overwrite the state derived from the first record.
+	drill := t.TempDir()
+	for _, ev := range []timeEvent{
+		{Type: TimeEventStart, Time: start.Add(2 * time.Second).Format(timeLayout), Elapsed: "00:02:00", Practice: "drill"},
+		{Type: TimeEventEnd, Time: start.Add(3 * time.Second).Format(timeLayout), Elapsed: "00:03:00", Practice: "drill"},
+	} {
+		if err := appendProblemEvent(drill, "1136a", link, ev); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	db, err := openTimerDB(true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	var status string
+	var practice int
+	if err = db.QueryRow(`SELECT status, practice FROM problem WHERE key = 'contest:1136:a'`).Scan(&status, &practice); err != nil {
+		t.Fatal(err)
+	}
+	if status != practiceStatus(1) || practice != 1 {
+		t.Fatalf("aggregated state = (%q, %v), want (practice_1, 1)", status, practice)
+	}
+}
+
 func TestVerdictFromNote(t *testing.T) {
 	cases := map[string]string{
 		"verdict OK submission 123": "OK",
@@ -367,6 +408,56 @@ func TestDBSyncIdempotent(t *testing.T) {
 	}
 	if firstEvents != len(rec.Events) || firstProblems != 1 {
 		t.Fatalf("unexpected counts: events=%v problems=%v", firstEvents, firstProblems)
+	}
+}
+
+func TestEventColumnsMigration(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "timer.db")
+	t.Setenv("CF_TIMER_DB", path)
+	raw, err := sql.Open("sqlite", "file:"+path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = raw.Exec(`CREATE TABLE event (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		problem_key TEXT NOT NULL,
+		type TEXT NOT NULL,
+		at_ms INTEGER NOT NULL DEFAULT 0,
+		elapsed_ms INTEGER NOT NULL DEFAULT 0,
+		duration_ms INTEGER NOT NULL DEFAULT 0,
+		verdict TEXT NOT NULL DEFAULT '',
+		note TEXT NOT NULL DEFAULT '',
+		UNIQUE(problem_key, type, at_ms, note)
+	)`); err != nil {
+		t.Fatal(err)
+	}
+	raw.Close()
+
+	db, err := openTimerDB(false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	rows, err := db.Query(`PRAGMA table_info(event)`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rows.Close()
+	found := false
+	for rows.Next() {
+		var cid int
+		var name, columnType string
+		var notNull, pk int
+		var defaultValue interface{}
+		if err = rows.Scan(&cid, &name, &columnType, &notNull, &defaultValue, &pk); err != nil {
+			t.Fatal(err)
+		}
+		if name == "practice" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatal("event.practice column was not added")
 	}
 }
 

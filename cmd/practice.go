@@ -219,7 +219,10 @@ func selectLocalPractice(status string, count int) ([]practiceProblem, error) {
 		}
 		problem.Info = info
 		if problem.Display == "" {
-			problem.Display = info.ProblemID
+			problem.Display = strings.ToLower(info.ContestID + info.ProblemID)
+			if problem.Display == "" {
+				problem.Display = info.ProblemID
+			}
 		}
 		problem.Link = problemLinkFor(info, problem.Link)
 		result = append(result, problem)

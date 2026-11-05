@@ -92,6 +92,7 @@ func TestSelectLocalPractice(t *testing.T) {
 		{"contest:1136:b", "1136b", problemStatusDone},
 		{"contest:1136:c", "1136c", problemStatusPending},
 		{"contest:1136:d", "1136d", practiceStatus(2)},
+		{"contest:2276:a", "", problemStatusTestsPassed},
 	}
 	for _, row := range rows {
 		if _, err = db.Exec(`INSERT INTO problem(key, contest_key, problem_id, display, status) VALUES(?, ?, ?, ?, ?)`,
@@ -102,8 +103,15 @@ func TestSelectLocalPractice(t *testing.T) {
 	db.Close()
 
 	all, err := selectLocalPractice("", 10)
-	if err != nil || len(all) != 4 {
+	if err != nil || len(all) != 5 {
 		t.Fatalf("select all = %v, %v", len(all), err)
+	}
+	displayByKey := map[string]string{}
+	for _, problem := range all {
+		displayByKey[problem.Key] = problem.Display
+	}
+	if displayByKey["contest:2276:a"] != "2276a" {
+		t.Fatalf("empty display fallback = %q, want 2276a", displayByKey["contest:2276:a"])
 	}
 	accepted, err := selectLocalPractice(problemStatusAccepted, 10)
 	if err != nil || len(accepted) != 2 {
