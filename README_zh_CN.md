@@ -11,7 +11,7 @@ Codeforces Tool 是 [Codeforces](https://codeforces.com) 的命令行界面的�
 
 这玩意儿挺快、挺小、挺强大，还跨平台哦。
 
-[安装](#安装) | [使用方法](#使用方法) | [常见问题](#常见问题) | [English](./README.md)
+[安装](#安装) | [使用方法](#使用方法) | [命令文档](./docs/commands.md) | [常见问题](#常见问题) | [English](./README.md)
 
 ## 特点
 
@@ -20,6 +20,7 @@ Codeforces Tool 是 [Codeforces](https://codeforces.com) 的命令行界面的�
 * 提交代码
 * 动态刷新提交后的情况
 * 拉取问题的样例
+* 一条命令同步比赛或题目：样例、题面和最新提交代码
 * 本地编译和测试样例
 * 拉取某人的所有代码
 * 从指定模板生成代码（包括时间戳，作者等信息）
@@ -54,6 +55,8 @@ $ go env -w GOPRIVATE=github.com/cys001x/cf-tool-x
 
 ## 使用方法
 
+完整的命令参考见 [docs/commands.md](./docs/commands.md)。
+
 以下简单模拟一场比赛的流程。
 
  `cf race 1136` 或者 `cf race https://codeforces.com/contest/1136`
@@ -61,6 +64,10 @@ $ go env -w GOPRIVATE=github.com/cys001x/cf-tool-x
 就开始打 1136 这场比赛了！
 
 如果比赛还未开始，则该命令会进行倒计时。比赛已开始或倒计时完后，工具会自动用默认浏览器打开比赛的题目界面与所有题目页面，并拉取样例到本地。
+
+ `cf sync 1136` 或者 `cf sync 1136a`
+
+一条命令同步整场比赛或单道题目：拉取样例和题面，拉取你最新的一次提交代码；如果没有提交且本地没有代码，则用默认模板生成代码。若本地已有代码，会先询问是否覆盖。
 
  `cd ./cf/contest/1136/a` （或者是其他的路径，请看屏幕前的提示）
 
@@ -109,10 +116,11 @@ $ go env -w GOPRIVATE=github.com/cys001x/cf-tool-x
   cf detail [<specifier>...]
   cf race [<specifier>...]
   cf pull [ac] [<specifier>...]
+  cf sync [<specifier>...]
   cf clone [ac] [<handle>]
-  cf upgrade
-   cf statement [<specifier>...] [-d <dir>] [-f <file>]
+  cf statement [<specifier>...] [-d <dir>] [-f <file>]
   cf material [<specifier>...] [-d <dir>] [-f <file>]
+  cf upgrade
 
 参数:
   -h --help            帮助。
@@ -144,7 +152,7 @@ $ go env -w GOPRIVATE=github.com/cys001x/cf-tool-x
   cf list              列出当前比赛的题目通过、时限等信息。
   cf list 1119         
   cf parse 100         获取 contest 100 的所有题目的样例到文件夹
-                       "{cf}/{contest}/100/" 中。
+                       "{cf}/{contest}/100/<题目>" 中。
   cf parse gym 100001a
                        获取 gym 100001 的 a 题的样例到文件夹
                        "{cf}/{gym}/100001/a" 中。
@@ -158,8 +166,6 @@ $ go env -w GOPRIVATE=github.com/cys001x/cf-tool-x
                        新建两个文件 "inK.txt" 和 "ansK.txt" 即可，其中 K 是包含 0~9 的字符串。
   cf test -f a.cpp -d ./1a
                        用 ./1a 目录下的样例文件测试 a.cpp。
-  cf test 2231a
-                       在./cf/contest/2231/a目录下测试对应样例文件
   cf watch             查看自己在当前比赛的最后 10 次提交结果。
   cf watch all         查看自己在当前比赛的全部提交结果
   cf open 1136a        用默认的浏览器打开比赛 contest 1136, problem a.
@@ -175,10 +181,14 @@ $ go env -w GOPRIVATE=github.com/cys001x/cf-tool-x
                        测试点并存成 inK.txt/ansK.txt，可直接用 cf test 本地复现。
   cf race 1136         如果比赛还未开始且进入倒计时，则该命令会倒计时。倒计时完后，会自动打开一些
                        题目页面并拉取样例。
-  cf pull 100          拉取比赛 id 为 100 每道题的最新代码到文件夹 "./100/<problem-id>" 下。
-  cf pull 100 a        拉取比赛 id 为 100 的题目 a 的最新代码到文件夹 "./100/a" 下。
+  cf pull 100          拉取比赛 100 中你的全部提交，保存到 "./<题目>/<题目>.<后缀>"。
+  cf pull 100 a        拉取比赛 100 题目 a 的全部提交，保存到 "./a.<后缀>"。
   cf pull ac 100 a     拉取比赛 id 为 100 的题目 a 的 AC 代码。
-  cf pull              拉取当前题目的最新代码到当前文件夹下。
+  cf pull              拉取当前题目的全部提交到当前文件夹下。
+  cf sync 1136         同步比赛 1136 的所有题目：拉取样例和题面，拉取每题最新提交；
+                       没有提交且本地没有代码时用默认模板生成。
+  cf sync 1136a        同步比赛 1136 的题目 a。
+  cf sync              同步当前题目。
   cf clone xalanq      拉取 xalanq 的所有提交代码。
   cf upgrade           从 GitHub 更新 "cf" 到最新版。
   cf statement         拉取当前题目的题面到当前文件夹下。
