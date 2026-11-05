@@ -1,0 +1,34 @@
+README.md
+  69fd4781bb3eb42f 23,66-69,102,118,122,136,158,173,199-204,206,209-210
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8-ntes.9",
+  "base_commit_sha": "5214a3604c83877412bf470d8a2295a8200c6c30",
+  "prompts": {
+    "69fd4781bb3eb42f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e6f58b04-794a-40e1-8850-1fc4ca95514a",
+        "model": "deepseek-flash"
+      },
+      "human_author": "cys",
+      "messages": [],
+      "total_additions": 86,
+      "total_deletions": 78,
+      "accepted_lines": 20,
+      "overriden_lines": 0,
+      "per_file_stats": {
+        "client/sync_code_test.go": {
+          "additions": 66,
+          "deletions": 66
+        },
+        "README.md": {
+          "additions": 20,
+          "deletions": 12,
+          "accepted_lines": 20
+        }
+      }
+    }
+  }
+}
