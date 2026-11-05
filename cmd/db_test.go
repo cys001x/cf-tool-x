@@ -2,9 +2,13 @@ package cmd
 
 import (
 	"database/sql"
+	"encoding/json"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/cys001x/cf-tool-x/client"
 )
 
 func TestIndexProblemRecordDB(t *testing.T) {
@@ -201,6 +205,14 @@ func TestDeriveProblemState(t *testing.T) {
 		{"first accepted in practice", []timeEvent{
 			{Type: TimeEventSubmit, Verdict: "OK", Practice: "drill"},
 		}, problemStatusAccepted, 0},
+		{"first and second in practice", []timeEvent{
+			{Type: TimeEventSubmit, Verdict: "OK", Practice: "drill"},
+			{Type: TimeEventSubmit, Verdict: "OK", Practice: "drill"},
+		}, practiceStatus(1), 1},
+		{"practice wrong answer ignored", []timeEvent{
+			{Type: TimeEventSubmit, Verdict: "OK"},
+			{Type: TimeEventSubmit, Verdict: "WRONG_ANSWER", Practice: "drill"},
+		}, problemStatusAccepted, 0},
 		{"practice 1", []timeEvent{
 			{Type: TimeEventSubmit, Verdict: "OK"},
 			{Type: TimeEventSubmit, Verdict: "OK", Practice: "drill"},
@@ -248,5 +260,164 @@ func TestVerdictFromNote(t *testing.T) {
 		if got := verdictFromNote(note); got != want {
 			t.Errorf("verdictFromNote(%q) = %q, want %q", note, got, want)
 		}
+	}
+}
+
+func TestIndexPracticeCountIdempotent(t *testing.T) {
+	t.Setenv("CF_TIMER_DB", filepath.Join(t.TempDir(), "timer.db"))
+	dir := t.TempDir()
+	link := "https://codeforces.com/contest/1136/problem/a"
+	start := time.Date(2026, 11, 5, 12, 0, 0, 0, time.Local)
+	events := []timeEvent{
+		{Type: TimeEventStart, Time: start.Format(timeLayout), Elapsed: "00:00:00"},
+		{Type: TimeEventEnd, Time: start.Add(10 * time.Second).Format(timeLayout), Elapsed: "00:00:10"},
+		{Type: TimeEventSubmit, Time: start.Add(11 * time.Second).Format(timeLayout), Elapsed: "00:00:11", Verdict: "OK", Note: "verdict OK submission 1"},
+		{Type: TimeEventSubmit, Time: start.Add(12 * time.Second).Format(timeLayout), Elapsed: "00:00:12", Verdict: "OK", Practice: "drill", Note: "verdict OK submission 2"},
+	}
+	for _, ev := range events {
+		if err := appendProblemEvent(dir, "1136a", link, ev); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for i := 0; i < 2; i++ {
+		if err := indexProblemRecord(dir); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	db, err := openTimerDB(true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	var status string
+	var practice, eventCount int
+	if err = db.QueryRow(`SELECT status, practice FROM problem WHERE key = 'contest:1136:a'`).Scan(&status, &practice); err != nil {
+		t.Fatal(err)
+	}
+	if status != practiceStatus(1) || practice != 1 {
+		t.Fatalf("db state = (%q, %v), want (practice_1, 1)", status, practice)
+	}
+	if err = db.QueryRow(`SELECT COUNT(*) FROM event`).Scan(&eventCount); err != nil {
+		t.Fatal(err)
+	}
+	if eventCount != len(events) {
+		t.Fatalf("event count = %v, want %v", eventCount, len(events))
+	}
+}
+
+func TestDBSyncIdempotent(t *testing.T) {
+	work := t.TempDir()
+	t.Chdir(work)
+	initTestConfig(t)
+	oldClient := client.Instance
+	client.Instance = nil
+	defer func() { client.Instance = oldClient }()
+	t.Setenv("CF_TIMER_STATE", filepath.Join(work, "missing-timer.json"))
+	t.Setenv("CF_TIMER_DB", filepath.Join(work, "timer.db"))
+
+	dir := filepath.Join(work, "cf", "contest", "1136", "a")
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	start := time.Date(2026, 11, 5, 12, 0, 0, 0, time.Local)
+	rec := problemTimeRecord{
+		Problem: "1136a",
+		Link:    "https://codeforces.com/contest/1136/problem/a",
+		Events: []timeEvent{
+			{Type: TimeEventStart, Time: start.Format(timeLayout), Elapsed: "00:00:00"},
+			{Type: TimeEventEnd, Time: start.Add(time.Minute).Format(timeLayout), Elapsed: "00:01:00"},
+			{Type: TimeEventTest, Time: start.Add(2 * time.Minute).Format(timeLayout), Elapsed: "00:02:00"},
+		},
+	}
+	data, err := json.Marshal(rec)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = os.WriteFile(filepath.Join(dir, TimeRecordFileName), data, 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	counts := func() (events, problems int) {
+		db, err := openTimerDB(true)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer db.Close()
+		if err = db.QueryRow(`SELECT COUNT(*) FROM event`).Scan(&events); err != nil {
+			t.Fatal(err)
+		}
+		if err = db.QueryRow(`SELECT COUNT(*) FROM problem`).Scan(&problems); err != nil {
+			t.Fatal(err)
+		}
+		return
+	}
+
+	if err = dbSync(nil, false); err != nil {
+		t.Fatal(err)
+	}
+	firstEvents, firstProblems := counts()
+	if err = dbSync(nil, false); err != nil {
+		t.Fatal(err)
+	}
+	secondEvents, secondProblems := counts()
+	if firstEvents != secondEvents || firstProblems != secondProblems {
+		t.Fatalf("db sync not idempotent: first (%v,%v), second (%v,%v)",
+			firstEvents, firstProblems, secondEvents, secondProblems)
+	}
+	if firstEvents != len(rec.Events) || firstProblems != 1 {
+		t.Fatalf("unexpected counts: events=%v problems=%v", firstEvents, firstProblems)
+	}
+}
+
+func TestProblemMigrationDropsTestsPassed(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "timer.db")
+	t.Setenv("CF_TIMER_DB", path)
+	raw, err := sql.Open("sqlite", "file:"+path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = raw.Exec(`CREATE TABLE problem (
+		key TEXT PRIMARY KEY,
+		contest_key TEXT NOT NULL DEFAULT '',
+		problem_id TEXT NOT NULL DEFAULT '',
+		display TEXT NOT NULL DEFAULT '',
+		name TEXT NOT NULL DEFAULT '',
+		link TEXT NOT NULL DEFAULT '',
+		dir TEXT NOT NULL DEFAULT '',
+		summary TEXT NOT NULL DEFAULT '',
+		status TEXT NOT NULL DEFAULT 'pending',
+		tests_passed INTEGER NOT NULL DEFAULT 0
+	)`); err != nil {
+		t.Fatal(err)
+	}
+	raw.Close()
+
+	db, err := openTimerDB(false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	rows, err := db.Query(`PRAGMA table_info(problem)`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rows.Close()
+	columns := map[string]bool{}
+	for rows.Next() {
+		var cid int
+		var name, columnType string
+		var notNull, pk int
+		var defaultValue interface{}
+		if err = rows.Scan(&cid, &name, &columnType, &notNull, &defaultValue, &pk); err != nil {
+			t.Fatal(err)
+		}
+		columns[name] = true
+	}
+	if columns["tests_passed"] {
+		t.Fatalf("tests_passed was not dropped: %+v", columns)
+	}
+	if !columns["practice"] {
+		t.Fatalf("practice column was not added: %+v", columns)
 	}
 }

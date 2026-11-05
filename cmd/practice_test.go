@@ -117,12 +117,23 @@ func TestSelectLocalPractice(t *testing.T) {
 	}
 }
 
+// initTestConfig installs a temporary empty configuration and restores the
+// previous global instance after the test.
+func initTestConfig(t *testing.T) {
+	t.Helper()
+	path := filepath.Join(t.TempDir(), "config")
+	if err := os.WriteFile(path, []byte("{}\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	old := config.Instance
+	t.Cleanup(func() { config.Instance = old })
+	config.Init(path)
+}
+
 func TestResolvePracticeTimer(t *testing.T) {
 	work := t.TempDir()
 	t.Chdir(work)
-	oldConfig := config.Instance
-	defer func() { config.Instance = oldConfig }()
-	config.Init(filepath.Join(t.TempDir(), "config"))
+	initTestConfig(t)
 
 	base := filepath.Join(work, "cf", "practice", "drill")
 	problemDir := filepath.Join(base, "1136a")
@@ -153,6 +164,104 @@ func TestResolvePracticeTimer(t *testing.T) {
 	}
 	if _, _, _, err = resolvePracticeTimer("p_missing", "1136a"); err == nil {
 		t.Fatal("missing practice set must be rejected")
+	}
+
+	// Manifest miss falls back to <contestId><problemIndex>.
+	fallbackDir := filepath.Join(base, "1136b")
+	if err = os.MkdirAll(fallbackDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if _, dir, problem, err = resolvePracticeTimer("p_drill", "1136b"); err != nil || dir != fallbackDir || problem != "1136b" {
+		t.Fatalf("fallback resolve = (%q, %q, %v)", dir, problem, err)
+	}
+
+	// A practice set without practice.json still resolves by folder name.
+	noManifestBase := filepath.Join(work, "cf", "practice", "plain")
+	noManifestDir := filepath.Join(noManifestBase, "1136c")
+	if err = os.MkdirAll(noManifestDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if _, dir, _, err = resolvePracticeTimer("p_plain", "1136c"); err != nil || dir != noManifestDir {
+		t.Fatalf("manifest-less resolve = (%q, %v)", dir, err)
+	}
+}
+
+func TestTimerPracticeFlow(t *testing.T) {
+	work := t.TempDir()
+	t.Chdir(work)
+	initTestConfig(t)
+	oldClient := client.Instance
+	client.Instance = nil
+	defer func() { client.Instance = oldClient }()
+	oldArgs := Args
+	Args = &ParsedArgs{}
+	defer func() { Args = oldArgs }()
+	t.Setenv("CF_TIMER_STATE", filepath.Join(work, "timer.json"))
+	t.Setenv("CF_TIMER_DB", filepath.Join(work, "timer.db"))
+
+	base := filepath.Join(work, "cf", "practice", "drill")
+	problemDir := filepath.Join(base, "1136a")
+	if err := os.MkdirAll(problemDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	manifest := practiceManifest{
+		Name:     "drill",
+		Problems: []practiceProblem{{Key: "contest:1136:a", Display: "1136a"}},
+	}
+	data, err := json.Marshal(manifest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = os.WriteFile(filepath.Join(base, "practice.json"), data, 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = timerStart("p_drill", "1136a", "practice"); err != nil {
+		t.Fatal(err)
+	}
+	t.Chdir(problemDir)
+	if !appendAutoTimeEvent(TimeEventSubmit, "verdict OK submission 1") {
+		t.Fatal("first submit was not recorded")
+	}
+	if !appendAutoTimeEvent(TimeEventSubmit, "verdict OK submission 2") {
+		t.Fatal("second submit was not recorded")
+	}
+	if err = timerEnd("p_drill", "1136a", "done"); err != nil {
+		t.Fatal(err)
+	}
+
+	rec, err := loadProblemTimeRecord(filepath.Join(problemDir, TimeRecordFileName))
+	if err != nil {
+		t.Fatal(err)
+	}
+	submits := 0
+	for _, ev := range rec.Events {
+		if ev.Type == TimeEventSubmit {
+			submits++
+			if ev.Practice != "drill" || ev.Verdict != "OK" {
+				t.Fatalf("unexpected submit event: %+v", ev)
+			}
+		}
+	}
+	if submits != 2 {
+		t.Fatalf("submit events = %v, want 2: %+v", submits, rec.Events)
+	}
+	if rec.Events[0].Type != TimeEventStart || rec.Events[0].Practice != "drill" {
+		t.Fatalf("start event missing practice: %+v", rec.Events[0])
+	}
+
+	db, err := openTimerDB(true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	var status string
+	var practice int
+	if err = db.QueryRow(`SELECT status, practice FROM problem WHERE key = 'contest:1136:a'`).Scan(&status, &practice); err != nil {
+		t.Fatal(err)
+	}
+	if status != practiceStatus(1) || practice != 1 {
+		t.Fatalf("db state = (%q, %v), want (practice_1, 1)", status, practice)
 	}
 }
 
