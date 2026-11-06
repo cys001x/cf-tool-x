@@ -87,7 +87,9 @@ func parseArgs(opts docopt.Opts) error {
 	if err != nil {
 		return err
 	}
-	info.Dir = Args.Dir
+	if Args.Dir != "" {
+		info.Dir = Args.Dir
+	}
 	info.File = Args.File
 	Args.Info = info
 	// util.DebugJSON(Args)
@@ -97,6 +99,21 @@ func parseArgs(opts docopt.Opts) error {
 // infoFromSpecifiers builds the contest/problem Info from free-form specifiers.
 // Path parsing is used when no problem type was given explicitly.
 func infoFromSpecifiers(specifiers []string, path string) (info client.Info, err error) {
+	if len(specifiers) == 1 {
+		if set, problem, ok := splitPracticeSpecifier(specifiers[0]); ok {
+			info, dir, _, err := resolvePracticeTimer("p_"+set, problem)
+			if err != nil {
+				return client.Info{}, err
+			}
+			info.Dir = dir
+			return info, nil
+		}
+	}
+	for _, specifier := range specifiers {
+		if _, _, ok := splitPracticeSpecifier(specifier); ok {
+			return client.Info{}, fmt.Errorf("Practice specifier %q must be used alone", specifier)
+		}
+	}
 	cfg := config.Instance
 	for _, arg := range specifiers {
 		parsed := parseArg(arg)

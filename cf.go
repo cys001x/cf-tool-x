@@ -84,6 +84,9 @@ Options:
                        "https://codeforces.com/contest/180/problem/A",
                        "https://codeforces.com/group/Cw4JRyRGXR/contest/269760"
                        "1111A", "1111", "a", "Cw4JRyRGXR"
+                       "p_drill_1136a" means problem 1136a in
+                       "{cf}/practice/drill" (a practice set created by
+                       "cf lpractice"/"cf opractice").
                        You can combine multiple specifiers to specify what you
                        want.
   <alias>              Template's alias. E.g. "cpp"
@@ -173,6 +176,9 @@ Examples:
                        refreshes the elapsed time on one line. There is no
                        background daemon: the state lives in
                        "~/.cf/timer.json" and commands work from any terminal.
+                       While the timer is open, any other cf command can be
+                       typed without "cf" and runs below the timer, for
+                       example "submit 1136a". The timer stays open.
   cf timer start 1136a "read the problem"
                        Start timing problem "a" of contest 1136.
   cf timer end 1136a "solved"
@@ -186,7 +192,16 @@ Examples:
   cf timer s p_drill 1136a "practice"
                        Start a practice run for problem 1136a in the set
                        "{cf}/practice/drill". Accepted submits in this run
-                       advance the practice label.
+                       advance the practice label. "p_drill_1136a" can be
+                       used instead of "p_drill 1136a".
+  submit 1136a         (inside cf timer) Run "cf submit 1136a" without leaving
+                       the timer. Every cf command except "timer" works this
+                       way; typing "q" closes the timer.
+  cf submit p_drill_1136a
+                       Submit the code of practice problem 1136a in
+                       "{cf}/practice/drill". "p_<set>_<problem>" works
+                       wherever a specifier is accepted, and starts a
+                       practice run in "cf timer start/end".
   cf db sync           Index every "count_time.json" into "~/.cf/timer.db"
                        and fill contest metadata from the Codeforces API.
   cf db time 1136a     Print the time nodes and total time of a problem.

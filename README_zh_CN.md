@@ -79,6 +79,10 @@ $ go env -w GOPRIVATE=github.com/cys001x/cf-tool-x
 比赛计时，`end <specifier> <描述>` 结束，`pause` 暂停或继续，`q`（或 `exit`）关闭计时并输出总结。这些
 命令也可以在其它终端执行。没有后台守护进程：计时依据 `~/.cf/timer.json` 中的时间戳计算。
 
+计时器打开时，还可以直接输入其它 cf 命令（省去 `cf`，例如 `submit 1136a`）。命令在计时器下方
+执行，执行完继续计时，不用退出再重新打开；`timer` 本身不能在计时器里再执行。按 Enter 空行只刷新
+计时行，Ctrl-C 或 Ctrl-D 离开计时器并让它继续在后台计时。
+
 可以同时为多道题目计时，`end` 关闭与 specifier 对应的那一个。`cf test` 全部样例通过时自动记录 `test` 节点，`cf submit` 自动记录 `submit` 节点（含判定结果）。
 判定为 Accepted 时会询问是否关闭计时器，选是后再让用户提供一段总结。时间节点保存在
 `<题目>/count_time.json`，全局单例状态保存在 `~/.cf/timer.json`。`end` 的描述或 `q`
@@ -102,6 +106,12 @@ SQL，加 `--write` 才允许修改数据。每道题还会根据事件推导出
 `cf lnrepractice` 只抽从未计时过的题。第二个参数可以指定文件夹名，例如`cf lpractice 5 drill`。`cf opractice 5 --difficulty 1200-1600 --tags dp,greedy`
 则从 Codeforces 在线题库中抽取。用 `cf timer s p_drill 1136a "retry"` 开始练习计时，
 这次计时中的 Accepted 会推进该题的 practice 标签。
+
+练习题目也可以写成单个 specifier：`p_<set>_<题目>`。例如 `cf submit p_drill_1136a`
+提交 `cf/practice/drill/1136a` 中的代码，`cf test p_drill_1136a` 测试该目录，
+`cf timer s p_drill_1136a` 开始练习计时。它必须是命令中唯一的 specifier。
+题目部分是练习目录名（`1136a`、`100001a`），所以练习集名字可以带下划线
+（`p_drill_easy_1136a`）。
 
  `cd ./cf/contest/1136/a` （或者是其他的路径，请看屏幕前的提示）
 
@@ -182,6 +192,8 @@ SQL，加 `--write` 才允许修改数据。每道题还会根据事件推导出
                        "https://codeforces.com/contest/180/problem/A"、
                        "https://codeforces.com/group/Cw4JRyRGXR/contest/269760"、
                        "1111A"、"1111"、"a"、"Cw4JRyRGXR"。
+                       "p_drill_1136a" 表示 "{cf}/practice/drill" 中的题目
+                       1136a（由 "cf lpractice"/"cf opractice" 生成的练习集）。
                        你可以任意组合多个 <specifier> 来说明你的需求。
   <alias>              模板的名字，比如 "cpp"。
   <shell>              生成补全脚本的 shell：bash、zsh 或 fish。
@@ -251,6 +263,9 @@ SQL，加 `--write` 才允许修改数据。每道题还会根据事件推导出
   cf sync 1136a        同步比赛 1136 的题目 a。
   cf sync              同步当前题目。
   cf timer             在前台打开计时器，每秒刷新一行已用时间。
+                       计时器打开时可以直接输入其它 cf 命令（省去 "cf"），
+                       例如 "submit 1136a"，命令在计时器下方执行，计时器
+                       不关闭。
   cf timer start 1136a "read the problem"
                        开始为比赛 1136 的题目 a 计时。
   cf timer end 1136a "solved"
@@ -261,6 +276,14 @@ SQL，加 `--write` 才允许修改数据。每道题还会根据事件推导出
   cf timer s p_drill 1136a "practice"
                        在 "{cf}/practice/drill" 中为题目 1136a 开始练习计时；
                        这次计时中的 Accepted 会推进 practice 标签。
+                       "p_drill_1136a" 也可以代替 "p_drill 1136a"。
+  submit 1136a         （在计时器中）执行 "cf submit 1136a"，不用退出计时器。
+                       除 "timer" 外的所有 cf 命令都可以这样用；输入 "q"
+                       关闭计时器。
+  cf submit p_drill_1136a
+                       提交 "{cf}/practice/drill" 中练习题 1136a 的代码。
+                       "p_<set>_<题目>" 可用于所有接受 specifier 的命令，
+                       在 "cf timer start/end" 中则开始一次练习计时。
   cf db sync           把所有 "count_time.json" 索引进 "~/.cf/timer.db"，
                        并从 Codeforces API 补全比赛信息。
   cf db time 1136a     输出一道题的时间节点与总用时。

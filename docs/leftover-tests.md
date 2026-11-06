@@ -50,6 +50,7 @@
 - 练习集下载样例和题面需要有效的 Codeforces 会话；题面失败只警告。
 - 首次 Accepted 即使发生在 practice 计时中仍记 `accepted`，practice 计数从下一次 practice Accepted 开始。
 - `cf timer start gym 100001a` 这类多 token specifier 仍只解析第一个 token（既有行为，本次未改）。
+- `p_<set>_<problem>` 只在当前目录附近能定位到 `cf` 根时生效，且必须单独使用；练习题部分必须以数字开头（练习目录名 `<contestId><index>`），练习集名因此可含下划线。
 - 新增 SQLite 依赖后 `vendor/` 由约 11M 增至约 140M，二进制由约 8M 增至约 12M。
 
 ## 2026-11-05 复测记录
@@ -78,3 +79,32 @@
 - 真实“首次 Accepted 发生在 practice 计时中”的场景；单元测试覆盖仍记 `accepted`。
 - `cf test` 自动 test 事件；本地模板脚本缺少 `./`，Go `exec` 拒绝相对 PATH 可执行文件。
 - v1.3.1 发行版不包含本次复测的 3 个修复，需要下一个版本发布。
+
+## 2026-11-06 计时器内执行命令（新增）
+
+计时器前台改为轮询 stdin（Unix `poll`，Windows `WaitForSingleObject`），
+移除了常驻读取 goroutine；非计时命令以子进程 `cf <line>` 执行。
+
+已通过（单元测试 + 本地 pty 模拟）：
+
+- 计时器内 `s/e/p/status/q` 仍按计时命令处理。
+- `submit`、`completion bash`、`db` 等作为子进程执行，计时器保持运行，命令结束后状态行恢复。
+- `open` 在计时器内执行 `cf open`，不再嵌套打开计时器；`timer`/`counttime` 被拒绝。
+- 子进程读取 stdin 正常（`cf config` 菜单与 User-Agent 输入实测），父进程不抢输入。
+- 引号与转义解析（`submit -f "a b.cpp"`）、空行刷新、`q` 关闭且总结只打印一次。
+- 子命令运行中按 Ctrl-C（`cf config` 实测）：子命令退出，计时器继续，父进程未被 SIGINT 杀死。
+- `printf 'status\nq\n' | cf timer` 的逐行执行（单元测试）。
+- `p_<set>_<problem>` 单 token specifier：`infoFromSpecifiers` 解析、`getOneCode` 在练习目录找代码、
+  `cf timer s/e p_drill_1136a` 生成带 practice 的事件、`cf db time p_drill_1136a` 输出记录
+  （单元测试 + 本地二进制实测）；计时器 REPL 内 `s/db time/e` 全流程（pty 模拟）。
+  带下划线的练习集名 `p_drill_easy_1136a`、非法形式 `p_drill`/`p__1136a` 已覆盖。
+
+待测（真机 / 真实账号）：
+
+- 计时器内真实 `cf submit`：Accepted 后 `y`（关闭计时器，总结只出现一次）与 `n`（继续计时）两条分支。
+- 真实 `cf submit p_drill_1136a`：确认提交 URL、代码来源与普通 specifier 一致（需网络）。
+- `cf test p_drill_1136a` 用练习目录中的样例运行；练习目录缺样例时的报错文案。
+- Windows Terminal 交互模式：状态行刷新（`WaitForSingleObject` 路径）、Ctrl-C 与中文输入。
+- 子命令输出未以换行结尾时，状态行的覆盖情况。
+- `cf test` / `cf race` / `cf watch` 等长时间或自带信号处理的命令在计时器内的中断行为。
+- 终端窗口尺寸变化（SIGWINCH）时状态行与输入行的对齐。

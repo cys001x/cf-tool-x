@@ -93,6 +93,12 @@ func TestParseTimerArgs(t *testing.T) {
 		{[]string{"exit", "done"}, "q", "", "", "done"},
 		{[]string{"s", "1136a", "read"}, "start", "", "1136a", "read"},
 		{[]string{"s", "p_drill", "1136a", "read"}, "start", "p_drill", "1136a", "read"},
+		{[]string{"s", "p_drill_1136a", "read"}, "start", "p_drill", "1136a", "read"},
+		{[]string{"start", "p_drill_1136a"}, "start", "p_drill", "1136a", ""},
+		{[]string{"start", "p_drill_easy_1136a", "note"}, "start", "p_drill_easy", "1136a", "note"},
+		{[]string{"start", "p_drill_easy", "1136a", "read"}, "start", "p_drill_easy", "1136a", "read"},
+		{[]string{"end", "p_drill_1136a"}, "end", "p_drill", "1136a", ""},
+		{[]string{"e", "p_drill_100001a"}, "end", "p_drill", "100001a", ""},
 		{[]string{"e", "1136a"}, "end", "", "1136a", ""},
 		{[]string{"p"}, "pause", "", "", ""},
 	}

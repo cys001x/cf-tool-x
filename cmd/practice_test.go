@@ -281,6 +281,206 @@ func TestTimerPracticeFlow(t *testing.T) {
 	}
 }
 
+func TestSplitPracticeSpecifier(t *testing.T) {
+	cases := []struct {
+		specifier    string
+		set, problem string
+		ok           bool
+	}{
+		{"p_drill_1136a", "drill", "1136a", true},
+		{"p_drill_easy_1136a", "drill_easy", "1136a", true},
+		{"p_drill_100001a", "drill", "100001a", true},
+		{"p_drill_99999100", "drill", "99999100", true},
+		{"p_drill", "", "", false},
+		{"p_drill_easy", "", "", false},
+		{"p__1136a", "", "", false},
+		{"p_drill_", "", "", false},
+		{"drill_1136a", "", "", false},
+		{"1136a", "", "", false},
+	}
+	for _, c := range cases {
+		set, problem, ok := splitPracticeSpecifier(c.specifier)
+		if set != c.set || problem != c.problem || ok != c.ok {
+			t.Errorf("splitPracticeSpecifier(%q) = (%q, %q, %v), want (%q, %q, %v)",
+				c.specifier, set, problem, ok, c.set, c.problem, c.ok)
+		}
+	}
+}
+
+func TestPracticeSpecifierInfo(t *testing.T) {
+	work := t.TempDir()
+	t.Chdir(work)
+	initTestConfig(t)
+
+	base := filepath.Join(work, "cf", "practice", "drill")
+	problemDir := filepath.Join(base, "1136a")
+	if err := os.MkdirAll(problemDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	manifest := practiceManifest{
+		Name:     "drill",
+		Problems: []practiceProblem{{Key: "contest:1136:a", Display: "1136a"}},
+	}
+	data, err := json.Marshal(manifest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = os.WriteFile(filepath.Join(base, "practice.json"), data, 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	info, err := infoFromSpecifiers([]string{"p_drill_1136a"}, work)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if info.ContestID != "1136" || info.ProblemID != "a" || info.ProblemType != "contest" {
+		t.Fatalf("practice info = %+v", info)
+	}
+	if info.Path() != problemDir {
+		t.Fatalf("practice path = %q, want %q", info.Path(), problemDir)
+	}
+
+	// A normal specifier must not be affected.
+	plain, err := infoFromSpecifiers([]string{"1136a"}, work)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if plain.Dir != "" {
+		t.Fatalf("plain specifier dir = %q, want empty", plain.Dir)
+	}
+
+	if _, err = infoFromSpecifiers([]string{"p_missing_1136a"}, work); err == nil {
+		t.Fatal("missing practice set must be rejected")
+	}
+	if _, err = infoFromSpecifiers([]string{"p_drill_1136a", "1136b"}, work); err == nil {
+		t.Fatal("practice specifier combined with another specifier must be rejected")
+	}
+
+	// Set names may contain underscores; the last underscore separates the
+	// problem because it starts with a digit.
+	base2 := filepath.Join(work, "cf", "practice", "drill_easy")
+	dir2 := filepath.Join(base2, "1136a")
+	if err = os.MkdirAll(dir2, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err = os.WriteFile(filepath.Join(base2, "practice.json"), data, 0644); err != nil {
+		t.Fatal(err)
+	}
+	info2, err := infoFromSpecifiers([]string{"p_drill_easy_1136a"}, work)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if info2.Path() != dir2 {
+		t.Fatalf("underscore set path = %q, want %q", info2.Path(), dir2)
+	}
+}
+
+func TestPracticeSpecifierCodeLookup(t *testing.T) {
+	work := t.TempDir()
+	t.Chdir(work)
+	initTestConfig(t)
+
+	base := filepath.Join(work, "cf", "practice", "drill")
+	problemDir := filepath.Join(base, "1136a")
+	if err := os.MkdirAll(problemDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	manifest := practiceManifest{
+		Name:     "drill",
+		Problems: []practiceProblem{{Key: "contest:1136:a", Display: "1136a"}},
+	}
+	data, err := json.Marshal(manifest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = os.WriteFile(filepath.Join(base, "practice.json"), data, 0644); err != nil {
+		t.Fatal(err)
+	}
+	codePath := filepath.Join(problemDir, "a.cpp")
+	if err = os.WriteFile(codePath, []byte("int main() { return 0; }"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	info, err := infoFromSpecifiers([]string{"p_drill_1136a"}, work)
+	if err != nil {
+		t.Fatal(err)
+	}
+	oldArgs := Args
+	Args = &ParsedArgs{Info: info}
+	defer func() { Args = oldArgs }()
+
+	templates := []config.CodeTemplate{{Suffix: []string{"cpp"}, Lang: "g++17"}}
+	name, index, err := getOneCode("", "", templates)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if name != codePath || index != 0 {
+		t.Fatalf("getOneCode = (%q, %v), want (%q, 0)", name, index, codePath)
+	}
+}
+
+func TestTimerPracticeSpecifierFlow(t *testing.T) {
+	work := t.TempDir()
+	t.Chdir(work)
+	initTestConfig(t)
+	oldArgs := Args
+	Args = &ParsedArgs{}
+	defer func() { Args = oldArgs }()
+	t.Setenv("CF_TIMER_STATE", filepath.Join(work, "timer.json"))
+	t.Setenv("CF_TIMER_DB", filepath.Join(work, "timer.db"))
+
+	base := filepath.Join(work, "cf", "practice", "drill")
+	problemDir := filepath.Join(base, "1136a")
+	if err := os.MkdirAll(problemDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	manifest := practiceManifest{
+		Name:     "drill",
+		Problems: []practiceProblem{{Key: "contest:1136:a", Display: "1136a"}},
+	}
+	data, err := json.Marshal(manifest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = os.WriteFile(filepath.Join(base, "practice.json"), data, 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	if quit, external := runMonitorCommandLine("s p_drill_1136a practice"); quit || external {
+		t.Fatalf("start = (quit=%v, external=%v)", quit, external)
+	}
+	st, err := loadTimeState()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(st.Open) != 1 {
+		t.Fatalf("open segments = %+v", st.Open)
+	}
+	seg := st.Open[0]
+	if seg.Practice != "drill" || seg.Dir != problemDir || seg.Specifier != "1136a" || seg.Problem != "1136a" {
+		t.Fatalf("segment = %+v", seg)
+	}
+
+	if quit, external := runMonitorCommandLine("e p_drill_1136a done"); quit || external {
+		t.Fatalf("end = (quit=%v, external=%v)", quit, external)
+	}
+	rec, err := loadProblemTimeRecord(filepath.Join(problemDir, TimeRecordFileName))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rec.Events) != 2 {
+		t.Fatalf("events = %+v", rec.Events)
+	}
+	for _, ev := range rec.Events {
+		if ev.Practice != "drill" {
+			t.Fatalf("event without practice: %+v", ev)
+		}
+	}
+	if rec.Problem != "1136a" {
+		t.Fatalf("record problem = %q", rec.Problem)
+	}
+}
+
 func TestParsePracticeKey(t *testing.T) {
 	cases := map[string]string{
 		"contest:1136:a":            "contest",

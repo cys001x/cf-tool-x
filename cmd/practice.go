@@ -37,6 +37,28 @@ func practiceSetDir(set string) string {
 	return filepath.Join(practiceBaseDir(), "practice", sanitizePracticeName(set))
 }
 
+// splitPracticeSpecifier recognizes "p_<set>_<problem>", e.g. "p_drill_1136a".
+// The problem part must start with a digit, which matches every generated
+// practice folder name (<contestId><index>) and keeps set names containing
+// underscores unambiguous. "p_<set>" alone is not a problem specifier; the
+// timer still accepts it as the separate practice prefix.
+func splitPracticeSpecifier(specifier string) (set, problem string, ok bool) {
+	specifier = strings.TrimSpace(specifier)
+	if !strings.HasPrefix(specifier, "p_") {
+		return "", "", false
+	}
+	rest := strings.TrimPrefix(specifier, "p_")
+	index := strings.LastIndex(rest, "_")
+	if index <= 0 || index == len(rest)-1 {
+		return "", "", false
+	}
+	problem = rest[index+1:]
+	if problem[0] < '0' || problem[0] > '9' {
+		return "", "", false
+	}
+	return rest[:index], problem, true
+}
+
 // resolvePracticeTimer maps "p_<set> <specifier>" to the problem folder inside
 // the practice set. It rejects a problem that is not part of the set.
 func resolvePracticeTimer(practice, specifier string) (info client.Info, dir, problem string, err error) {

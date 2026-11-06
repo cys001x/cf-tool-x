@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"bufio"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,16 +9,13 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-	"unicode/utf8"
 
 	"github.com/cys001x/cf-tool-x/client"
 	"github.com/cys001x/cf-tool-x/config"
 	"github.com/cys001x/cf-tool-x/util"
 	"github.com/fatih/color"
-	ansi "github.com/k0kubun/go-ansi"
 	"github.com/mitchellh/go-homedir"
 	"github.com/shirou/gopsutil/process"
-	"golang.org/x/term"
 )
 
 // TimeRecordFileName is the timer data file written into every problem folder.
@@ -746,277 +742,6 @@ func recordSubmissionTimer(cln *client.Client) {
 	printTimeSummary(st)
 }
 
-// runTimeMonitor renders the ticking timer and handles typed commands.
-func runTimeMonitor() error {
-	defer func() {
-		mutateTimeState(false, func(st *timeState, now time.Time) error {
-			if st.MonitorPID == int32(os.Getpid()) {
-				st.MonitorPID = 0
-			}
-			return nil
-		})
-	}()
-
-	color.Cyan("Timer opened. Commands: s/start <specifier> <note>, e/end <specifier> <note>, p/pause, q.")
-
-	fd := int(os.Stdin.Fd())
-	inputTTY := term.IsTerminal(fd)
-	// Raw input needs both sides: with a non-TTY stdout the status line is
-	// rendered like "cf submit", without terminal output post-processing.
-	interactive := inputTTY && term.IsTerminal(int(os.Stdout.Fd()))
-	rawMode := false
-	var termState *term.State
-	enterRaw := func() {
-		if !interactive || rawMode {
-			return
-		}
-		if state, err := term.MakeRaw(fd); err == nil {
-			termState = state
-			rawMode = true
-		}
-	}
-	leaveRaw := func() {
-		if rawMode {
-			term.Restore(fd, termState)
-			rawMode = false
-		}
-	}
-	enterRaw()
-	defer leaveRaw()
-
-	keyInput := make(chan byte)
-	lineInput := make(chan string)
-	if interactive {
-		go func() {
-			buf := make([]byte, 1)
-			for {
-				n, err := os.Stdin.Read(buf)
-				if n > 0 {
-					keyInput <- buf[0]
-				}
-				if err != nil {
-					close(keyInput)
-					return
-				}
-			}
-		}()
-	} else {
-		go func() {
-			reader := bufio.NewReader(os.Stdin)
-			for {
-				line, err := reader.ReadString('\n')
-				if err != nil && line == "" {
-					close(lineInput)
-					return
-				}
-				lineInput <- strings.TrimSpace(line)
-				if err != nil {
-					close(lineInput)
-					return
-				}
-			}
-		}()
-	}
-
-	var inputBuf []byte
-	statusLen := 0
-	statusShown := false
-
-	// The ticker uses the same refresh scheme as "cf submit": print the line
-	// with a newline and move the cursor back up with go-ansi on the next draw.
-	drawStatus := func(st *timeState) {
-		elapsed := formatElapsedMS(st.elapsed(time.Now()))
-		plain := fmt.Sprintf("[%v] %v", elapsed, openProblemNames(st))
-		line := fmt.Sprintf("[%v] %v", color.GreenString(elapsed), openProblemNames(st))
-		if st.Paused {
-			plain += " paused"
-			line += " paused"
-		}
-		plainLine := plain
-		if interactive {
-			plainLine = plain + "  > " + string(inputBuf)
-			line += "  > " + string(inputBuf)
-		}
-		padding := ""
-		if statusLen > len(plainLine) {
-			padding = strings.Repeat(" ", statusLen-len(plainLine))
-		}
-		if statusShown {
-			ansi.CursorUp(1)
-		}
-		ending := "\n"
-		if rawMode {
-			// Raw mode disables output post-processing, so "\n" alone does
-			// not return the cursor to column 0.
-			ending = "\r\n"
-		}
-		ansi.Printf("%v%v%v", line, padding, ending)
-		statusShown = true
-		statusLen = len(plainLine)
-	}
-	printMonitorLine := func(format string, a ...interface{}) {
-		msg := color.CyanString(format, a...)
-		if rawMode {
-			ansi.Printf("%v\r\n", msg)
-			return
-		}
-		fmt.Println(msg)
-	}
-	clearStatus := func() {
-		if !statusShown {
-			return
-		}
-		ansi.CursorUp(1)
-		ending := "\n"
-		if rawMode {
-			ending = "\r\n"
-		}
-		ansi.Printf("%v%v", strings.Repeat(" ", statusLen), ending)
-		ansi.CursorUp(1)
-		statusShown = false
-	}
-
-	// runLine executes one command line. It returns true when the timer is done.
-	runLine := func(line string) bool {
-		if strings.TrimSpace(line) == "" {
-			return false
-		}
-		leaveRaw()
-		clearStatus()
-		err := runTimeCommand(line)
-		if err != nil {
-			color.Red(err.Error())
-		}
-		cmd, _, _, _ := parseTimerArgs(strings.Fields(line))
-		done := cmd == "q"
-		if !done {
-			enterRaw()
-		}
-		return done
-	}
-
-	ticker := time.NewTicker(time.Second)
-	defer ticker.Stop()
-
-	st, err := loadTimeState()
-	if err != nil {
-		return err
-	}
-	lastNotice := st.NoticeSeq
-	drawStatus(st)
-
-	for {
-		select {
-		case b, ok := <-keyInput:
-			if !ok {
-				keyInput = nil
-				clearStatus()
-				leaveRaw()
-				color.Yellow("Input closed. The timer keeps running in the background.")
-				continue
-			}
-			switch {
-			case b == 27:
-				// Swallow ANSI escape sequences such as arrow keys.
-				for {
-					next, more := <-keyInput
-					if !more {
-						break
-					}
-					if next >= 0x40 && next <= 0x7e {
-						break
-					}
-				}
-			case b == 3 || b == 4:
-				leaveRaw()
-				fmt.Println()
-				color.Yellow("Left the timer running. Use `cf timer q` to close it.")
-				return nil
-			case b == '\r' || b == '\n':
-				line := string(inputBuf)
-				inputBuf = nil
-				if line == "" {
-					if cur, e := loadTimeState(); e == nil {
-						drawStatus(cur)
-					}
-					continue
-				}
-				if runLine(line) {
-					return nil
-				}
-				cur, e := loadTimeState()
-				if e != nil {
-					return e
-				}
-				lastNotice = cur.NoticeSeq
-				if !cur.Running {
-					leaveRaw()
-					printTimeSummary(cur)
-					return nil
-				}
-				drawStatus(cur)
-			case b == 127 || b == 8:
-				if len(inputBuf) > 0 {
-					_, size := utf8.DecodeLastRune(inputBuf)
-					inputBuf = inputBuf[:len(inputBuf)-size]
-				}
-				if cur, e := loadTimeState(); e == nil {
-					drawStatus(cur)
-				}
-			case b >= 32:
-				inputBuf = append(inputBuf, b)
-				if cur, e := loadTimeState(); e == nil {
-					drawStatus(cur)
-				}
-			}
-		case line, ok := <-lineInput:
-			clearStatus()
-			if !ok {
-				lineInput = nil
-				color.Yellow("Input closed. The timer keeps running in the background.")
-				continue
-			}
-			if runLine(line) {
-				return nil
-			}
-			cur, loadErr := loadTimeState()
-			if loadErr != nil {
-				return loadErr
-			}
-			lastNotice = cur.NoticeSeq
-			if !cur.Running {
-				leaveRaw()
-				printTimeSummary(cur)
-				return nil
-			}
-			drawStatus(cur)
-		case <-ticker.C:
-			cur, e := loadTimeState()
-			if e != nil {
-				continue
-			}
-			if cur.NoticeSeq != lastNotice && cur.Notice != "" {
-				clearStatus()
-				printMonitorLine("Timer: %v", cur.Notice)
-				lastNotice = cur.NoticeSeq
-			}
-			if !cur.Running {
-				clearStatus()
-				leaveRaw()
-				printTimeSummary(cur)
-				return nil
-			}
-			drawStatus(cur)
-		}
-	}
-}
-
-// runTimeCommand executes one timer command line (used by the monitor).
-func runTimeCommand(line string) error {
-	cmd, practice, specifier, note := parseTimerArgs(strings.Fields(line))
-	return runTimerCommand(cmd, practice, specifier, note)
-}
-
 // normalizeTimerCommand accepts the first letter of start, end, pause and q.
 func normalizeTimerCommand(command string) string {
 	switch strings.ToLower(command) {
@@ -1041,10 +766,19 @@ func parseTimerArgs(args []string) (command, practice, specifier, note string) {
 	if command == "start" || command == "end" {
 		index := 1
 		if index < len(rest) && strings.HasPrefix(rest[index], "p_") {
-			practice = rest[index]
-			index++
-		}
-		if index < len(rest) {
+			if set, problem, ok := splitPracticeSpecifier(rest[index]); ok {
+				practice = "p_" + set
+				specifier = problem
+				index++
+			} else {
+				practice = rest[index]
+				index++
+				if index < len(rest) {
+					specifier = rest[index]
+					index++
+				}
+			}
+		} else if index < len(rest) {
 			specifier = rest[index]
 			index++
 		}

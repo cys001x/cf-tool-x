@@ -61,6 +61,18 @@ Most commands accept one or more `<specifier>` arguments. They can be combined;
 | `https://codeforces.com/gym/100001/problem/A` | Gym problem URL |
 | `https://codeforces.com/group/Cw4JRyRGXR/contest/269760` | Group contest URL |
 | `https://codeforces.com/contest/1136/submission/52531875` | Submission URL |
+| `p_drill_1136a` | Problem 1136a inside the practice set `{cf}/practice/drill` |
+
+The `p_<set>_<problem>` form points at a practice set created by
+`cf lpractice`/`cf opractice`. The problem part is the practice folder name
+(`<contestId><index>`, e.g. `1136a`, `100001a`). It can be used wherever a
+specifier is accepted: `cf submit p_drill_1136a` submits the code in that
+folder, `cf test p_drill_1136a` tests it, and so on. It must be the only
+specifier on the command line. The set is resolved under
+the `cf` root around the current directory, and the folder must exist. Since
+the problem part starts with a digit, set names may contain underscores, e.g.
+`p_drill_easy_1136a` means set `drill_easy`. `cf timer start/end` also accepts
+this form and records a practice run.
 
 When no specifier is given, `cf` derives the contest and problem from the
 current directory if it is inside the `cf` folder tree.
@@ -170,13 +182,21 @@ in `~/.cf/timer.json`, so the timer keeps counting even when no `cf` process is
 running. Run `cf timer` again to see the clock, or use any command from another
 terminal.
 
+The timer window accepts every other `cf` command without the `cf` prefix, for
+example `submit 1136a`, `test`, `db sync`, `open 1136a`, or `lpractice 5`.
+Such a line runs as `cf <line>` in a child process below the timer, with the
+same arguments and prompts as on the shell; the timer stays open afterwards.
+`timer` itself is rejected because the timer is already open. Ctrl-C during a
+child command stops the child and returns to the timer. Quotes are honored the
+same way a shell does for the command line, e.g. `submit -f "a b.cpp"`.
+
 While it is open, these commands can be typed in the timer window or run from
 any other terminal:
 
 | Command | Effect |
 |---------|--------|
-| `start <specifier> <note>` (`s`) | Start timing a problem or a contest. Several problems can run at the same time; only a duplicate start of the same problem is rejected. The timer is created automatically when it does not exist. Prefix the specifier with `p_<set>` to record a practice run inside `{cf}/practice/<set>`, for example `cf timer s p_drill 1136a "retry"`. |
-| `end <specifier> <note>` (`e`) | Stop the running problem that matches the specifier. The specifier must resolve to the same folder as one of the open `start` events; otherwise the command is rejected. For a practice run use the same `p_<set>` prefix. The note is stored as that problem's summary. The elapsed time of that problem and the timer total are printed. |
+| `start <specifier> <note>` (`s`) | Start timing a problem or a contest. Several problems can run at the same time; only a duplicate start of the same problem is rejected. The timer is created automatically when it does not exist. Prefix the specifier with `p_<set>` to record a practice run inside `{cf}/practice/<set>`, for example `cf timer s p_drill 1136a "retry"`. The single-token form `cf timer s p_drill_1136a "retry"` is equivalent. |
+| `end <specifier> <note>` (`e`) | Stop the running problem that matches the specifier. The specifier must resolve to the same folder as one of the open `start` events; otherwise the command is rejected. For a practice run use the same `p_<set>` prefix or the `p_<set>_<problem>` form. The note is stored as that problem's summary. The elapsed time of that problem and the timer total are printed. |
 | `pause` (`p`) | Pause the timer. Running `pause` again resumes it. |
 | `q [<note>]` (`exit` is an alias) | Close the timer and print the summary. The note is stored as the session summary and as the summary of every open problem. A running problem is ended automatically with the note, or `auto end on quit`. |
 | `status` | Print the current elapsed time, active problem and state. |
@@ -189,6 +209,10 @@ cf timer pause
 cf timer q "contest done"
 cf timer s p_drill 1136a "practice run"
 cf timer e p_drill 1136a "still wrong"
+cf timer s p_drill_1136a "practice run"   # same as above
+submit 1136a      # typed inside the timer: same as "cf submit 1136a"
+submit p_drill_1136a                      # practice problem
+db sync           # typed inside the timer: same as "cf db sync"
 ```
 
 Automatically recorded nodes:
@@ -197,6 +221,7 @@ Automatically recorded nodes:
 - `cf submit` appends a `submit` node with the verdict. When the verdict is
   `Accepted`, `cf` asks `Accepted. Close the timer? (y/n)`. Answering `y` asks
   for a summary of the session, then closes the timer and prints the summary.
+  The same prompt works from inside the timer; the summary is printed once.
 
 Files:
 

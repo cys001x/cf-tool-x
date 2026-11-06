@@ -83,6 +83,11 @@ the timer and print the summary. The same commands work from any other terminal,
 so the timer state can be updated from any terminal. There is no background
 daemon: the clock is derived from timestamps in `~/.cf/timer.json`.
 
+While the timer is open, every other `cf` command can be typed without the `cf`
+prefix, for example `submit 1136a`. It runs below the timer and the timer stays
+open afterwards; `timer` itself is rejected. Ctrl-C or Ctrl-D leaves the timer
+running in the background.
+
 Several problems can be timed at the same time; `end` closes the one matching
 the specifier. `cf test` records a `test` node when every sample passes, and `cf submit`
 records a `submit` node with the verdict. An accepted submission asks whether to
@@ -117,6 +122,13 @@ drill`. `cf opractice 5 --difficulty 1200-1600 --tags dp,greedy` selects from
 the online Codeforces problemset instead. Start a practice run with
 `cf timer s p_drill 1136a "retry"`; accepted submits during that run advance
 the problem's practice label.
+
+A practice problem can also be used as one specifier, `p_<set>_<problem>`:
+`cf submit p_drill_1136a` submits the code in `cf/practice/drill/1136a`,
+`cf test p_drill_1136a` tests it, and `cf timer s p_drill_1136a` starts the
+practice run. Use it as the only specifier. The problem part is the practice
+folder name (`1136a`, `100001a`), so set names may contain underscores
+(`p_drill_easy_1136a`).
 
  `cd ./cf/contest/1136/a` (May be different from this, please notice the message on your screen)
 
@@ -198,6 +210,9 @@ Options:
                        "https://codeforces.com/contest/180/problem/A",
                        "https://codeforces.com/group/Cw4JRyRGXR/contest/269760"
                        "1111A", "1111", "a", "Cw4JRyRGXR"
+                       "p_drill_1136a" means problem 1136a in
+                       "{cf}/practice/drill" (a practice set created by
+                       "cf lpractice"/"cf opractice").
                        You can combine multiple specifiers to specify what you
                        want.
   <alias>              Template's alias. E.g. "cpp"
@@ -287,6 +302,9 @@ Examples:
                        refreshes the elapsed time on one line. There is no
                        background daemon: the state lives in
                        "~/.cf/timer.json" and commands work from any terminal.
+                       While the timer is open, any other cf command can be
+                       typed without "cf" and runs below the timer, for
+                       example "submit 1136a". The timer stays open.
   cf timer start 1136a "read the problem"
                        Start timing problem "a" of contest 1136.
   cf timer end 1136a "solved"
@@ -300,7 +318,16 @@ Examples:
   cf timer s p_drill 1136a "practice"
                        Start a practice run for problem 1136a in the set
                        "{cf}/practice/drill". Accepted submits in this run
-                       advance the practice label.
+                       advance the practice label. "p_drill_1136a" can be
+                       used instead of "p_drill 1136a".
+  submit 1136a         (inside cf timer) Run "cf submit 1136a" without leaving
+                       the timer. Every cf command except "timer" works this
+                       way; typing "q" closes the timer.
+  cf submit p_drill_1136a
+                       Submit the code of practice problem 1136a in
+                       "{cf}/practice/drill". "p_<set>_<problem>" works
+                       wherever a specifier is accepted, and starts a
+                       practice run in "cf timer start/end".
   cf db sync           Index every "count_time.json" into "~/.cf/timer.db"
                        and fill contest metadata from the Codeforces API.
   cf db time 1136a     Print the time nodes and total time of a problem.
