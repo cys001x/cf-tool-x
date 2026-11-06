@@ -133,6 +133,8 @@
   Esc 关闭，选中项高亮。
 - 终端批量送达的多个字符按单字符插入；`end`/`home` 不再被 textinput 当作光标键。
 - Up/Down 历史；历史写入 `~/.cf/history`（0600）。
+- Ctrl-R 反向历史搜索：输入过滤、Ctrl-R/Up 向前、Down 向后、Enter 执行、Esc/Ctrl-C
+  恢复原输入、Tab 接受后继续编辑（单元测试 + pty）。
 - `cf config` 在 shell 内运行，Ctrl-C 只退出子命令，shell 继续、计时器保持运行。
 - `start`/`status`/`end`/`q` 全流程；`q` 关闭计时并退出，退出后不残留输入行。
 - 200 字符长输入横向滚动，不再换行或重复打印。

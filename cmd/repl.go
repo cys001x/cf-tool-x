@@ -26,6 +26,7 @@ var (
 	replStatusStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("10"))
 	replSelectedStyle = lipgloss.NewStyle().Background(lipgloss.Color("62")).Foreground(lipgloss.Color("230"))
 	replDimStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("245"))
+	replSearchStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("11"))
 )
 
 // replCommandNames is the completion list of the interactive shell. It is the
@@ -139,6 +140,11 @@ type replModel struct {
 	execing   bool
 	closed    bool
 	quitting  bool
+
+	searching   bool
+	searchQuery string
+	searchIndex int
+	searchSaved string
 }
 
 func newReplModel() *replModel {
@@ -209,6 +215,88 @@ func (m *replModel) historyNext() {
 		return
 	}
 	m.setInput(m.history[m.histPos])
+}
+
+// findHistoryMatch scans history from start towards step and returns the first
+// entry containing the current query.
+func (m *replModel) findHistoryMatch(start, step int) (int, bool) {
+	query := strings.ToLower(m.searchQuery)
+	for i := start; i >= 0 && i < len(m.history); i += step {
+		if strings.Contains(strings.ToLower(m.history[i]), query) {
+			return i, true
+		}
+	}
+	return -1, false
+}
+
+func (m *replModel) searchOlder() {
+	start := len(m.history) - 1
+	if m.searchIndex >= 0 {
+		start = m.searchIndex - 1
+	}
+	if index, ok := m.findHistoryMatch(start, -1); ok {
+		m.searchIndex = index
+	}
+}
+
+func (m *replModel) searchNewer() {
+	if m.searchIndex < 0 {
+		return
+	}
+	if index, ok := m.findHistoryMatch(m.searchIndex+1, 1); ok {
+		m.searchIndex = index
+	}
+}
+
+func (m *replModel) searchChanged() {
+	m.searchIndex = -1
+	m.searchOlder()
+}
+
+func (m *replModel) startSearch() {
+	if m.searching {
+		m.searchOlder()
+		return
+	}
+	m.compOpen = false
+	m.compItems = nil
+	m.searching = true
+	m.searchQuery = ""
+	m.searchSaved = m.input.Value()
+	m.searchIndex = -1
+	m.searchOlder()
+}
+
+func (m *replModel) searchMatch() string {
+	if m.searchIndex < 0 || m.searchIndex >= len(m.history) {
+		return ""
+	}
+	return m.history[m.searchIndex]
+}
+
+// acceptSearch copies the selected history entry into the input. execute also
+// submits it immediately, like Enter in a shell's reverse search.
+func (m *replModel) acceptSearch(execute bool) tea.Cmd {
+	match := m.searchMatch()
+	m.searching = false
+	m.searchQuery = ""
+	m.searchIndex = -1
+	if match == "" {
+		m.setInput(m.searchSaved)
+		return nil
+	}
+	m.setInput(match)
+	if !execute {
+		return nil
+	}
+	return m.submit()
+}
+
+func (m *replModel) cancelSearch() {
+	m.searching = false
+	m.searchQuery = ""
+	m.searchIndex = -1
+	m.setInput(m.searchSaved)
 }
 
 // completionCandidates lists the values matching the token at the cursor.
@@ -384,7 +472,50 @@ func (m *replModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case tea.KeyMsg:
+		if m.searching {
+			switch msg.String() {
+			case "ctrl+r", "up":
+				m.searchOlder()
+				return m, nil
+			case "down":
+				m.searchNewer()
+				return m, nil
+			case "enter":
+				return m, m.acceptSearch(true)
+			case "esc", "ctrl+g", "ctrl+c":
+				m.cancelSearch()
+				return m, nil
+			case "tab", "left", "right":
+				return m, m.acceptSearch(false)
+			case "backspace", "ctrl+h":
+				runes := []rune(m.searchQuery)
+				if len(runes) > 0 {
+					m.searchQuery = string(runes[:len(runes)-1])
+					m.searchChanged()
+				}
+				return m, nil
+			case "ctrl+u":
+				m.searchQuery = ""
+				m.searchChanged()
+				return m, nil
+			}
+			if msg.Type == tea.KeyRunes {
+				var query []rune
+				for _, r := range msg.Runes {
+					if r == '\r' || r == '\n' || r == '\t' {
+						r = ' '
+					}
+					query = append(query, r)
+				}
+				m.searchQuery += string(query)
+				m.searchChanged()
+			}
+			return m, nil
+		}
 		switch msg.String() {
+		case "ctrl+r":
+			m.startSearch()
+			return m, nil
 		case "ctrl+c", "ctrl+d":
 			m.input.Blur()
 			m.quitting = true
@@ -507,7 +638,12 @@ func (m *replModel) View() string {
 	} else {
 		lines = append(lines, replDimStyle.Render("Timer unavailable"))
 	}
-	lines = append(lines, m.input.View())
+	if m.searching {
+		line := fmt.Sprintf("(reverse-i-search)`%v': %v", m.searchQuery, m.searchMatch())
+		lines = append(lines, replSearchStyle.Render(runewidth.Truncate(line, m.width-1, "…")))
+	} else {
+		lines = append(lines, m.input.View())
+	}
 	if m.compOpen && len(m.compItems) > 0 {
 		limit := len(m.compItems)
 		if limit > 6 {

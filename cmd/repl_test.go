@@ -16,6 +16,83 @@ func newTestReplModel(t *testing.T) *replModel {
 	return newReplModel()
 }
 
+func TestReplHistorySearch(t *testing.T) {
+	m := newTestReplModel(t)
+	m.history = []string{"status", "db path", "git status"}
+	m.histPos = len(m.history)
+
+	m.startSearch()
+	if got := m.searchMatch(); got != "git status" {
+		t.Fatalf("initial search match = %q, want git status", got)
+	}
+	m.searchOlder()
+	if got := m.searchMatch(); got != "db path" {
+		t.Fatalf("older match = %q, want db path", got)
+	}
+	m.searchOlder()
+	if got := m.searchMatch(); got != "status" {
+		t.Fatalf("oldest match = %q, want status", got)
+	}
+	m.searchNewer()
+	if got := m.searchMatch(); got != "db path" {
+		t.Fatalf("newer match = %q, want db path", got)
+	}
+
+	m.searchQuery = "st"
+	m.searchChanged()
+	if got := m.searchMatch(); got != "git status" {
+		t.Fatalf("query match = %q, want git status", got)
+	}
+	m.searchOlder()
+	if got := m.searchMatch(); got != "status" {
+		t.Fatalf("older query match = %q, want status", got)
+	}
+}
+
+func TestReplHistorySearchKeys(t *testing.T) {
+	m := newTestReplModel(t)
+	m.history = []string{"status", "db path", "git status"}
+	m.histPos = len(m.history)
+	m.setInput("draft")
+
+	m.Update(tea.KeyMsg{Type: tea.KeyCtrlR})
+	if !m.searching {
+		t.Fatal("ctrl+r must start the reverse search")
+	}
+	m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("db")})
+	if got := m.searchMatch(); got != "db path" {
+		t.Fatalf("search match for db = %q, want db path", got)
+	}
+	m.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	if m.searching || m.input.Value() != "draft" {
+		t.Fatalf("escape must restore draft: searching=%v value=%q", m.searching, m.input.Value())
+	}
+
+	m.Update(tea.KeyMsg{Type: tea.KeyCtrlR})
+	m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("git")})
+	m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	if m.searching {
+		t.Fatal("enter must close the search")
+	}
+	if got := m.input.Value(); got != "" {
+		t.Fatalf("enter must submit the match and clear input, got %q", got)
+	}
+	if len(m.history) != 3 {
+		t.Fatalf("duplicate history entry appended: %#v", m.history)
+	}
+}
+
+func TestReplHistorySearchAcceptEdit(t *testing.T) {
+	m := newTestReplModel(t)
+	m.history = []string{"submit 1136a"}
+	m.histPos = 1
+	m.startSearch()
+	m.Update(tea.KeyMsg{Type: tea.KeyTab})
+	if m.searching || m.input.Value() != "submit 1136a" {
+		t.Fatalf("tab accept = searching=%v value=%q", m.searching, m.input.Value())
+	}
+}
+
 func TestReplTypedRuneBatch(t *testing.T) {
 	m := newTestReplModel(t)
 	// Terminals may batch several characters into one key message. "end" must

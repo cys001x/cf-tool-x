@@ -84,8 +84,8 @@ $ go env -w GOPRIVATE=github.com/cys001x/cf-tool-x
 
 shell 打开时，还可以直接输入其它 cf 命令（省去 `cf`，例如 `submit 1136a`）。命令在计时器下方
 执行，执行完继续计时，不用退出再重新打开。Tab 补全命令和参数（`db`、`watch`、`pull`、
-`clone`、`completion`），上下方向键翻历史命令，历史保存在 `~/.cf/history`。按 Enter 空行只刷新
-计时行，Ctrl-C 或 Ctrl-D 离开并让计时器继续在后台计时。
+`clone`、`completion`），上下方向键翻历史命令，Ctrl-R 搜索历史，历史保存在 `~/.cf/history`。
+按 Enter 空行只刷新计时行，Ctrl-C 或 Ctrl-D 离开并让计时器继续在后台计时。
 
 可以同时为多道题目计时，`end` 关闭与 specifier 对应的那一个。`cf test` 全部样例通过时自动记录 `test` 节点，`cf submit` 自动记录 `submit` 节点（含判定结果）。
 判定为 Accepted 时会询问是否关闭计时器，选是后再让用户提供一段总结。时间节点保存在
@@ -273,8 +273,9 @@ SQL，加 `--write` 才允许修改数据。每道题还会根据事件推导出
   cf                   打开交互式 shell，底部每秒刷新计时状态行。可以直接输入
                        其它 cf 命令（省去 "cf"），例如 "submit 1136a"，命令在
                        计时器下方执行，shell 不关闭；Tab 补全命令与参数，上下键
-                       翻历史；"q" 关闭计时并退出。Ctrl-C 或 Ctrl-D 离开 shell，
-                       计时器继续在后台计时。"cf --help" 查看全部命令说明。
+                       翻历史，Ctrl-R 搜索历史；"q" 关闭计时并退出。Ctrl-C 或
+                       Ctrl-D 离开 shell，计时器继续在后台计时。
+                       "cf --help" 查看全部命令说明。
   cf start 1136a "read the problem"
                        开始为比赛 1136 的题目 a 计时。"cf start" 和
                        "cf end" 可在任意终端执行。

@@ -179,7 +179,11 @@ without the `cf` prefix: other commands run as `cf <line>` in a child process
 below the status line, with the same arguments and prompts as on the shell.
 Tab completes command names and the arguments of `db`, `watch`, `pull`,
 `clone`, and `completion`; press Tab again to cycle, Enter to accept, Esc to
-close. Up/Down recall the command history, which is stored in `~/.cf/history`.
+close. Up/Down recall the command history, which is stored in `~/.cf/history`;
+Ctrl-R opens a reverse history search (`(reverse-i-search)`), where Enter runs
+the selected entry, Ctrl-R or Up moves to an older match, Down to a newer one,
+Tab or Left/Right accepts the match for editing, and Esc or Ctrl-C restores the
+original input.
 `q` closes the timer and leaves the shell; Ctrl-C or Ctrl-D leaves the timer
 running in the background. `cf --help` prints the command introduction.
 

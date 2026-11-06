@@ -185,9 +185,10 @@ Examples:
                        terminal. Type any cf command without the "cf" prefix,
                        for example "submit 1136a"; it runs below the timer and
                        the shell stays open. Tab completes commands and
-                       arguments; Up/Down recall the command history. "q"
-                       closes the timer and leaves the shell; Ctrl-C or Ctrl-D
-                       leaves the timer running. "cf --help" prints this help.
+                       arguments; Up/Down recall the command history and
+                       Ctrl-R searches it. "q" closes the timer and leaves the
+                       shell; Ctrl-C or Ctrl-D leaves the timer running.
+                       "cf --help" prints this help.
   cf start 1136a "read the problem"
                        Start timing problem "a" of contest 1136. "cf start"
                        and "cf end" work from any terminal.
