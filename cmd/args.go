@@ -42,7 +42,8 @@ type ParsedArgs struct {
 	Statement    bool     `docopt:"statement"`
 	Material     bool     `docopt:"material"`
 	Completion   bool     `docopt:"completion"`
-	Timer        bool     `docopt:"timer"`
+	Start        bool     `docopt:"start"`
+	End          bool     `docopt:"end"`
 	DB           bool     `docopt:"db"`
 	LPractice    bool     `docopt:"lpractice"`
 	LRePractice  bool     `docopt:"lrepractice"`

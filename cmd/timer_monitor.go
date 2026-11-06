@@ -14,6 +14,7 @@ import (
 
 	"github.com/fatih/color"
 	ansi "github.com/k0kubun/go-ansi"
+	"github.com/mattn/go-runewidth"
 	"golang.org/x/term"
 )
 
@@ -22,7 +23,58 @@ type timerMonitorStatus struct {
 	raw    bool
 	prompt bool
 	length int
+	width  int
 	shown  bool
+}
+
+func terminalWidth(fd int) int {
+	width, _, err := term.GetSize(fd)
+	if err != nil || width < 1 {
+		return 0
+	}
+	return width
+}
+
+// inputDisplay converts the typed bytes to text. Raw mode delivers multi-byte
+// characters one byte at a time; an incomplete trailing sequence is hidden
+// until all of its bytes arrive, so the width calculation never sees a
+// replacement character and the status line cannot grow by an extra column.
+func inputDisplay(b []byte) string {
+	for i := 1; i <= utf8.UTFMax && i <= len(b); i++ {
+		if !utf8.RuneStart(b[len(b)-i]) {
+			continue
+		}
+		start := len(b) - i
+		if r, size := utf8.DecodeRune(b[start:]); r == utf8.RuneError && size == 1 && !utf8.FullRune(b[start:]) {
+			b = b[:start]
+		}
+		break
+	}
+	return strings.ToValidUTF8(string(b), "�")
+}
+
+// fitTail returns the longest suffix of s that fits in width display columns,
+// and whether the beginning was dropped. width is measured in terminal cells,
+// so wide characters such as Chinese are counted as two columns.
+func fitTail(s string, width int) (string, bool) {
+	if width <= 0 {
+		return "", s != ""
+	}
+	if runewidth.StringWidth(s) <= width {
+		return s, false
+	}
+	runes := []rune(s)
+	total := 0
+	start := len(runes)
+	for start > 0 {
+		w := runewidth.RuneWidth(runes[start-1])
+		if total+w > width {
+			break
+		}
+		total += w
+		start--
+	}
+	return string(runes[start:]), true
 }
 
 func (s *timerMonitorStatus) ending() string {
@@ -34,30 +86,64 @@ func (s *timerMonitorStatus) ending() string {
 	return "\n"
 }
 
-// draw prints the status line. Consecutive calls overwrite the same line.
+// draw prints the status line. Consecutive calls overwrite the same line. The
+// line is clipped to the terminal width so it never wraps: a wrapped status
+// line would make CursorUp(1) redraw the wrong row and print the input again.
 func (s *timerMonitorStatus) draw(st *timeState, input []byte) {
 	elapsed := formatElapsedMS(st.elapsed(time.Now()))
-	plain := fmt.Sprintf("[%v] %v", elapsed, openProblemNames(st))
+	prefixPlain := fmt.Sprintf("[%v] %v", elapsed, openProblemNames(st))
+	if st.Paused {
+		prefixPlain += " paused"
+	}
+
+	// Keep the most recently typed characters when the input is too wide.
+	shownInput := inputDisplay(input)
+	if s.prompt && s.width > 0 {
+		avail := s.width - runewidth.StringWidth(prefixPlain) - runewidth.StringWidth("  > ") - 1
+		tail, truncated := fitTail(shownInput, avail)
+		if truncated {
+			if avail > 1 {
+				tail, _ = fitTail(tail, avail-1)
+				tail = "…" + tail
+			} else {
+				tail = ""
+			}
+		}
+		shownInput = tail
+	}
+
+	plainLine := prefixPlain
 	line := fmt.Sprintf("[%v] %v", color.GreenString(elapsed), openProblemNames(st))
 	if st.Paused {
-		plain += " paused"
 		line += " paused"
 	}
-	plainLine := plain
 	if s.prompt {
-		plainLine = plain + "  > " + string(input)
-		line += "  > " + string(input)
+		plainLine += "  > " + shownInput
+		line += "  > " + shownInput
 	}
+	if s.width > 0 {
+		// Leave the last column unused: writing exactly one full row can make
+		// some terminals scroll before the trailing newline.
+		max := s.width - 1
+		if max < 1 {
+			max = 1
+		}
+		if runewidth.StringWidth(plainLine) > max {
+			plainLine = runewidth.Truncate(plainLine, max, "…")
+			line = plainLine
+		}
+	}
+	width := runewidth.StringWidth(plainLine)
 	padding := ""
-	if s.length > len(plainLine) {
-		padding = strings.Repeat(" ", s.length-len(plainLine))
+	if s.length > width {
+		padding = strings.Repeat(" ", s.length-width)
 	}
 	if s.shown {
 		ansi.CursorUp(1)
 	}
 	ansi.Printf("%v%v%v", line, padding, s.ending())
 	s.shown = true
-	s.length = len(plainLine)
+	s.length = width
 }
 
 // clear blanks the status line and parks the cursor on it so command output
@@ -148,7 +234,7 @@ func monitorCfArgs(args []string) ([]string, error) {
 	}
 	switch strings.ToLower(args[0]) {
 	case "timer", "counttime":
-		return nil, errors.New("The timer is already open. Use `q` to close it, or s/e/p to control it")
+		return nil, errors.New("`timer` is not a command. Use s/start and e/end inside the shell, or `cf start`/`cf end` from any terminal")
 	}
 	return args, nil
 }
@@ -254,7 +340,7 @@ func runTimeMonitor() error {
 // of using a reader goroutine, so an external command can read stdin while the
 // monitor is not reading it.
 func runTimeMonitorInteractive(fd int) error {
-	status := &timerMonitorStatus{prompt: true}
+	status := &timerMonitorStatus{prompt: true, width: terminalWidth(fd)}
 	rawMode := false
 	var termState *term.State
 
@@ -358,6 +444,8 @@ func runTimeMonitorInteractive(fd int) error {
 	inputClosed := false
 	nextTick := time.Now().Add(time.Second)
 	for {
+		// Pick up terminal resizes (SIGWINCH) without installing a handler.
+		status.width = terminalWidth(fd)
 		if inputClosed {
 			time.Sleep(time.Until(nextTick))
 		} else {
@@ -409,6 +497,9 @@ func runTimeMonitorInteractive(fd int) error {
 func runTimeMonitorLines() error {
 	status := &timerMonitorStatus{}
 	draw := term.IsTerminal(int(os.Stdout.Fd()))
+	if draw {
+		status.width = terminalWidth(int(os.Stdout.Fd()))
+	}
 	reader := bufio.NewReader(os.Stdin)
 	lastNotice := int64(0)
 	if st, err := loadTimeState(); err == nil {

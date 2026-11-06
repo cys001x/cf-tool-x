@@ -21,9 +21,6 @@ const sessionPath = "~/.cf/session"
 
 func main() {
 	if len(os.Args) > 1 {
-		if os.Args[1] == "counttime" || os.Args[1] == "countTime" {
-			os.Args[1] = "timer"
-		}
 		switch strings.ToLower(os.Args[1]) {
 		case "lpractice":
 			os.Args[1] = "lpractice"
@@ -63,7 +60,8 @@ Usage:
   cf race [<specifier>...]
   cf pull [ac] [<specifier>...]
   cf sync [<specifier>...]
-  cf timer <args>...
+  cf start [<args>...]
+  cf end [<args>...]
   cf db [options] [<args>...]
   cf lpractice [options] <count> [<name>]
   cf lrepractice [options] <count> [<name>]
@@ -96,9 +94,11 @@ Options:
                        want.
   <alias>              Template's alias. E.g. "cpp"
   <shell>              Shell to generate completion for: bash, zsh or fish.
-  <args>               A timer command (start/end, or s/e; required after
-                       "cf timer") and its arguments, or db commands
-                       (sql/time/stats/sync/path) and arguments.
+  <args>               Arguments of "cf start"/"cf end": an optional
+                       "p_<set>" practice set, a specifier (or a
+                       "p_<set>_<problem>" practice specifier), and a note.
+                       For "cf db": a subcommand (sql/time/stats/sync/path)
+                       and its arguments.
   ac                   The status of the submission is Accepted.
   --from <date>        Start date (YYYY-MM-DD) for "cf db stats".
   --to <date>          End date (YYYY-MM-DD) for "cf db stats".
@@ -181,37 +181,37 @@ Examples:
   cf                   Open the interactive shell. A timer status line is
                        refreshed every second at the bottom. There is no
                        background daemon: the state lives in
-                       "~/.cf/timer.json" and the timer commands work from any
+                       "~/.cf/timer.json" and "cf start"/"cf end" work from any
                        terminal. Type any cf command without the "cf" prefix,
                        for example "submit 1136a"; it runs below the timer and
                        the shell stays open. "q" closes the timer and leaves
                        the shell; Ctrl-C or Ctrl-D leaves the timer running.
                        "cf --help" prints this help.
-  cf timer start 1136a "read the problem"
-                       Start timing problem "a" of contest 1136. Only start
-                       and end can be run as "cf timer" commands.
-  cf timer end 1136a "solved"
+  cf start 1136a "read the problem"
+                       Start timing problem "a" of contest 1136. "cf start"
+                       and "cf end" work from any terminal.
+  cf end 1136a "solved"
                        End the running problem. It must match the start.
-  cf timer s p_drill 1136a "practice"
+  cf start p_drill 1136a "practice"
                        Start a practice run for problem 1136a in the set
                        "{cf}/practice/drill". Accepted submits in this run
                        advance the practice label. "p_drill_1136a" can be
                        used instead of "p_drill 1136a".
-  s 1136a "read"       (inside cf) Timer commands work without the "timer"
-                       prefix: s/start and e/end; p/pause, q and status are
-                       also available inside the shell.
+  s 1136a "read"       (inside cf) Start timing without the "cf" prefix:
+                       s/start and e/end; p/pause, q and status are also
+                       available inside the shell.
   p                    (inside cf) Pause or resume the timer.
   status               (inside cf) Print the elapsed time, active problem and
                        state.
   q "contest done"     (inside cf) Close the timer, print the summary and
                        leave the shell. "exit" is an alias.
   submit 1136a         (inside cf) Run "cf submit 1136a" without leaving the
-                       shell. Every cf command except "timer" works this way.
+                       shell. Every other cf command works this way.
   cf submit p_drill_1136a
                        Submit the code of practice problem 1136a in
                        "{cf}/practice/drill". "p_<set>_<problem>" works
                        wherever a specifier is accepted, and starts a
-                       practice run in "cf timer start/end".
+                       practice run in "cf start/end".
   cf db sync           Index every "count_time.json" into "~/.cf/timer.db"
                        and fill contest metadata from the Codeforces API.
   cf db time 1136a     Print the time nodes and total time of a problem.
@@ -252,7 +252,7 @@ File:
   "~/.cf/timer.json"     State of the global timer.
   "~/.cf/timer.db"       Local SQLite index of the timer records.
   "<problem>/count_time.json"
-                        Timer data written by "cf timer".
+                        Timer data written by "cf start" and "cf end".
   "{cf}/practice/<name>"
                         Practice sets created by "cf lpractice" and "cf opractice".
 

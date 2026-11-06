@@ -185,7 +185,7 @@ func mutateTimeState(createIfMissing bool, fn func(*timeState, time.Time) error)
 	st, err := loadTimeState()
 	if err != nil {
 		if !createIfMissing {
-			return nil, errors.New("No timer. Run `cf timer` or `cf timer start <specifier> <note>` first")
+			return nil, errors.New("No timer. Run `cf start <specifier> <note>` first")
 		}
 		st = newTimeState(time.Now())
 	}
@@ -322,7 +322,7 @@ func addRecordPath(records []string, path string) []string {
 func resolveTimerInfo(specifier string) (client.Info, error) {
 	specifier = strings.TrimSpace(specifier)
 	if specifier == "" {
-		return client.Info{}, errors.New("Missing specifier, e.g. `cf timer start 1136a <note>`")
+		return client.Info{}, errors.New("Missing specifier, e.g. `cf start 1136a <note>`")
 	}
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -383,7 +383,7 @@ func timerStart(practice, specifier, note string) error {
 		}
 		for _, seg := range st.Open {
 			if seg.Dir == dir {
-				return fmt.Errorf("Problem %v is already running. Run `cf timer end %v <note>` first",
+				return fmt.Errorf("Problem %v is already running. Run `cf end %v <note>` first",
 					seg.Problem, seg.Specifier)
 			}
 		}
@@ -419,7 +419,7 @@ func timerStart(practice, specifier, note string) error {
 // timerEnd records the end node of the problem opened by a matching start.
 func timerEnd(practice, specifier, note string) error {
 	if strings.TrimSpace(specifier) == "" {
-		return errors.New("Missing specifier, e.g. `cf timer end 1136a <note>`")
+		return errors.New("Missing specifier, e.g. `cf end 1136a <note>`")
 	}
 	var dir string
 	var err error
@@ -463,7 +463,7 @@ func timerEnd(practice, specifier, note string) error {
 		}
 		if index < 0 {
 			if len(st.Open) == 0 {
-				return errors.New("No running problem. Run `cf timer start <specifier> <note>` first")
+				return errors.New("No running problem. Run `cf start <specifier> <note>` first")
 			}
 			names := make([]string, len(st.Open))
 			for i, seg := range st.Open {
@@ -797,7 +797,7 @@ func parseTimerArgs(args []string) (command, practice, specifier, note string) {
 func runTimerCommand(command, practice, specifier, note string) error {
 	switch command {
 	case "":
-		return errors.New("Missing timer command. Run `cf` to open the interactive shell, or `cf timer start|end|pause|q|status`")
+		return errors.New("Missing timer command. Run `start`/`end` inside the cf shell, or `cf start`/`cf end` from any terminal")
 	case "start":
 		return timerStart(practice, specifier, note)
 	case "end":
@@ -856,7 +856,7 @@ func timerOpen() error {
 	if st.MonitorPID > 0 && st.MonitorPID != int32(os.Getpid()) && monitorAlive(st.MonitorPID) {
 		color.Yellow("The timer is already open in process %v.", st.MonitorPID)
 		printTimeStatus(st)
-		color.Cyan("Use `cf timer start/end` from any terminal, or run `cf` to open the shell.")
+		color.Cyan("Use `cf start/end` from any terminal, or run `cf` to open the shell.")
 		return nil
 	}
 	if _, err = mutateTimeState(false, func(st *timeState, now time.Time) error {
@@ -868,16 +868,18 @@ func timerOpen() error {
 	return runTimeMonitor()
 }
 
-// Timer command
-func Timer() (err error) {
-	command, practice, specifier, note := parseTimerArgs(Args.CommandArgs)
-	switch command {
-	case "start", "end":
-	case "":
-		return errors.New("Missing timer command. Use `cf` for the interactive shell, or `cf timer start|end`")
-	default:
-		return fmt.Errorf("`cf timer %v` is not supported. Use `cf timer start|end`, or run `%v` inside the cf shell", command, command)
-	}
+// StartTimer handles "cf start [<args>...]".
+func StartTimer() error {
+	return runStartEnd("start", Args.CommandArgs)
+}
+
+// EndTimer handles "cf end [<args>...]".
+func EndTimer() error {
+	return runStartEnd("end", Args.CommandArgs)
+}
+
+func runStartEnd(command string, args []string) error {
+	_, practice, specifier, note := parseTimerArgs(append([]string{command}, args...))
 	return runTimerCommand(command, practice, specifier, note)
 }
 

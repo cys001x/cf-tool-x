@@ -63,11 +63,11 @@ func splitPracticeSpecifier(specifier string) (set, problem string, ok bool) {
 // the practice set. It rejects a problem that is not part of the set.
 func resolvePracticeTimer(practice, specifier string) (info client.Info, dir, problem string, err error) {
 	if strings.TrimSpace(specifier) == "" {
-		return info, "", "", errors.New("Missing specifier, e.g. `cf timer start p_drill 1136a <note>`")
+		return info, "", "", errors.New("Missing specifier, e.g. `cf start p_drill 1136a <note>`")
 	}
 	set := strings.TrimPrefix(strings.TrimSpace(practice), "p_")
 	if set == "" {
-		return info, "", "", errors.New("Missing practice set name, e.g. `cf timer start p_drill 1136a`")
+		return info, "", "", errors.New("Missing practice set name, e.g. `cf start p_drill 1136a`")
 	}
 	base := practiceSetDir(set)
 	if st, e := os.Stat(base); e != nil || !st.IsDir() {

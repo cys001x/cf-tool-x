@@ -63,8 +63,10 @@ func Eval(opts docopt.Opts) error {
 		return Upgrade()
 	} else if Args.Completion {
 		return Completion()
-	} else if Args.Timer {
-		return Timer()
+	} else if Args.Start {
+		return StartTimer()
+	} else if Args.End {
+		return EndTimer()
 	} else if Args.DB {
 		return DB()
 	} else if Args.LPractice || Args.LRePractice || Args.LNRePractice || Args.OPractice {

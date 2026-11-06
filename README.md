@@ -80,17 +80,15 @@ Open the interactive shell. A timer status line refreshes every second at the
 bottom. Type `start <specifier> <note>` to start timing a problem or contest,
 `end <specifier> <note>` to stop it, `pause` to pause or resume, and `q` (or
 `exit`) to close the timer and print the summary. `start` and `end` also work
-from any other terminal as `cf timer start|end ...`; `pause`, `q`, and `status`
-are shell-only, and any other `cf timer` subcommand is rejected as an unknown
-command. `cf --help` prints the full command introduction; unknown commands
-print a short `Unknown command: "<name>"` message instead of the whole usage.
-There is no background daemon: the clock is derived from timestamps in
-`~/.cf/timer.json`.
+from any other terminal as `cf start ...` and `cf end ...`; `pause`, `q`, and
+`status` are shell-only. `cf --help` prints the full command introduction;
+unknown commands print a short `Unknown command: "<name>"` message instead of
+the whole usage. There is no background daemon: the clock is derived from
+timestamps in `~/.cf/timer.json`.
 
 While the shell is open, every other `cf` command can be typed without the `cf`
 prefix, for example `submit 1136a`. It runs below the timer and the shell stays
-open afterwards; `timer` itself is rejected. Ctrl-C or Ctrl-D leaves the timer
-running in the background.
+open afterwards. Ctrl-C or Ctrl-D leaves the timer running in the background.
 
 Several problems can be timed at the same time; `end` closes the one matching
 the specifier. `cf test` records a `test` node when every sample passes, and `cf submit`
@@ -110,7 +108,7 @@ with a per-day breakdown; add `--accepted` to keep only accepted problems.
 `cf db sql "SELECT ..."` runs read-only SQL against `~/.cf/timer.db`, and
 `--write` allows changes. Each problem also gets one derived status label
 (`pending`, `open`, `done`, `tests_passed`, `accepted`). Accepted submits made
-during a practice timing run (`cf timer s p_<set> <problem>`) change it to
+during a practice timing run (`cf start p_<set> <problem>`) change it to
 `practice_1`, `practice_2`, and so on up to `practice_9`. `cf db stats --status
 done` filters by status.
 
@@ -124,12 +122,12 @@ picks only accepted problems, including ones accepted again in practice
 timed. Add a second argument to name the folder, for example `cf lpractice 5
 drill`. `cf opractice 5 --difficulty 1200-1600 --tags dp,greedy` selects from
 the online Codeforces problemset instead. Start a practice run with
-`cf timer s p_drill 1136a "retry"`; accepted submits during that run advance
+`cf start p_drill 1136a "retry"`; accepted submits during that run advance
 the problem's practice label.
 
 A practice problem can also be used as one specifier, `p_<set>_<problem>`:
 `cf submit p_drill_1136a` submits the code in `cf/practice/drill/1136a`,
-`cf test p_drill_1136a` tests it, and `cf timer s p_drill_1136a` starts the
+`cf test p_drill_1136a` tests it, and `cf start p_drill_1136a` starts the
 practice run. Use it as the only specifier. The problem part is the practice
 folder name (`1136a`, `100001a`), so set names may contain underscores
 (`p_drill_easy_1136a`).
@@ -189,7 +187,8 @@ Usage:
   cf race [<specifier>...]
   cf pull [ac] [<specifier>...]
   cf sync [<specifier>...]
-  cf timer <args>...
+  cf start [<args>...]
+  cf end [<args>...]
   cf db [options] [<args>...]
   cf lpractice [options] <count> [<name>]
   cf lrepractice [options] <count> [<name>]
@@ -222,9 +221,11 @@ Options:
                        want.
   <alias>              Template's alias. E.g. "cpp"
   <shell>              Shell to generate completion for: bash, zsh or fish.
-  <args>               A timer command (start/end, or s/e; required after
-                       "cf timer") and its arguments, or db commands
-                       (sql/time/stats/sync/path) and arguments.
+  <args>               Arguments of "cf start"/"cf end": an optional
+                       "p_<set>" practice set, a specifier (or a
+                       "p_<set>_<problem>" practice specifier), and a note.
+                       For "cf db": a subcommand (sql/time/stats/sync/path)
+                       and its arguments.
   ac                   The status of the submission is Accepted.
   --from <date>        Start date (YYYY-MM-DD) for "cf db stats".
   --to <date>          End date (YYYY-MM-DD) for "cf db stats".
@@ -307,37 +308,37 @@ Examples:
   cf                   Open the interactive shell. A timer status line is
                        refreshed every second at the bottom. There is no
                        background daemon: the state lives in
-                       "~/.cf/timer.json" and the timer commands work from any
+                       "~/.cf/timer.json" and "cf start"/"cf end" work from any
                        terminal. Type any cf command without the "cf" prefix,
                        for example "submit 1136a"; it runs below the timer and
                        the shell stays open. "q" closes the timer and leaves
                        the shell; Ctrl-C or Ctrl-D leaves the timer running.
                        "cf --help" prints this help.
-  cf timer start 1136a "read the problem"
-                       Start timing problem "a" of contest 1136. Only start
-                       and end can be run as "cf timer" commands.
-  cf timer end 1136a "solved"
+  cf start 1136a "read the problem"
+                       Start timing problem "a" of contest 1136. "cf start"
+                       and "cf end" work from any terminal.
+  cf end 1136a "solved"
                        End the running problem. It must match the start.
-  cf timer s p_drill 1136a "practice"
+  cf start p_drill 1136a "practice"
                        Start a practice run for problem 1136a in the set
                        "{cf}/practice/drill". Accepted submits in this run
                        advance the practice label. "p_drill_1136a" can be
                        used instead of "p_drill 1136a".
-  s 1136a "read"       (inside cf) Timer commands work without the "timer"
-                       prefix: s/start and e/end; p/pause, q and status are
-                       also available inside the shell.
+  s 1136a "read"       (inside cf) Start timing without the "cf" prefix:
+                       s/start and e/end; p/pause, q and status are also
+                       available inside the shell.
   p                    (inside cf) Pause or resume the timer.
   status               (inside cf) Print the elapsed time, active problem and
                        state.
   q "contest done"     (inside cf) Close the timer, print the summary and
                        leave the shell. "exit" is an alias.
   submit 1136a         (inside cf) Run "cf submit 1136a" without leaving the
-                       shell. Every cf command except "timer" works this way.
+                       shell. Every other cf command works this way.
   cf submit p_drill_1136a
                        Submit the code of practice problem 1136a in
                        "{cf}/practice/drill". "p_<set>_<problem>" works
                        wherever a specifier is accepted, and starts a
-                       practice run in "cf timer start/end".
+                       practice run in "cf start/end".
   cf db sync           Index every "count_time.json" into "~/.cf/timer.db"
                        and fill contest metadata from the Codeforces API.
   cf db time 1136a     Print the time nodes and total time of a problem.
@@ -378,7 +379,7 @@ File:
   "~/.cf/timer.json"     State of the global timer.
   "~/.cf/timer.db"       Local SQLite index of the timer records.
   "<problem>/count_time.json"
-                        Timer data written by "cf timer".
+                        Timer data written by "cf start" and "cf end".
   "{cf}/practice/<name>"
                         Practice sets created by "cf lpractice" and "cf opractice".
 

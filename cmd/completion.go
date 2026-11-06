@@ -12,8 +12,9 @@ import (
 var completionCommands = []string{
 	"config", "submit", "list", "ncontests", "parse", "gen", "test", "watch",
 	"open", "stand", "sid", "detail", "race", "pull", "sync",
+	"start", "end",
 	"clone", "upgrade", "statement", "material", "completion",
-	"timer", "db",
+	"db",
 	"lpractice", "lrepractice", "lnrepractice", "opractice",
 }
 
@@ -48,9 +49,6 @@ _cf() {
         watch)
             [[ $COMP_CWORD -eq 2 ]] && COMPREPLY=( $(compgen -W "all" -- "$cur") )
             ;;
-        timer)
-            [[ $COMP_CWORD -eq 2 ]] && COMPREPLY=( $(compgen -W "start end s e" -- "$cur") )
-            ;;
         db)
             [[ $COMP_CWORD -eq 2 ]] && COMPREPLY=( $(compgen -W "sql time stats sync path" -- "$cur") )
             ;;
@@ -80,12 +78,13 @@ _cf() {
         'race:start a contest'
         'pull:pull your submissions'
         'sync:sync samples, statement and latest submission'
+        'start:start timing a problem or contest'
+        'end:stop timing a running problem'
         'clone:clone all submissions of a user'
         'upgrade:upgrade cf'
         'statement:fetch problem statements'
         'material:fetch contest materials'
         'completion:print a shell completion script'
-        'timer:start/end timer commands (use cf for the shell)'
         'db:query the local timer database'
         'lpractice:pick random local problems'
         'lrepractice:pick random accepted local problems'
@@ -105,9 +104,6 @@ _cf() {
         watch)
             _values 'scope' all
             ;;
-        timer)
-            _values 'timer command' start end s e
-            ;;
         db)
             _values 'db command' sql time stats sync path
             ;;
@@ -121,7 +117,6 @@ const fishCompletion = `# fish completion for cf
 complete -c cf -f -n "not __fish_seen_subcommand_from COMMANDS" -a "COMMANDS"
 complete -c cf -n "__fish_seen_subcommand_from pull clone" -a ac
 complete -c cf -n "__fish_seen_subcommand_from watch" -a all
-complete -c cf -n "__fish_seen_subcommand_from timer" -a "start end s e"
 complete -c cf -n "__fish_seen_subcommand_from db" -a "sql time stats sync path"
 `
 

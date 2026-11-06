@@ -7,13 +7,13 @@
 1. **真实提交下的 practice 计数**
    - 准备一个练习集，目录形如 `{cf}/practice/<set>/<problem>/`，并存在 `practice.json`。
    - 先正常计时并 Accepted 一次，使状态为 `accepted`。
-   - 再执行 `cf timer s p_<set> <problem>`，用 `cf submit` 在同一个计时段内 Accepted。
+   - 再执行 `cf start p_<set> <problem>`，用 `cf submit` 在同一个计时段内 Accepted。
    - 期望：`cf db sync` 后 `status` 变为 `practice_1`，`problem.practice` 为 1；重复到第 9 次后保持 `practice_9`。
    - 反向用例：普通计时中的 Accepted 不增加 practice；首次 Accepted 发生在 practice 计时中时仍为 `accepted`。
    - 重点检查 `cf submit` 判定 Accepted 后询问“是否关闭计时器”的两条分支都不影响计数。
 
 2. **practice 计时入口**
-   - `cf timer s p_<set> <problem>` 能按 `practice.json` 的 `display` 找到题目目录。
+   - `cf start p_<set> <problem>` 能按 `practice.json` 的 `display` 找到题目目录。
    - `practice.json` 缺失时按 `<contestId><index>` 回退。
    - 题目不在练习集、练习集不存在时均报错且不写计时数据。
    - 默认时间戳练习集、自定义 `<name>`、gym、group、acmsguru 各测一次。
@@ -49,7 +49,7 @@
 - group 比赛与 acmsguru 没有在线元数据，名称、div、起止时间留空。
 - 练习集下载样例和题面需要有效的 Codeforces 会话；题面失败只警告。
 - 首次 Accepted 即使发生在 practice 计时中仍记 `accepted`，practice 计数从下一次 practice Accepted 开始。
-- `cf timer start gym 100001a` 这类多 token specifier 仍只解析第一个 token（既有行为，本次未改）。
+- `cf start gym 100001a` 这类多 token specifier 仍只解析第一个 token（既有行为，本次未改）。
 - `p_<set>_<problem>` 只在当前目录附近能定位到 `cf` 根时生效，且必须单独使用；练习题部分必须以数字开头（练习目录名 `<contestId><index>`），练习集名因此可含下划线。
 - 新增 SQLite 依赖后 `vendor/` 由约 11M 增至约 140M，二进制由约 8M 增至约 12M。
 
@@ -84,9 +84,9 @@
 
 计时器前台改为轮询 stdin（Unix `poll`，Windows `WaitForSingleObject`），
 移除了常驻读取 goroutine；非计时命令以子进程 `cf <line>` 执行。
-入口调整（2026-11-06 追加）：不带参数的 `cf` 打开 shell；`cf timer` 只接受
-`start`/`end`（含 `s`/`e`）。裸 `cf timer` 提示需要 start 或 end；其它子命令与未知顶层
-命令输出 npm 风格提示（`Unknown command: "<名字>"` + `cf --help`），退出码 1。
+入口调整（2026-11-06 追加）：不带参数的 `cf` 打开 shell；计时入口为
+`cf start`/`cf end`（shell 内可用 `s`/`e`）。`cf timer` 与 `cf counttime`
+已移除，按未知顶层命令输出 npm 风格提示。
 
 已通过（单元测试 + 本地 pty 模拟）：
 
@@ -98,9 +98,17 @@
 - 子命令运行中按 Ctrl-C（`cf config` 实测）：子命令退出，计时器继续，父进程未被 SIGINT 杀死。
 - `printf 'status\nq\n' | cf` 的逐行执行（单元测试 + 本地二进制实测）。
 - `p_<set>_<problem>` 单 token specifier：`infoFromSpecifiers` 解析、`getOneCode` 在练习目录找代码、
-  `cf timer s/e p_drill_1136a` 生成带 practice 的事件、`cf db time p_drill_1136a` 输出记录
+  `cf timer s/e p_drill_1136a`（旧入口，逻辑现由 `cf start`/`cf end` 复用）生成带 practice 的事
+  件、`cf db time p_drill_1136a` 输出记录
   （单元测试 + 本地二进制实测）；计时器 REPL 内 `s/db time/e` 全流程（pty 模拟）。
   带下划线的练习集名 `p_drill_easy_1136a`、非法形式 `p_drill`/`p__1136a` 已覆盖。
+
+已修复（2026-11-06）：
+
+- 输入行超过终端宽度时状态行换行，`CursorUp(1)` 定位到错误的行，导致输入内容被反复打印。
+  状态行现在按终端列宽裁剪（中文按两列计算），输入只显示末尾并以 `…` 开头；终端尺寸每秒
+  重新获取；未收全的多字节字符暂不显示。单元测试 `TestFitTail`/`TestInputDisplay`，另有
+  80 列 pty 实测（ASCII 与中文输入下状态行最长 79 列，无换行）。
 
 待测（真机 / 真实账号）：
 

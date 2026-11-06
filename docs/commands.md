@@ -10,7 +10,7 @@ document describes every command, its arguments, and the files it creates.
   - [cf config](#cf-config)
   - [cf sync](#cf-sync)
   - [cf (interactive shell)](#cf-interactive-shell)
-  - [cf timer](#cf-timer)
+  - [cf start / cf end](#cf-start--cf-end)
   - [cf db](#cf-db)
   - [cf practice commands](#cf-practice-commands)
   - [cf pull](#cf-pull-ac)
@@ -72,8 +72,8 @@ folder, `cf test p_drill_1136a` tests it, and so on. It must be the only
 specifier on the command line. The set is resolved under
 the `cf` root around the current directory, and the folder must exist. Since
 the problem part starts with a digit, set names may contain underscores, e.g.
-`p_drill_easy_1136a` means set `drill_easy`. `cf timer start/end` also accepts
-this form and records a practice run.
+`p_drill_easy_1136a` means set `drill_easy`. `cf start` and `cf end` also accept
+this form and record a practice run.
 
 When no specifier is given, `cf` derives the contest and problem from the
 current directory if it is inside the `cf` folder tree.
@@ -181,25 +181,24 @@ below the status line, with the same arguments and prompts as on the shell.
 running in the background. `cf --help` prints the command introduction.
 
 The timer commands are also available from any other terminal as
-`cf timer <command> ...`; see [cf timer](#cf-timer). A bare `cf timer` is not
-a command: the shell is opened by `cf`.
+`cf start ...` and `cf end ...`; see [cf start / cf end](#cf-start--cf-end).
+The shell itself is opened by a bare `cf`.
 
-### cf timer
+### cf start / cf end
 
 ```
-cf timer start <specifier> <note>
-cf timer end <specifier> <note>
-cf timer s <specifier> <note>   # aliases
-cf timer e <specifier> <note>
-cf counttime ...                # alias of cf timer
+cf start <specifier> <note>
+cf end <specifier> <note>
+cf start p_<set> <problem> <note>   # practice run
+cf end p_<set> <problem> <note>
+cf start p_<set>_<problem> <note>   # single-token practice specifier
+cf end p_<set>_<problem> <note>
 ```
 
-Only `start` and `end` are available as `cf timer` commands. They work from
-any terminal while the shell is open. `pause`, `q`, and `status` live inside
-the [`cf` shell](#cf-interactive-shell); a bare `cf timer` prints the usage.
-Any other subcommand, for example `cf timer pause`, prints
-`Unknown command: "pause"` and points to `cf --help`; an unknown top-level
-command is reported the same way.
+`cf start` and `cf end` work from any terminal. The timer is created
+automatically by the first `cf start`. `pause`, `q`, and `status` live inside
+the [`cf` shell](#cf-interactive-shell). An unknown top-level command prints
+`Unknown command: "<name>"` and points to `cf --help`.
 
 The timer status line is refreshed every second while the shell is open; the
 time is printed in green and the line is redrawn in place with the same
@@ -213,16 +212,17 @@ The shell accepts every other `cf` command without the `cf` prefix, for
 example `submit 1136a`, `test`, `db sync`, `open 1136a`, or `lpractice 5`.
 Such a line runs as `cf <line>` in a child process below the timer, with the
 same arguments and prompts as on the shell; the timer stays open afterwards.
-`timer` itself is rejected because the timer is already open. Ctrl-C during a
-child command stops the child and returns to the shell. Quotes are honored the
-same way a shell does for the command line, e.g. `submit -f "a b.cpp"`.
+`start` and `end` are handled by the shell itself; typing `cf start` also works
+as a child command. Ctrl-C during a child command stops the child and returns
+to the shell. Quotes are honored the same way a shell does for the command
+line, e.g. `submit -f "a b.cpp"`.
 
 These commands can be typed in the shell; `start` and `end` can also be run
-from any other terminal as `cf timer <command>`:
+from any other terminal as `cf start` and `cf end`:
 
 | Command | Effect |
 |---------|--------|
-| `start <specifier> <note>` (`s`) | Start timing a problem or a contest. Several problems can run at the same time; only a duplicate start of the same problem is rejected. The timer is created automatically when it does not exist. Prefix the specifier with `p_<set>` to record a practice run inside `{cf}/practice/<set>`, for example `cf timer s p_drill 1136a "retry"`. The single-token form `cf timer s p_drill_1136a "retry"` is equivalent. |
+| `start <specifier> <note>` (`s`) | Start timing a problem or a contest. Several problems can run at the same time; only a duplicate start of the same problem is rejected. The timer is created automatically when it does not exist. Prefix the specifier with `p_<set>` to record a practice run inside `{cf}/practice/<set>`, for example `cf start p_drill 1136a "retry"`. The single-token form `cf start p_drill_1136a "retry"` is equivalent. |
 | `end <specifier> <note>` (`e`) | Stop the running problem that matches the specifier. The specifier must resolve to the same folder as one of the open `start` events; otherwise the command is rejected. For a practice run use the same `p_<set>` prefix or the `p_<set>_<problem>` form. The note is stored as that problem's summary. The elapsed time of that problem and the timer total are printed. |
 | `pause` (`p`) | Inside the shell: pause the timer. Running `pause` again resumes it. |
 | `q [<note>]` (`exit` is an alias) | Inside the shell: close the timer, print the summary, and leave the shell. The note is stored as the session summary and as the summary of every open problem. A running problem is ended automatically with the note, or `auto end on quit`. |
@@ -230,12 +230,12 @@ from any other terminal as `cf timer <command>`:
 
 ```plain
 cf                                        # interactive shell with the timer
-cf timer start 1136a "read the problem"   # from any terminal
-cf timer end 1136a "solved"
-cf timer s p_drill 1136a "practice run"
-cf timer e p_drill 1136a "still wrong"
-cf timer s p_drill_1136a "practice run"   # same as above
-s 1136a "read"    # typed inside the shell: same as "cf timer start ..."
+cf start 1136a "read the problem"         # from any terminal
+cf end 1136a "solved"
+cf start p_drill 1136a "practice run"
+cf end p_drill 1136a "still wrong"
+cf start p_drill_1136a "practice run"     # same as above
+s 1136a "read"    # typed inside the shell: same as "cf start ..."
 p                 # typed inside the shell: pause or resume
 status            # typed inside the shell
 q "contest done"  # typed inside the shell: close and leave
@@ -381,7 +381,7 @@ Every problem has one derived status label:
 - `accepted`: at least one `submit` with verdict `OK`, and no counted
   practice submits.
 - `practice_1` through `practice_9`: accepted submits made during a practice
-  timing run (`cf timer s p_<set> ...`), excluding the first accepted submit.
+  timing run (`cf start p_<set> ...`), excluding the first accepted submit.
   The number is the practice-accepted count, capped at 9.
 - `tests_passed`: at least one `test` event exists. `cf test` only writes that
   event when every sample passes.
@@ -464,7 +464,7 @@ cf/
 - A code file is generated only when a default template exists. An empty
   `analysis.md` is created next to it if missing.
 - To record a practice run, start the timer from the set with
-  `cf timer s p_<set> <problem>`. Only accepted submits made during that timer
+  `cf start p_<set> <problem>`. Only accepted submits made during that timer
   segment advance the problem's `practice` count and status.
 
 ```plain

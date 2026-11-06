@@ -2,37 +2,18 @@ package cmd
 
 import (
 	"fmt"
-	"strings"
 )
 
 // ValidateCommandLine returns an npm-style message for an unknown top-level
-// command or an unsupported "cf timer" subcommand. An empty string means the
-// line is known and can go to docopt.
+// command. An empty string means the line is known and can go to docopt.
 func ValidateCommandLine(argv []string) string {
-	if len(argv) == 0 || strings.HasPrefix(argv[0], "-") {
+	if len(argv) == 0 || len(argv[0]) == 0 || argv[0][0] == '-' {
 		return ""
 	}
-	command := argv[0]
-	if command == "counttime" || command == "countTime" {
-		command = "timer"
+	if !isKnownCommand(argv[0]) {
+		return unknownCommandMessage(argv[0], "commands")
 	}
-	if !isKnownCommand(command) {
-		return unknownCommandMessage(command, "commands")
-	}
-	if command != "timer" {
-		return ""
-	}
-	if len(argv) == 1 {
-		return "A timer command is required: start or end.\n\nTo see the supported timer commands, run:\n  cf --help"
-	}
-	if strings.HasPrefix(argv[1], "-") {
-		return ""
-	}
-	switch normalizeTimerCommand(argv[1]) {
-	case "start", "end":
-		return ""
-	}
-	return unknownCommandMessage(argv[1], "timer commands")
+	return ""
 }
 
 func isKnownCommand(name string) bool {
