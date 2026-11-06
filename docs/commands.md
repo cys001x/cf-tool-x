@@ -709,7 +709,9 @@ cf upgrade
 ```
 
 Downloads the latest release binary from GitHub Releases and replaces the
-current executable.
+current executable. The plain `cf_<tag>_<goos>_<goarch>[.exe]` assets are
+preferred; the first file of a legacy `cf_<tag>_<goos>_<32|64>.zip` asset is
+used when no plain binary exists. `386`, `amd64`, and `arm64` are supported.
 
 ### cf completion
 

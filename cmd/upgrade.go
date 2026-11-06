@@ -37,6 +37,24 @@ func less(a, b string) bool {
 	return false
 }
 
+// upgradeAssetCandidates lists the release assets to try, newest naming first.
+// Releases ship plain binaries named cf_<tag>_<goos>_<goarch>[.exe]; older
+// releases used cf_<tag>_<goos>_<32|64>.zip.
+func upgradeAssetCandidates(version, goos, goarch string) []string {
+	name := fmt.Sprintf("cf_%v_%v_%v", version, goos, goarch)
+	if goos == "windows" {
+		name += ".exe"
+	}
+	names := []string{name}
+	switch goarch {
+	case "386":
+		names = append(names, fmt.Sprintf("cf_%v_%v_32.zip", version, goos))
+	case "amd64":
+		names = append(names, fmt.Sprintf("cf_%v_%v_64.zip", version, goos))
+	}
+	return names
+}
+
 func getLatest() (version, note, ptime, url string, size uint, err error) {
 	goos := ""
 	switch runtime.GOOS {
@@ -51,12 +69,8 @@ func getLatest() (version, note, ptime, url string, size uint, err error) {
 		return
 	}
 
-	arch := ""
 	switch runtime.GOARCH {
-	case "386":
-		arch = "32"
-	case "amd64":
-		arch = "64"
+	case "386", "amd64", "arm64":
 	default:
 		err = fmt.Errorf("Not support %v", runtime.GOARCH)
 		return
@@ -72,19 +86,44 @@ func getLatest() (version, note, ptime, url string, size uint, err error) {
 		return
 	}
 	result := make(map[string]interface{})
-	json.Unmarshal(body, &result)
-	version = result["tag_name"].(string)
-	note = result["body"].(string)
-	tm, _ := time.Parse("2006-01-02T15:04:05Z", result["published_at"].(string))
-	ptime = tm.In(time.Local).Format("2006-01-02 15:04")
-	url = fmt.Sprintf("https://github.com/cys001x/cf-tool-x/releases/download/%v/cf_%v_%v_%v.zip", version, version, goos, arch)
-	assets, _ := result["assets"].([]interface{})
-	for _, tmp := range assets {
-		asset, _ := tmp.(map[string]interface{})
-		if url == asset["browser_download_url"] {
-			size = uint(asset["size"].(float64))
-			break
+	if err = json.Unmarshal(body, &result); err != nil {
+		return
+	}
+	version, _ = result["tag_name"].(string)
+	if version == "" {
+		err = fmt.Errorf("Cannot read the latest release from GitHub")
+		return
+	}
+	note, _ = result["body"].(string)
+	if published, ok := result["published_at"].(string); ok {
+		if tm, e := time.Parse("2006-01-02T15:04:05Z", published); e == nil {
+			ptime = tm.In(time.Local).Format("2006-01-02 15:04")
 		}
+	}
+	assets, _ := result["assets"].([]interface{})
+	byName := make(map[string]map[string]interface{}, len(assets))
+	for _, tmp := range assets {
+		asset, ok := tmp.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if name, ok := asset["name"].(string); ok {
+			byName[name] = asset
+		}
+	}
+	for _, name := range upgradeAssetCandidates(version, goos, runtime.GOARCH) {
+		asset, ok := byName[name]
+		if !ok {
+			continue
+		}
+		url, _ = asset["browser_download_url"].(string)
+		if s, ok := asset["size"].(float64); ok {
+			size = uint(s)
+		}
+		break
+	}
+	if url == "" {
+		err = fmt.Errorf("Release %v has no asset for %v/%v", version, goos, runtime.GOARCH)
 	}
 	return
 }
@@ -154,24 +193,24 @@ func upgrade(url, exePath string, size uint) (err error) {
 	if err != nil {
 		return
 	}
-	reader, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
-	if err != nil {
-		return
-	}
-
-	rc, err := reader.File[0].Open()
-	if err != nil {
-		return
-	}
-	newData, err := ioutil.ReadAll(rc)
-	rc.Close()
-	if err != nil {
-		return
+	// Releases ship plain binaries; older ones shipped a zip holding the
+	// binary as its first file. Accept both.
+	payload := data
+	if reader, zerr := zip.NewReader(bytes.NewReader(data), int64(len(data))); zerr == nil && len(reader.File) > 0 {
+		rc, oerr := reader.File[0].Open()
+		if oerr != nil {
+			return oerr
+		}
+		payload, err = ioutil.ReadAll(rc)
+		rc.Close()
+		if err != nil {
+			return err
+		}
 	}
 
 	newPath := filepath.Join(updateDir, fmt.Sprintf(".%s.new", filepath.Base(exePath)))
 	color.Cyan("Save the new one to %v", newPath)
-	if err = ioutil.WriteFile(newPath, newData, 0755); err != nil {
+	if err = ioutil.WriteFile(newPath, payload, 0755); err != nil {
 		return
 	}
 
