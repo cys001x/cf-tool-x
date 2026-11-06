@@ -1,0 +1,97 @@
+cmd/timer_monitor.go
+  69fd4781bb3eb42f 243-244,336
+cmd/completion.go
+  69fd4781bb3eb42f 52,88,109,124
+cmd/timer_monitor_test.go
+  69fd4781bb3eb42f 126-148
+cmd/timer.go
+  69fd4781bb3eb42f 799-800,859,874-880,883-891
+cmd/command_check.go
+  69fd4781bb3eb42f 1-49
+cmd/command_check_test.go
+  69fd4781bb3eb42f 1-47
+docs/leftover-tests.md
+  69fd4781bb3eb42f 20,87-89,99
+docs/commands.md
+  69fd4781bb3eb42f 12,169-186,190-194,197-210,212,217,220-221,227-229,232,238-242,244,253,301-303
+README_zh_CN.md
+  69fd4781bb3eb42f 76,78-83,85-87,157,173,204-206,270-274,276-277,284-291
+README.md
+  69fd4781bb3eb42f 77,79-88,90-91,176,192,225-227,307-308,310-315,317-318,326-335
+cf.go
+  69fd4781bb3eb42f 37-40,50,66,99-101,181-182,184-189,191-192,200-209,302-309
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8-ntes.9",
+  "base_commit_sha": "f40d257e8787371d48e92bf550b774a2b335b8c3",
+  "prompts": {
+    "69fd4781bb3eb42f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e6f58b04-794a-40e1-8850-1fc4ca95514a",
+        "model": "deepseek-flash"
+      },
+      "human_author": "cys",
+      "messages": [],
+      "total_additions": 347,
+      "total_deletions": 142,
+      "accepted_lines": 311,
+      "overriden_lines": 0,
+      "per_file_stats": {
+        "cmd/completion.go": {
+          "additions": 5,
+          "deletions": 5,
+          "accepted_lines": 4
+        },
+        "docs/commands.md": {
+          "additions": 66,
+          "deletions": 36,
+          "accepted_lines": 56
+        },
+        "cmd/command_check_test.go": {
+          "additions": 47,
+          "accepted_lines": 47
+        },
+        "cf.go": {
+          "additions": 42,
+          "deletions": 24,
+          "accepted_lines": 37
+        },
+        "cmd/timer_monitor.go": {
+          "additions": 3,
+          "deletions": 3,
+          "accepted_lines": 3
+        },
+        "README.md": {
+          "additions": 48,
+          "deletions": 38,
+          "accepted_lines": 38
+        },
+        "cmd/timer_monitor_test.go": {
+          "additions": 23,
+          "accepted_lines": 23
+        },
+        "docs/leftover-tests.md": {
+          "additions": 7,
+          "deletions": 4,
+          "accepted_lines": 5
+        },
+        "README_zh_CN.md": {
+          "additions": 38,
+          "deletions": 29,
+          "accepted_lines": 30
+        },
+        "cmd/timer.go": {
+          "additions": 19,
+          "deletions": 3,
+          "accepted_lines": 19
+        },
+        "cmd/command_check.go": {
+          "additions": 49,
+          "accepted_lines": 49
+        }
+      }
+    }
+  }
+}
