@@ -1,0 +1,87 @@
+cmd/repl.go
+  69fd4781bb3eb42f 1-560
+go.mod
+  69fd4781bb3eb42f 7-9,27-34,37,40,43-46,49,52,54-55
+README_zh_CN.md
+  69fd4781bb3eb42f 86-88,275-277,336
+cmd/repl_test.go
+  69fd4781bb3eb42f 1-146
+cf.go
+  69fd4781bb3eb42f 187-190,255
+docs/commands.md
+  69fd4781bb3eb42f 180-182,264-265
+docs/leftover-tests.md
+  69fd4781bb3eb42f 83,85-88,124-147
+cmd/timer_monitor.go
+  69fd4781bb3eb42f 46-47,49,51,269,306,332
+README.md
+  69fd4781bb3eb42f 91-94,317-320,385
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8-ntes.9",
+  "base_commit_sha": "10626fbcabec344c99af0ad8d43d3e7b49e372ea",
+  "prompts": {
+    "69fd4781bb3eb42f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e6f58b04-794a-40e1-8850-1fc4ca95514a",
+        "model": "deepseek-flash"
+      },
+      "human_author": "cys",
+      "messages": [],
+      "total_additions": 819,
+      "total_deletions": 320,
+      "accepted_lines": 789,
+      "overriden_lines": 0,
+      "per_file_stats": {
+        "cmd/repl_test.go": {
+          "additions": 146,
+          "accepted_lines": 146
+        },
+        "README_zh_CN.md": {
+          "additions": 9,
+          "deletions": 7,
+          "accepted_lines": 7
+        },
+        "README.md": {
+          "additions": 11,
+          "deletions": 6,
+          "accepted_lines": 9
+        },
+        "docs/commands.md": {
+          "additions": 5,
+          "accepted_lines": 5
+        },
+        "cf.go": {
+          "additions": 5,
+          "deletions": 3,
+          "accepted_lines": 5
+        },
+        "cmd/timer_monitor_test.go": {
+          "deletions": 44
+        },
+        "go.mod": {
+          "additions": 24,
+          "deletions": 4,
+          "accepted_lines": 21
+        },
+        "cmd/timer_monitor.go": {
+          "additions": 7,
+          "deletions": 230,
+          "accepted_lines": 7
+        },
+        "cmd/repl.go": {
+          "additions": 583,
+          "deletions": 23,
+          "accepted_lines": 560
+        },
+        "docs/leftover-tests.md": {
+          "additions": 29,
+          "deletions": 3,
+          "accepted_lines": 29
+        }
+      }
+    }
+  }
+}
