@@ -1,0 +1,48 @@
+cmd/upgrade_test.go
+  69fd4781bb3eb42f 1-26
+cmd/upgrade.go
+  69fd4781bb3eb42f 40-57,73,89-102,104,106-108,110-111,114-126,196-208,213
+docs/commands.md
+  69fd4781bb3eb42f 712-714
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8-ntes.9",
+  "base_commit_sha": "a86229ec19dba9c403093dec804018af0a4062c5",
+  "prompts": {
+    "69fd4781bb3eb42f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e6f58b04-794a-40e1-8850-1fc4ca95514a",
+        "model": "deepseek-flash"
+      },
+      "human_author": "cys",
+      "messages": [],
+      "total_additions": 98,
+      "total_deletions": 31,
+      "accepted_lines": 98,
+      "overriden_lines": 0,
+      "per_file_stats": {
+        "docs/commands.md": {
+          "additions": 3,
+          "deletions": 1,
+          "accepted_lines": 3
+        },
+        "cmd/upgrade.go": {
+          "additions": 68,
+          "deletions": 29,
+          "accepted_lines": 68
+        },
+        "cmd/upgrade_test.go": {
+          "additions": 26,
+          "accepted_lines": 26
+        },
+        "cf.go": {
+          "additions": 1,
+          "deletions": 1,
+          "accepted_lines": 1
+        }
+      }
+    }
+  }
+}
