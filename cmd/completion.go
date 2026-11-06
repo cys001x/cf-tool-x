@@ -49,7 +49,7 @@ _cf() {
             [[ $COMP_CWORD -eq 2 ]] && COMPREPLY=( $(compgen -W "all" -- "$cur") )
             ;;
         timer)
-            [[ $COMP_CWORD -eq 2 ]] && COMPREPLY=( $(compgen -W "start end pause q status s e p" -- "$cur") )
+            [[ $COMP_CWORD -eq 2 ]] && COMPREPLY=( $(compgen -W "start end s e" -- "$cur") )
             ;;
         db)
             [[ $COMP_CWORD -eq 2 ]] && COMPREPLY=( $(compgen -W "sql time stats sync path" -- "$cur") )
@@ -85,7 +85,7 @@ _cf() {
         'statement:fetch problem statements'
         'material:fetch contest materials'
         'completion:print a shell completion script'
-        'timer:global timer for contests and problems'
+        'timer:start/end timer commands (use cf for the shell)'
         'db:query the local timer database'
         'lpractice:pick random local problems'
         'lrepractice:pick random accepted local problems'
@@ -106,7 +106,7 @@ _cf() {
             _values 'scope' all
             ;;
         timer)
-            _values 'timer command' start end pause q status s e p
+            _values 'timer command' start end s e
             ;;
         db)
             _values 'db command' sql time stats sync path
@@ -121,7 +121,7 @@ const fishCompletion = `# fish completion for cf
 complete -c cf -f -n "not __fish_seen_subcommand_from COMMANDS" -a "COMMANDS"
 complete -c cf -n "__fish_seen_subcommand_from pull clone" -a ac
 complete -c cf -n "__fish_seen_subcommand_from watch" -a all
-complete -c cf -n "__fish_seen_subcommand_from timer" -a "start end pause q status s e p"
+complete -c cf -n "__fish_seen_subcommand_from timer" -a "start end s e"
 complete -c cf -n "__fish_seen_subcommand_from db" -a "sql time stats sync path"
 `
 

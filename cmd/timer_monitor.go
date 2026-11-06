@@ -240,8 +240,8 @@ func runTimeMonitor() error {
 	// Ctrl-C raises SIGINT for the process group. The runner ignores it in the
 	// monitor and lets the child exit; see ignoreInterrupt.
 
-	color.Cyan("Timer opened. Commands: s/start <specifier> <note>, e/end <specifier> <note>, p/pause, q.")
-	color.Cyan("Any other line runs as a cf command below the timer, e.g. `submit 1136a`.")
+	color.Cyan("cf shell opened. Timer commands: s/start <specifier> <note>, e/end <specifier> <note>, p/pause, q.")
+	color.Cyan("Any other line runs as a cf command below the timer, e.g. `submit 1136a`. `cf --help` shows all commands.")
 
 	fd := int(os.Stdin.Fd())
 	if !term.IsTerminal(fd) || !term.IsTerminal(int(os.Stdout.Fd())) {
@@ -333,7 +333,7 @@ func runTimeMonitorInteractive(fd int) error {
 		case b == 3 || b == 4:
 			leaveRaw()
 			fmt.Println()
-			color.Yellow("Left the timer running. Use `cf timer q` to close it.")
+			color.Yellow("Left the timer running. Run `cf` again and type `q` to close it.")
 			return true
 		case b == '\r' || b == '\n':
 			line := string(inputBuf)

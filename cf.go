@@ -34,6 +34,10 @@ func main() {
 		case "opractice":
 			os.Args[1] = "opractice"
 		}
+		if message := cmd.ValidateCommandLine(os.Args[1:]); message != "" {
+			fmt.Fprintln(os.Stderr, message)
+			os.Exit(1)
+		}
 	}
 	usage := `Codeforces Tool $%version%$ (cf). https://github.com/cys001x/cf-tool-x
 
@@ -43,6 +47,7 @@ templates at first.
 If you want to compete, the best command is "cf race"
 
 Usage:
+  cf
   cf config
   cf submit [-f <file>] [<specifier>...]
   cf list [<specifier>...]
@@ -58,7 +63,7 @@ Usage:
   cf race [<specifier>...]
   cf pull [ac] [<specifier>...]
   cf sync [<specifier>...]
-  cf timer [<args>...]
+  cf timer <args>...
   cf db [options] [<args>...]
   cf lpractice [options] <count> [<name>]
   cf lrepractice [options] <count> [<name>]
@@ -91,8 +96,9 @@ Options:
                        want.
   <alias>              Template's alias. E.g. "cpp"
   <shell>              Shell to generate completion for: bash, zsh or fish.
-  <args>               Timer commands (start/end/pause/q/status, or s/e/p/q) or
-                       db commands (sql/time/stats/sync/path) and arguments.
+  <args>               A timer command (start/end, or s/e; required after
+                       "cf timer") and its arguments, or db commands
+                       (sql/time/stats/sync/path) and arguments.
   ac                   The status of the submission is Accepted.
   --from <date>        Start date (YYYY-MM-DD) for "cf db stats".
   --to <date>          End date (YYYY-MM-DD) for "cf db stats".
@@ -172,31 +178,35 @@ Examples:
                        no submission and no local code.
   cf sync 1136a        Sync problem "a" of contest 1136.
   cf sync              Sync the current problem.
-  cf timer             Open the timer in the foreground. Every second it
-                       refreshes the elapsed time on one line. There is no
+  cf                   Open the interactive shell. A timer status line is
+                       refreshed every second at the bottom. There is no
                        background daemon: the state lives in
-                       "~/.cf/timer.json" and commands work from any terminal.
-                       While the timer is open, any other cf command can be
-                       typed without "cf" and runs below the timer, for
-                       example "submit 1136a". The timer stays open.
+                       "~/.cf/timer.json" and the timer commands work from any
+                       terminal. Type any cf command without the "cf" prefix,
+                       for example "submit 1136a"; it runs below the timer and
+                       the shell stays open. "q" closes the timer and leaves
+                       the shell; Ctrl-C or Ctrl-D leaves the timer running.
+                       "cf --help" prints this help.
   cf timer start 1136a "read the problem"
-                       Start timing problem "a" of contest 1136.
+                       Start timing problem "a" of contest 1136. Only start
+                       and end can be run as "cf timer" commands.
   cf timer end 1136a "solved"
                        End the running problem. It must match the start.
-  cf timer pause       Pause or resume the timer.
-  cf timer q "contest done"
-                       Close the timer and print the summary. "q" can also
-                       be written as "exit"; commands can be shortened to their
-                       first letter: s, e, p, q. The same commands work from
-                       any terminal while the timer is open.
   cf timer s p_drill 1136a "practice"
                        Start a practice run for problem 1136a in the set
                        "{cf}/practice/drill". Accepted submits in this run
                        advance the practice label. "p_drill_1136a" can be
                        used instead of "p_drill 1136a".
-  submit 1136a         (inside cf timer) Run "cf submit 1136a" without leaving
-                       the timer. Every cf command except "timer" works this
-                       way; typing "q" closes the timer.
+  s 1136a "read"       (inside cf) Timer commands work without the "timer"
+                       prefix: s/start and e/end; p/pause, q and status are
+                       also available inside the shell.
+  p                    (inside cf) Pause or resume the timer.
+  status               (inside cf) Print the elapsed time, active problem and
+                       state.
+  q "contest done"     (inside cf) Close the timer, print the summary and
+                       leave the shell. "exit" is an alias.
+  submit 1136a         (inside cf) Run "cf submit 1136a" without leaving the
+                       shell. Every cf command except "timer" works this way.
   cf submit p_drill_1136a
                        Submit the code of practice problem 1136a in
                        "{cf}/practice/drill". "p_<set>_<problem>" works
@@ -288,6 +298,14 @@ Script in template:
 	config.Init(cfgPath)
 	client.Init(clnPath, config.Instance.Host, config.Instance.Proxy)
 	client.SetUserAgent(config.Instance.UserAgent)
+
+	if len(os.Args) == 1 {
+		if err := cmd.Repl(); err != nil {
+			color.Red(err.Error())
+		}
+		color.Unset()
+		return
+	}
 
 	err := cmd.Eval(opts)
 	if err != nil {

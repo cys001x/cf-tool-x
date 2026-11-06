@@ -9,6 +9,7 @@ document describes every command, its arguments, and the files it creates.
 - [Commands](#commands)
   - [cf config](#cf-config)
   - [cf sync](#cf-sync)
+  - [cf (interactive shell)](#cf-interactive-shell)
   - [cf timer](#cf-timer)
   - [cf db](#cf-db)
   - [cf practice commands](#cf-practice-commands)
@@ -165,54 +166,82 @@ Notes:
   template generation apply.
 - A template must be configured before `cf sync` can generate code.
 
+### cf (interactive shell)
+
+```
+cf
+```
+
+Opens the interactive shell with the timer status line at the bottom. It is the
+same shell that the timer commands record into. Type a timer command
+(`s/start`, `e/end`, `p/pause`, `q`, `status`) or any other `cf` command
+without the `cf` prefix: other commands run as `cf <line>` in a child process
+below the status line, with the same arguments and prompts as on the shell.
+`q` closes the timer and leaves the shell; Ctrl-C or Ctrl-D leaves the timer
+running in the background. `cf --help` prints the command introduction.
+
+The timer commands are also available from any other terminal as
+`cf timer <command> ...`; see [cf timer](#cf-timer). A bare `cf timer` is not
+a command: the shell is opened by `cf`.
+
 ### cf timer
 
 ```
-cf timer [<args>...]
-cf counttime [<args>...]   # alias
+cf timer start <specifier> <note>
+cf timer end <specifier> <note>
+cf timer s <specifier> <note>   # aliases
+cf timer e <specifier> <note>
+cf counttime ...                # alias of cf timer
 ```
 
-A global singleton timer. `cf timer` opens it in the foreground and
-refreshes the elapsed time on one line every second; the time is printed in
-green and the line is redrawn in place with the same cursor-up refresh used by
-`cf submit`. Typed commands appear after `>` on the
-same line. Ctrl-C or Ctrl-D leaves the monitor and keeps the timer state
-active. There is no background daemon: the clock is derived from the timestamps
-in `~/.cf/timer.json`, so the timer keeps counting even when no `cf` process is
-running. Run `cf timer` again to see the clock, or use any command from another
-terminal.
+Only `start` and `end` are available as `cf timer` commands. They work from
+any terminal while the shell is open. `pause`, `q`, and `status` live inside
+the [`cf` shell](#cf-interactive-shell); a bare `cf timer` prints the usage.
+Any other subcommand, for example `cf timer pause`, prints
+`Unknown command: "pause"` and points to `cf --help`; an unknown top-level
+command is reported the same way.
 
-The timer window accepts every other `cf` command without the `cf` prefix, for
+The timer status line is refreshed every second while the shell is open; the
+time is printed in green and the line is redrawn in place with the same
+cursor-up refresh used by `cf submit`. Typed commands appear after `>` on the
+same line. Ctrl-C or Ctrl-D leaves the shell and keeps the timer state active.
+There is no background daemon: the clock is derived from the timestamps in
+`~/.cf/timer.json`, so the timer keeps counting even when no `cf` process is
+running. Run `cf` again to see the clock.
+
+The shell accepts every other `cf` command without the `cf` prefix, for
 example `submit 1136a`, `test`, `db sync`, `open 1136a`, or `lpractice 5`.
 Such a line runs as `cf <line>` in a child process below the timer, with the
 same arguments and prompts as on the shell; the timer stays open afterwards.
 `timer` itself is rejected because the timer is already open. Ctrl-C during a
-child command stops the child and returns to the timer. Quotes are honored the
+child command stops the child and returns to the shell. Quotes are honored the
 same way a shell does for the command line, e.g. `submit -f "a b.cpp"`.
 
-While it is open, these commands can be typed in the timer window or run from
-any other terminal:
+These commands can be typed in the shell; `start` and `end` can also be run
+from any other terminal as `cf timer <command>`:
 
 | Command | Effect |
 |---------|--------|
 | `start <specifier> <note>` (`s`) | Start timing a problem or a contest. Several problems can run at the same time; only a duplicate start of the same problem is rejected. The timer is created automatically when it does not exist. Prefix the specifier with `p_<set>` to record a practice run inside `{cf}/practice/<set>`, for example `cf timer s p_drill 1136a "retry"`. The single-token form `cf timer s p_drill_1136a "retry"` is equivalent. |
 | `end <specifier> <note>` (`e`) | Stop the running problem that matches the specifier. The specifier must resolve to the same folder as one of the open `start` events; otherwise the command is rejected. For a practice run use the same `p_<set>` prefix or the `p_<set>_<problem>` form. The note is stored as that problem's summary. The elapsed time of that problem and the timer total are printed. |
-| `pause` (`p`) | Pause the timer. Running `pause` again resumes it. |
-| `q [<note>]` (`exit` is an alias) | Close the timer and print the summary. The note is stored as the session summary and as the summary of every open problem. A running problem is ended automatically with the note, or `auto end on quit`. |
-| `status` | Print the current elapsed time, active problem and state. |
+| `pause` (`p`) | Inside the shell: pause the timer. Running `pause` again resumes it. |
+| `q [<note>]` (`exit` is an alias) | Inside the shell: close the timer, print the summary, and leave the shell. The note is stored as the session summary and as the summary of every open problem. A running problem is ended automatically with the note, or `auto end on quit`. |
+| `status` | Inside the shell: print the current elapsed time, active problem and state. |
 
 ```plain
-cf timer                                  # foreground window
+cf                                        # interactive shell with the timer
 cf timer start 1136a "read the problem"   # from any terminal
 cf timer end 1136a "solved"
-cf timer pause
-cf timer q "contest done"
 cf timer s p_drill 1136a "practice run"
 cf timer e p_drill 1136a "still wrong"
 cf timer s p_drill_1136a "practice run"   # same as above
-submit 1136a      # typed inside the timer: same as "cf submit 1136a"
+s 1136a "read"    # typed inside the shell: same as "cf timer start ..."
+p                 # typed inside the shell: pause or resume
+status            # typed inside the shell
+q "contest done"  # typed inside the shell: close and leave
+submit 1136a      # typed inside the shell: same as "cf submit 1136a"
 submit p_drill_1136a                      # practice problem
-db sync           # typed inside the timer: same as "cf db sync"
+db sync           # typed inside the shell: same as "cf db sync"
 ```
 
 Automatically recorded nodes:
@@ -221,7 +250,7 @@ Automatically recorded nodes:
 - `cf submit` appends a `submit` node with the verdict. When the verdict is
   `Accepted`, `cf` asks `Accepted. Close the timer? (y/n)`. Answering `y` asks
   for a summary of the session, then closes the timer and prints the summary.
-  The same prompt works from inside the timer; the summary is printed once.
+  The same prompt works from inside the shell; the summary is printed once.
 
 Files:
 
@@ -269,8 +298,9 @@ Notes:
   id, a gym/group URL).
 - Updates from different processes are serialized with a lock file next to the
   state file.
-- The monitor window only displays the timer. Closing the window keeps the
-  timer state active until `cf timer q`.
+- The shell displays the timer and runs typed commands. Leaving it with
+  Ctrl-C or Ctrl-D keeps the timer state active; run `cf` again and type `q`
+  to close the timer.
 - No process stays alive in the background. Every command is a short-lived
   process that reads and updates `~/.cf/timer.json`; elapsed time is computed
   from timestamps when the state is read.

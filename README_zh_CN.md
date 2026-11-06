@@ -73,15 +73,18 @@ $ go env -w GOPRIVATE=github.com/cys001x/cf-tool-x
 
 一条命令同步整场比赛或单道题目：拉取样例和题面，拉取你最新的一次提交代码；如果没有提交且本地没有代码，则用默认模板生成代码。若本地已有代码，会先询问是否覆盖。
 
- `cf timer`
+ `cf`
 
-打开全局计时器。每秒在同一行刷新已用时间。输入 `start <specifier> <描述>` 开始为一道题目或一场
-比赛计时，`end <specifier> <描述>` 结束，`pause` 暂停或继续，`q`（或 `exit`）关闭计时并输出总结。这些
-命令也可以在其它终端执行。没有后台守护进程：计时依据 `~/.cf/timer.json` 中的时间戳计算。
+打开交互式 shell，底部每秒刷新计时状态行。输入 `start <specifier> <描述>` 开始为一道题目或一场
+比赛计时，`end <specifier> <描述>` 结束，`pause` 暂停或继续，`q`（或 `exit`）关闭计时并输出总结。
+`start`/`end` 也可以在其它终端通过 `cf timer start|end ...` 执行；`pause`、`q`、`status`
+只在 shell 内可用，其它 `cf timer` 子命令按未知命令拒绝。完整命令说明用 `cf --help` 查看；
+未知命令只输出简短的 `Unknown command: "<名字>"` 提示，不再打印整页用法。没有后台守护进程：
+计时依据 `~/.cf/timer.json` 中的时间戳计算。
 
-计时器打开时，还可以直接输入其它 cf 命令（省去 `cf`，例如 `submit 1136a`）。命令在计时器下方
-执行，执行完继续计时，不用退出再重新打开；`timer` 本身不能在计时器里再执行。按 Enter 空行只刷新
-计时行，Ctrl-C 或 Ctrl-D 离开计时器并让它继续在后台计时。
+shell 打开时，还可以直接输入其它 cf 命令（省去 `cf`，例如 `submit 1136a`）。命令在计时器下方
+执行，执行完继续计时，不用退出再重新打开；`timer` 本身不能在 shell 里再执行。按 Enter 空行只刷新
+计时行，Ctrl-C 或 Ctrl-D 离开并让计时器继续在后台计时。
 
 可以同时为多道题目计时，`end` 关闭与 specifier 对应的那一个。`cf test` 全部样例通过时自动记录 `test` 节点，`cf submit` 自动记录 `submit` 节点（含判定结果）。
 判定为 Accepted 时会询问是否关闭计时器，选是后再让用户提供一段总结。时间节点保存在
@@ -151,6 +154,7 @@ SQL，加 `--write` 才允许修改数据。每道题还会根据事件推导出
 如果你想用本工具打比赛，那么最好用 "cf race" 命令。
 
 支持的命令:
+  cf
   cf config
   cf submit [-f <file>] [<specifier>...]
   cf list [<specifier>...]
@@ -166,7 +170,7 @@ SQL，加 `--write` 才允许修改数据。每道题还会根据事件推导出
   cf race [<specifier>...]
   cf pull [ac] [<specifier>...]
   cf sync [<specifier>...]
-  cf timer [<args>...]
+  cf timer <args>...
   cf db [options] [<args>...]
   cf lpractice [options] <count> [<name>]
   cf lrepractice [options] <count> [<name>]
@@ -197,8 +201,9 @@ SQL，加 `--write` 才允许修改数据。每道题还会根据事件推导出
                        你可以任意组合多个 <specifier> 来说明你的需求。
   <alias>              模板的名字，比如 "cpp"。
   <shell>              生成补全脚本的 shell：bash、zsh 或 fish。
-  <args>               计时器命令（start/end/pause/q/status，可简写为 s/e/p/q）与参数；
-                       或 cf db 的子命令（sql/time/stats/sync/path）与参数。
+  <args>               计时器命令（start/end，可简写为 s/e；"cf timer" 后必须
+                       给出）与参数；或 cf db 的子命令（sql/time/stats/sync/path）
+                       与参数。
   ac                   是否只获取 Accpeted 的代码。
   --from <date>        "cf db stats" 的起始日期（YYYY-MM-DD）。
   --to <date>          "cf db stats" 的结束日期（YYYY-MM-DD）。
@@ -262,24 +267,28 @@ SQL，加 `--write` 才允许修改数据。每道题还会根据事件推导出
                        没有提交且本地没有代码时用默认模板生成。
   cf sync 1136a        同步比赛 1136 的题目 a。
   cf sync              同步当前题目。
-  cf timer             在前台打开计时器，每秒刷新一行已用时间。
-                       计时器打开时可以直接输入其它 cf 命令（省去 "cf"），
-                       例如 "submit 1136a"，命令在计时器下方执行，计时器
-                       不关闭。
+  cf                   打开交互式 shell，底部每秒刷新计时状态行。可以直接输入
+                       其它 cf 命令（省去 "cf"），例如 "submit 1136a"，命令在
+                       计时器下方执行，shell 不关闭；"q" 关闭计时并退出。
+                       Ctrl-C 或 Ctrl-D 离开 shell，计时器继续在后台计时。
+                       "cf --help" 查看全部命令说明。
   cf timer start 1136a "read the problem"
-                       开始为比赛 1136 的题目 a 计时。
+                       开始为比赛 1136 的题目 a 计时。"cf timer" 只有
+                       start 和 end 两个命令。
   cf timer end 1136a "solved"
                        结束当前题目，必须与 start 的题目一致。
-  cf timer pause       暂停或继续计时。
-  cf timer q "contest done"
-                       关闭计时器并输出总结。
   cf timer s p_drill 1136a "practice"
                        在 "{cf}/practice/drill" 中为题目 1136a 开始练习计时；
                        这次计时中的 Accepted 会推进 practice 标签。
                        "p_drill_1136a" 也可以代替 "p_drill 1136a"。
-  submit 1136a         （在计时器中）执行 "cf submit 1136a"，不用退出计时器。
-                       除 "timer" 外的所有 cf 命令都可以这样用；输入 "q"
-                       关闭计时器。
+  s 1136a "read"       （在 cf shell 中）计时命令可以省略 "timer" 前缀：
+                       s/start、e/end；p/pause、q、status 也只在 shell 内使用。
+  p                    （在 cf shell 中）暂停或继续计时。
+  status               （在 cf shell 中）输出已用时间、当前题目和状态。
+  q "contest done"     （在 cf shell 中）关闭计时、输出总结并退出 shell；
+                       "exit" 是别名。
+  submit 1136a         （在 cf shell 中）执行 "cf submit 1136a"，不用退出。
+                       除 "timer" 外的所有 cf 命令都可以这样用。
   cf submit p_drill_1136a
                        提交 "{cf}/practice/drill" 中练习题 1136a 的代码。
                        "p_<set>_<题目>" 可用于所有接受 specifier 的命令，

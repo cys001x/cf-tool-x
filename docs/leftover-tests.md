@@ -17,7 +17,7 @@
    - `practice.json` 缺失时按 `<contestId><index>` 回退。
    - 题目不在练习集、练习集不存在时均报错且不写计时数据。
    - 默认时间戳练习集、自定义 `<name>`、gym、group、acmsguru 各测一次。
-   - `cf timer status` 显示 `题目 (p_<set>)`；`cf timer q` 的总结里事件带 `[practice <set>]`。
+   - shell 内 `status` 显示 `题目 (p_<set>)`；`q` 的总结里事件带 `[practice <set>]`。
 
 3. **练习集生成**
    - `cf lpractice`、`cf lrepractice`、`cf lnrepractice` 在真实 `~/.cf/timer.db` 上分别抽取全部 / `accepted` / `pending` 的题，数量与状态正确。
@@ -84,6 +84,9 @@
 
 计时器前台改为轮询 stdin（Unix `poll`，Windows `WaitForSingleObject`），
 移除了常驻读取 goroutine；非计时命令以子进程 `cf <line>` 执行。
+入口调整（2026-11-06 追加）：不带参数的 `cf` 打开 shell；`cf timer` 只接受
+`start`/`end`（含 `s`/`e`）。裸 `cf timer` 提示需要 start 或 end；其它子命令与未知顶层
+命令输出 npm 风格提示（`Unknown command: "<名字>"` + `cf --help`），退出码 1。
 
 已通过（单元测试 + 本地 pty 模拟）：
 
@@ -93,7 +96,7 @@
 - 子进程读取 stdin 正常（`cf config` 菜单与 User-Agent 输入实测），父进程不抢输入。
 - 引号与转义解析（`submit -f "a b.cpp"`）、空行刷新、`q` 关闭且总结只打印一次。
 - 子命令运行中按 Ctrl-C（`cf config` 实测）：子命令退出，计时器继续，父进程未被 SIGINT 杀死。
-- `printf 'status\nq\n' | cf timer` 的逐行执行（单元测试）。
+- `printf 'status\nq\n' | cf` 的逐行执行（单元测试 + 本地二进制实测）。
 - `p_<set>_<problem>` 单 token specifier：`infoFromSpecifiers` 解析、`getOneCode` 在练习目录找代码、
   `cf timer s/e p_drill_1136a` 生成带 practice 的事件、`cf db time p_drill_1136a` 输出记录
   （单元测试 + 本地二进制实测）；计时器 REPL 内 `s/db time/e` 全流程（pty 模拟）。

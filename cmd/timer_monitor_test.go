@@ -123,6 +123,29 @@ func TestRunMonitorCommandLineTimerCommands(t *testing.T) {
 	}
 }
 
+func TestTimerCommandOnlyStartAndEnd(t *testing.T) {
+	setupTimerTest(t)
+	for _, command := range []string{"pause", "p", "q", "exit", "status", ""} {
+		Args.CommandArgs = []string{command}
+		if err := Timer(); err == nil {
+			t.Errorf("`cf timer %q` must be rejected", command)
+		}
+	}
+}
+
+func TestBareTimerCommandRequiresSubcommand(t *testing.T) {
+	setupTimerTest(t)
+	if err := runTimerCommand("", "", "", ""); err == nil {
+		t.Fatal("bare `cf timer` must not open the shell")
+	}
+	if err := runTimerCommand("open", "", "", ""); err == nil {
+		t.Fatal("`cf timer open` must be rejected")
+	}
+	if _, err := loadTimeState(); err == nil {
+		t.Fatal("bare `cf timer` must not create timer state")
+	}
+}
+
 func TestRunTimeMonitorLines(t *testing.T) {
 	setupTimerTest(t)
 	if err := timerStart("", "1136a", "note"); err != nil {

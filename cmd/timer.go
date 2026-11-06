@@ -796,8 +796,8 @@ func parseTimerArgs(args []string) (command, practice, specifier, note string) {
 
 func runTimerCommand(command, practice, specifier, note string) error {
 	switch command {
-	case "", "open":
-		return timerOpen()
+	case "":
+		return errors.New("Missing timer command. Run `cf` to open the interactive shell, or `cf timer start|end|pause|q|status`")
 	case "start":
 		return timerStart(practice, specifier, note)
 	case "end":
@@ -856,7 +856,7 @@ func timerOpen() error {
 	if st.MonitorPID > 0 && st.MonitorPID != int32(os.Getpid()) && monitorAlive(st.MonitorPID) {
 		color.Yellow("The timer is already open in process %v.", st.MonitorPID)
 		printTimeStatus(st)
-		color.Cyan("Control it from any terminal with `cf timer start/end/pause/q`.")
+		color.Cyan("Use `cf timer start/end` from any terminal, or run `cf` to open the shell.")
 		return nil
 	}
 	if _, err = mutateTimeState(false, func(st *timeState, now time.Time) error {
@@ -871,5 +871,21 @@ func timerOpen() error {
 // Timer command
 func Timer() (err error) {
 	command, practice, specifier, note := parseTimerArgs(Args.CommandArgs)
+	switch command {
+	case "start", "end":
+	case "":
+		return errors.New("Missing timer command. Use `cf` for the interactive shell, or `cf timer start|end`")
+	default:
+		return fmt.Errorf("`cf timer %v` is not supported. Use `cf timer start|end`, or run `%v` inside the cf shell", command, command)
+	}
 	return runTimerCommand(command, practice, specifier, note)
+}
+
+// Repl opens the interactive shell with the timer status line. It is the
+// command behind a bare "cf".
+func Repl() (err error) {
+	if Args == nil {
+		Args = &ParsedArgs{}
+	}
+	return timerOpen()
 }
