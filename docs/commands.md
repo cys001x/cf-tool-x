@@ -177,6 +177,9 @@ same shell that the timer commands record into. Type a timer command
 (`s/start`, `e/end`, `p/pause`, `q`, `status`) or any other `cf` command
 without the `cf` prefix: other commands run as `cf <line>` in a child process
 below the status line, with the same arguments and prompts as on the shell.
+Tab completes command names and the arguments of `db`, `watch`, `pull`,
+`clone`, and `completion`; press Tab again to cycle, Enter to accept, Esc to
+close. Up/Down recall the command history, which is stored in `~/.cf/history`.
 `q` closes the timer and leaves the shell; Ctrl-C or Ctrl-D leaves the timer
 running in the background. `cf --help` prints the command introduction.
 
@@ -258,6 +261,8 @@ Files:
   accumulated elapsed time, active problem, and the list of touched records.
 - `~/.cf/timer.db` — SQLite index of the records, maintained by `cf db`; see
   [cf db](#cf-db).
+- `~/.cf/history` — command history of the interactive shell (one command per
+  line, mode 0600).
 - `<problem>/count_time.json` — time nodes of that problem:
 
 ```json

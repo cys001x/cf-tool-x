@@ -27,50 +27,6 @@ func TestSplitCommandLine(t *testing.T) {
 	}
 }
 
-func TestInputDisplay(t *testing.T) {
-	wide := []byte("中")
-	cases := []struct {
-		in   []byte
-		want string
-	}{
-		{nil, ""},
-		{[]byte("abc"), "abc"},
-		{wide[:1], ""},
-		{wide[:2], ""},
-		{wide, "中"},
-		{append([]byte("a"), wide...), "a中"},
-		{append([]byte("a"), wide[:2]...), "a"},
-	}
-	for _, c := range cases {
-		if got := inputDisplay(c.in); got != c.want {
-			t.Errorf("inputDisplay(%q) = %q, want %q", c.in, got, c.want)
-		}
-	}
-}
-
-func TestFitTail(t *testing.T) {
-	cases := []struct {
-		in    string
-		width int
-		want  string
-		cut   bool
-	}{
-		{"", 10, "", false},
-		{"hello", 5, "hello", false},
-		{"hello", 3, "llo", true},
-		{"中文abc", 4, "abc", true},
-		{"a中", 2, "中", true},
-		{"中文", 4, "中文", false},
-		{"abc", 0, "", true},
-	}
-	for _, c := range cases {
-		got, cut := fitTail(c.in, c.width)
-		if got != c.want || cut != c.cut {
-			t.Errorf("fitTail(%q, %d) = (%q, %v), want (%q, %v)", c.in, c.width, got, cut, c.want, c.cut)
-		}
-	}
-}
-
 func TestIsTimerMonitorCommand(t *testing.T) {
 	timerCommands := []string{"s", "start", "e", "end", "p", "pause", "q", "exit", "status"}
 	for _, command := range timerCommands {

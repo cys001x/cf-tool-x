@@ -184,9 +184,10 @@ Examples:
                        "~/.cf/timer.json" and "cf start"/"cf end" work from any
                        terminal. Type any cf command without the "cf" prefix,
                        for example "submit 1136a"; it runs below the timer and
-                       the shell stays open. "q" closes the timer and leaves
-                       the shell; Ctrl-C or Ctrl-D leaves the timer running.
-                       "cf --help" prints this help.
+                       the shell stays open. Tab completes commands and
+                       arguments; Up/Down recall the command history. "q"
+                       closes the timer and leaves the shell; Ctrl-C or Ctrl-D
+                       leaves the timer running. "cf --help" prints this help.
   cf start 1136a "read the problem"
                        Start timing problem "a" of contest 1136. "cf start"
                        and "cf end" work from any terminal.
@@ -251,6 +252,7 @@ File:
   "~/.cf/session"       Session file, including cookies, handle, password, etc.
   "~/.cf/timer.json"     State of the global timer.
   "~/.cf/timer.db"       Local SQLite index of the timer records.
+  "~/.cf/history"        Command history of the interactive shell.
   "<problem>/count_time.json"
                         Timer data written by "cf start" and "cf end".
   "{cf}/practice/<name>"

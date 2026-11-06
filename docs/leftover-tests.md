@@ -80,10 +80,12 @@
 - `cf test` 自动 test 事件；本地模板脚本缺少 `./`，Go `exec` 拒绝相对 PATH 可执行文件。
 - v1.3.1 发行版不包含本次复测的 3 个修复，需要下一个版本发布。
 
-## 2026-11-06 计时器内执行命令（新增）
+## 2026-11-06 计时器内执行命令
 
-计时器前台改为轮询 stdin（Unix `poll`，Windows `WaitForSingleObject`），
-移除了常驻读取 goroutine；非计时命令以子进程 `cf <line>` 执行。
+当时把计时器前台改为轮询 stdin（Unix `poll`，Windows `WaitForSingleObject`），
+移除了常驻读取 goroutine；非计时命令以子进程 `cf <line>` 执行。同日稍后交互层
+替换为 Bubble Tea（见文末「shell 改为 Bubble Tea」），非 TTY 的逐行模式仍沿用本节
+描述。
 入口调整（2026-11-06 追加）：不带参数的 `cf` 打开 shell；计时入口为
 `cf start`/`cf end`（shell 内可用 `s`/`e`）。`cf timer` 与 `cf counttime`
 已移除，按未知顶层命令输出 npm 风格提示。
@@ -119,3 +121,27 @@
 - 子命令输出未以换行结尾时，状态行的覆盖情况。
 - `cf test` / `cf race` / `cf watch` 等长时间或自带信号处理的命令在计时器内的中断行为。
 - 终端窗口尺寸变化（SIGWINCH）时状态行与输入行的对齐。
+
+## 2026-11-06 shell 改为 Bubble Tea（新增）
+
+交互式 shell 从手写 raw-mode 轮询改为 Bubble Tea（`cmd/repl.go`）；非 TTY 的
+`runTimeMonitorLines` 保持不变。子命令通过 `tea.ExecProcess` 挂起 TUI 执行。
+
+已通过（单元测试 + pty 模拟）：
+
+- Tab 补全命令名与 `db`/`watch`/`pull`/`clone`/`completion` 的参数；Enter 接受，
+  Esc 关闭，选中项高亮。
+- 终端批量送达的多个字符按单字符插入；`end`/`home` 不再被 textinput 当作光标键。
+- Up/Down 历史；历史写入 `~/.cf/history`（0600）。
+- `cf config` 在 shell 内运行，Ctrl-C 只退出子命令，shell 继续、计时器保持运行。
+- `start`/`status`/`end`/`q` 全流程；`q` 关闭计时并退出，退出后不残留输入行。
+- 200 字符长输入横向滚动，不再换行或重复打印。
+- 管道输入仍走旧的逐行模式（`printf 'status\nq\n' | cf`）。
+
+待测（真机 / 真实终端）：
+
+- Windows Terminal / conpty：渲染、Ctrl-C、中文输入。
+- 真实 `cf submit` 的 `y`（关闭计时）与 `n`（继续计时）分支在 `ExecProcess` 下的表现。
+- 终端 OSC 11 背景查询：支持 OSC 的终端应即时返回；不支持时 termenv 会等待 5s。
+- 窗口缩放、Ctrl-D、跨会话历史。
+- 依赖新增 bubbletea/bubbles/lipgloss，`vendor/` 约 145M，二进制约 12.6M。

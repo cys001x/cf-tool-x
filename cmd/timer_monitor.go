@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 	"unicode"
-	"unicode/utf8"
 
 	"github.com/fatih/color"
 	ansi "github.com/k0kubun/go-ansi"
@@ -21,7 +20,6 @@ import (
 // timerMonitorStatus draws the ticking line below the command output.
 type timerMonitorStatus struct {
 	raw    bool
-	prompt bool
 	length int
 	width  int
 	shown  bool
@@ -35,48 +33,6 @@ func terminalWidth(fd int) int {
 	return width
 }
 
-// inputDisplay converts the typed bytes to text. Raw mode delivers multi-byte
-// characters one byte at a time; an incomplete trailing sequence is hidden
-// until all of its bytes arrive, so the width calculation never sees a
-// replacement character and the status line cannot grow by an extra column.
-func inputDisplay(b []byte) string {
-	for i := 1; i <= utf8.UTFMax && i <= len(b); i++ {
-		if !utf8.RuneStart(b[len(b)-i]) {
-			continue
-		}
-		start := len(b) - i
-		if r, size := utf8.DecodeRune(b[start:]); r == utf8.RuneError && size == 1 && !utf8.FullRune(b[start:]) {
-			b = b[:start]
-		}
-		break
-	}
-	return strings.ToValidUTF8(string(b), "�")
-}
-
-// fitTail returns the longest suffix of s that fits in width display columns,
-// and whether the beginning was dropped. width is measured in terminal cells,
-// so wide characters such as Chinese are counted as two columns.
-func fitTail(s string, width int) (string, bool) {
-	if width <= 0 {
-		return "", s != ""
-	}
-	if runewidth.StringWidth(s) <= width {
-		return s, false
-	}
-	runes := []rune(s)
-	total := 0
-	start := len(runes)
-	for start > 0 {
-		w := runewidth.RuneWidth(runes[start-1])
-		if total+w > width {
-			break
-		}
-		total += w
-		start--
-	}
-	return string(runes[start:]), true
-}
-
 func (s *timerMonitorStatus) ending() string {
 	if s.raw {
 		// Raw mode disables output post-processing, so "\n" alone does not
@@ -87,39 +43,16 @@ func (s *timerMonitorStatus) ending() string {
 }
 
 // draw prints the status line. Consecutive calls overwrite the same line. The
-// line is clipped to the terminal width so it never wraps: a wrapped status
-// line would make CursorUp(1) redraw the wrong row and print the input again.
-func (s *timerMonitorStatus) draw(st *timeState, input []byte) {
+// line is clipped to the terminal width so it never wraps.
+func (s *timerMonitorStatus) draw(st *timeState) {
 	elapsed := formatElapsedMS(st.elapsed(time.Now()))
-	prefixPlain := fmt.Sprintf("[%v] %v", elapsed, openProblemNames(st))
+	plainLine := fmt.Sprintf("[%v] %v", elapsed, openProblemNames(st))
 	if st.Paused {
-		prefixPlain += " paused"
+		plainLine += " paused"
 	}
-
-	// Keep the most recently typed characters when the input is too wide.
-	shownInput := inputDisplay(input)
-	if s.prompt && s.width > 0 {
-		avail := s.width - runewidth.StringWidth(prefixPlain) - runewidth.StringWidth("  > ") - 1
-		tail, truncated := fitTail(shownInput, avail)
-		if truncated {
-			if avail > 1 {
-				tail, _ = fitTail(tail, avail-1)
-				tail = "…" + tail
-			} else {
-				tail = ""
-			}
-		}
-		shownInput = tail
-	}
-
-	plainLine := prefixPlain
 	line := fmt.Sprintf("[%v] %v", color.GreenString(elapsed), openProblemNames(st))
 	if st.Paused {
 		line += " paused"
-	}
-	if s.prompt {
-		plainLine += "  > " + shownInput
-		line += "  > " + shownInput
 	}
 	if s.width > 0 {
 		// Leave the last column unused: writing exactly one full row can make
@@ -333,163 +266,7 @@ func runTimeMonitor() error {
 	if !term.IsTerminal(fd) || !term.IsTerminal(int(os.Stdout.Fd())) {
 		return runTimeMonitorLines()
 	}
-	return runTimeMonitorInteractive(fd)
-}
-
-// runTimeMonitorInteractive owns stdin completely: it polls for input instead
-// of using a reader goroutine, so an external command can read stdin while the
-// monitor is not reading it.
-func runTimeMonitorInteractive(fd int) error {
-	status := &timerMonitorStatus{prompt: true, width: terminalWidth(fd)}
-	rawMode := false
-	var termState *term.State
-
-	enterRaw := func() {
-		if rawMode {
-			return
-		}
-		if termState != nil {
-			// An external command may have changed the terminal mode; restore
-			// the state saved before the first raw switch, then go raw again.
-			term.Restore(fd, termState)
-		}
-		if state, err := term.MakeRaw(fd); err == nil {
-			termState = state
-			rawMode = true
-			status.raw = true
-		}
-	}
-	leaveRaw := func() {
-		if rawMode {
-			term.Restore(fd, termState)
-			rawMode = false
-			status.raw = false
-		}
-	}
-	enterRaw()
-	defer leaveRaw()
-
-	var inputBuf []byte
-	lastNotice := int64(0)
-	if st, err := loadTimeState(); err == nil {
-		lastNotice = st.NoticeSeq
-		status.draw(st, inputBuf)
-	}
-
-	// runTypedLine executes one line and updates the display.
-	runTypedLine := func(line string) (quit bool) {
-		leaveRaw()
-		status.clear()
-		done, external := runMonitorCommandLine(line)
-		if done {
-			return true
-		}
-		cur, err := loadTimeState()
-		if err != nil {
-			return true
-		}
-		if !cur.Running {
-			// The external "submit" already printed the summary after closing
-			// the timer, so do not repeat it here.
-			leaveRaw()
-			return true
-		}
-		if !external {
-			lastNotice = cur.NoticeSeq
-		}
-		enterRaw()
-		status.draw(cur, inputBuf)
-		return false
-	}
-
-	handleKey := func(b byte) (quit bool) {
-		switch {
-		case b == 27:
-			// Swallow ANSI escape sequences such as arrow keys.
-			for stdinReadable(fd, 15*time.Millisecond) {
-				var next [1]byte
-				n, err := os.Stdin.Read(next[:])
-				if err != nil || n == 0 {
-					break
-				}
-				if next[0] >= 0x40 && next[0] <= 0x7e {
-					break
-				}
-			}
-		case b == 3 || b == 4:
-			leaveRaw()
-			fmt.Println()
-			color.Yellow("Left the timer running. Run `cf` again and type `q` to close it.")
-			return true
-		case b == '\r' || b == '\n':
-			line := string(inputBuf)
-			inputBuf = nil
-			if strings.TrimSpace(line) != "" {
-				return runTypedLine(line)
-			}
-		case b == 127 || b == 8:
-			if len(inputBuf) > 0 {
-				_, size := utf8.DecodeLastRune(inputBuf)
-				inputBuf = inputBuf[:len(inputBuf)-size]
-			}
-		case b >= 32:
-			inputBuf = append(inputBuf, b)
-		}
-		if cur, err := loadTimeState(); err == nil {
-			status.draw(cur, inputBuf)
-		}
-		return false
-	}
-
-	inputClosed := false
-	nextTick := time.Now().Add(time.Second)
-	for {
-		// Pick up terminal resizes (SIGWINCH) without installing a handler.
-		status.width = terminalWidth(fd)
-		if inputClosed {
-			time.Sleep(time.Until(nextTick))
-		} else {
-			wait := time.Until(nextTick)
-			if wait < 0 {
-				wait = 0
-			}
-			if stdinReadable(fd, wait) {
-				var buf [1]byte
-				n, err := os.Stdin.Read(buf[:])
-				if n > 0 {
-					if handleKey(buf[0]) {
-						return nil
-					}
-				}
-				if err != nil {
-					inputClosed = true
-					status.clear()
-					leaveRaw()
-					color.Yellow("Input closed. The timer keeps running in the background.")
-				}
-				continue
-			}
-		}
-		if !time.Now().Before(nextTick) {
-			nextTick = time.Now().Add(time.Second)
-			cur, err := loadTimeState()
-			if err != nil {
-				continue
-			}
-			if cur.NoticeSeq != lastNotice && cur.Notice != "" {
-				status.clear()
-				status.notice("Timer: %v", cur.Notice)
-				lastNotice = cur.NoticeSeq
-			}
-			if !cur.Running {
-				status.clear()
-				leaveRaw()
-				printTimeSummary(cur)
-				return nil
-			}
-			status.draw(cur, inputBuf)
-		}
-	}
+	return runReplTUI()
 }
 
 // runTimeMonitorLines handles a redirected stdin. It reads commands one line
@@ -526,7 +303,7 @@ func runTimeMonitorLines() error {
 			}
 			lastNotice = cur.NoticeSeq
 			if draw {
-				status.draw(cur, nil)
+				status.draw(cur)
 			}
 		}
 		if err != nil {
@@ -552,7 +329,7 @@ func runTimeMonitorLines() error {
 			return nil
 		}
 		if draw {
-			status.draw(cur, nil)
+			status.draw(cur)
 		}
 	}
 }
