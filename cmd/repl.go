@@ -406,6 +406,9 @@ func (m *replModel) submit() tea.Cmd {
 		m.history = append(m.history, line)
 		appendReplHistory(line)
 	}
+	// Keep the cursor after the newest entry. submit() may append the current
+	// command, so setting histPos before the append makes Up skip that entry.
+	m.histPos = len(m.history)
 	m.compOpen = false
 	m.compItems = nil
 

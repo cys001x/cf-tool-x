@@ -179,6 +179,22 @@ func TestReplHistoryNavigation(t *testing.T) {
 	}
 }
 
+func TestReplSubmitHistoryPositionIncludesNewCommand(t *testing.T) {
+	m := newTestReplModel(t)
+	m.history = []string{"first", "second"}
+	m.histPos = len(m.history)
+	m.input.SetValue("third")
+	m.submit()
+
+	if got := m.histPos; got != 3 {
+		t.Fatalf("history position after submit = %d, want 3", got)
+	}
+	m.historyPrev()
+	if got := m.input.Value(); got != "third" {
+		t.Fatalf("previous command = %q, want third", got)
+	}
+}
+
 func TestReplHistoryPersistence(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "history")
 	t.Setenv("CF_HISTORY", path)

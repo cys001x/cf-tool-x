@@ -12,7 +12,6 @@ import (
 
 	"github.com/cys001x/cf-tool-x/client"
 	"github.com/cys001x/cf-tool-x/config"
-	"github.com/cys001x/cf-tool-x/util"
 	"github.com/fatih/color"
 	"github.com/mitchellh/go-homedir"
 	"github.com/shirou/gopsutil/process"
@@ -728,18 +727,7 @@ func recordSubmissionTimer(cln *client.Client) {
 	if cln.LastVerdict != "OK" {
 		return
 	}
-	if !util.YesOrNo("Accepted. Close the timer? (y/n) ") {
-		return
-	}
-	color.Cyan("Summary of the session: ")
-	note = util.ScanlineTrim()
-	st, err := closeTimeSession(note)
-	if err != nil {
-		color.Red(err.Error())
-		return
-	}
-	color.Green("Timer closed.")
-	printTimeSummary(st)
+	color.Yellow("Timer remains running. Use `q` from the shell to close it.")
 }
 
 // normalizeTimerCommand accepts the first letter of start, end, pause and q.
