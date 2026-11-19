@@ -1,0 +1,83 @@
+cf.go
+  67e211a9145ae039 203-204,206-209
+README.md
+  67e211a9145ae039 333-334,336-339
+cmd/timer_monitor.go
+  67e211a9145ae039 18-19,154,209-216,272
+docs/commands.md
+  67e211a9145ae039 177-180,189-193
+README_zh_CN.md
+  67e211a9145ae039 289-290,292-294
+cmd/timer.go
+  67e211a9145ae039 517-568,847-848,865
+cmd/repl.go
+  67e211a9145ae039 148-150,424-431,489-499,669-671
+cmd/repl_test.go
+  67e211a9145ae039 240-274
+cmd/timer_lifecycle_test.go
+  67e211a9145ae039 318-368
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8-ntes.10",
+  "base_commit_sha": "e7693bebf085f34b77369ba7ef9457f81079f5e5",
+  "prompts": {
+    "67e211a9145ae039": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1e60530f-7069-4521-9637-0e22b38ae638",
+        "model": "deepseek-flash"
+      },
+      "human_author": "huawei",
+      "messages": [],
+      "total_additions": 208,
+      "total_deletions": 16,
+      "accepted_lines": 204,
+      "overriden_lines": 0,
+      "per_file_stats": {
+        "cmd/timer.go": {
+          "additions": 55,
+          "deletions": 1,
+          "accepted_lines": 55
+        },
+        "cf.go": {
+          "additions": 7,
+          "deletions": 3,
+          "accepted_lines": 6
+        },
+        "cmd/repl.go": {
+          "additions": 25,
+          "accepted_lines": 25
+        },
+        "cmd/repl_test.go": {
+          "additions": 35,
+          "accepted_lines": 35
+        },
+        "cmd/timer_monitor.go": {
+          "additions": 12,
+          "deletions": 2,
+          "accepted_lines": 12
+        },
+        "docs/commands.md": {
+          "additions": 11,
+          "deletions": 6,
+          "accepted_lines": 9
+        },
+        "README.md": {
+          "additions": 7,
+          "deletions": 3,
+          "accepted_lines": 6
+        },
+        "cmd/timer_lifecycle_test.go": {
+          "additions": 51,
+          "accepted_lines": 51
+        },
+        "README_zh_CN.md": {
+          "additions": 5,
+          "deletions": 1,
+          "accepted_lines": 5
+        }
+      }
+    }
+  }
+}
