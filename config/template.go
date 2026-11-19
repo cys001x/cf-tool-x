@@ -53,7 +53,7 @@ func (c *Config) AddTemplate() (err error) {
 	ansi.Println(note)
 	path := ""
 	for {
-		path = util.ScanlinePromptTrim(`Template absolute path(e.g. "~/template/io.cpp"): `)
+		path = util.ScanlinePromptTrim(`Template absolute path(e.g. "~/template/io.cpp"):` + "\n")
 		path, err = homedir.Expand(path)
 		if err == nil {
 			if _, err := os.Stat(path); err == nil {
@@ -64,7 +64,7 @@ func (c *Config) AddTemplate() (err error) {
 	}
 
 	color.Cyan(`The suffix of template above will be added by default.`)
-	tmpSuffix := strings.Fields(util.ScanlinePrompt(`Other suffix? (e.g. "cxx cc"), empty is ok: `))
+	tmpSuffix := strings.Fields(util.ScanlinePrompt(`Other suffix? (e.g. "cxx cc"), empty is ok:` + "\n"))
 	tmpSuffix = append(tmpSuffix, strings.Replace(filepath.Ext(path), ".", "", 1))
 	suffixMap := map[string]bool{}
 	suffix := []string{}
@@ -77,7 +77,7 @@ func (c *Config) AddTemplate() (err error) {
 
 	alias := ""
 	for {
-		alias = util.ScanlinePromptTrim(`Template's alias (e.g. "cpp" "py"): `)
+		alias = util.ScanlinePromptTrim(`Template's alias (e.g. "cpp" "py"):` + "\n")
 		if len(alias) > 0 {
 			break
 		}
@@ -101,18 +101,18 @@ func (c *Config) AddTemplate() (err error) {
   $%rand%$   Random string with 8 character (including "a-z" "0-9")`
 	ansi.Println(note)
 
-	beforeScript := util.ScanlinePromptTrim(`Before script (e.g. "g++ $%full%$ -o $%file%$.exe -std=c++11"), empty is ok: `)
+	beforeScript := util.ScanlinePromptTrim(`Before script (e.g. "g++ $%full%$ -o $%file%$.exe -std=c++11"), empty is ok:` + "\n")
 
 	script := ""
 	for {
-		script = util.ScanlinePromptTrim(`Script (e.g. "./$%file%$.exe" "python3 $%full%$"): `)
+		script = util.ScanlinePromptTrim(`Script (e.g. "./$%file%$.exe" "python3 $%full%$"):` + "\n")
 		if len(script) > 0 {
 			break
 		}
 		color.Red("Script can not be empty. Please input again")
 	}
 
-	afterScript := util.ScanlinePromptTrim(`After script (e.g. "rm $%file%$.exe" or "cmd.exe /C del $%file%$.exe" in windows), empty is ok: `)
+	afterScript := util.ScanlinePromptTrim(`After script (e.g. "rm $%file%$.exe" or "cmd.exe /C del $%file%$.exe" in windows), empty is ok:` + "\n")
 
 	c.Template = append(c.Template, CodeTemplate{
 		alias, lang, path, suffix,

@@ -34,13 +34,18 @@ func newLineModel(prompt string) *lineModel {
 }
 
 // setWidth limits the visible value so a long line scrolls horizontally
-// instead of wrapping and breaking cursor positioning.
+// instead of wrapping and breaking cursor positioning. A prompt ending with
+// "\n" puts the value on its own line, so only the last prompt line counts.
 func (m *lineModel) setWidth(columns int) {
 	if columns <= 0 {
 		m.input.Width = 0
 		return
 	}
-	width := columns - lipgloss.Width(m.input.Prompt) - 1
+	prompt := m.input.Prompt
+	if i := strings.LastIndex(prompt, "\n"); i >= 0 {
+		prompt = prompt[i+1:]
+	}
+	width := columns - lipgloss.Width(prompt) - 1
 	if width > 0 {
 		m.input.Width = width
 	}
@@ -85,8 +90,11 @@ func lineEditorAvailable() bool {
 
 // ScanlinePrompt prints prompt and reads one line. On an interactive terminal
 // arrow keys, Home/End and Delete edit the line; otherwise it falls back to a
-// plain line read.
+// plain line read. A trailing newline in prompt puts the input on its own
+// line, which keeps long prompts from leaving no room for the value.
 func ScanlinePrompt(prompt string) string {
+	separateLine := strings.HasSuffix(prompt, "\n")
+
 	// Bytes already buffered by Scanline (e.g. pasted input) must not be lost
 	// by switching to the raw-mode editor.
 	if !lineEditorAvailable() || stdinReader.Buffered() > 0 {
@@ -94,8 +102,16 @@ func ScanlinePrompt(prompt string) string {
 		return Scanline()
 	}
 
-	final, err := tea.NewProgram(newLineModel(prompt)).Run()
-	if err != nil {
+	editorPrompt := prompt
+	if separateLine {
+		// Print the prompt outside the renderer so it neither wraps into the
+		// value line nor gets erased when the editor exits.
+		promptColor.Print(prompt)
+		editorPrompt = ""
+	}
+
+	final, err := tea.NewProgram(newLineModel(editorPrompt)).Run()
+	if err != nil || final == nil {
 		promptColor.Print(prompt)
 		return Scanline()
 	}
@@ -109,9 +125,11 @@ func ScanlinePrompt(prompt string) string {
 		fmt.Println("Interrupted.")
 		os.Exit(1)
 	}
-	// The line editor erases its rendering on exit; echo the result so the
-	// transcript keeps the prompt and the answer.
-	promptColor.Print(prompt)
+	// The line editor erases its rendered line on exit; echo the answer so
+	// the transcript keeps it.
+	if !separateLine {
+		promptColor.Print(prompt)
+	}
 	fmt.Println(m.value)
 	return m.value
 }

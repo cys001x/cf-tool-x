@@ -224,7 +224,7 @@ func (c *Client) ConfigLoginWithCookies() (err error) {
 	color.Cyan("     Tip: extensions like 'Cookie-Editor' can export a header string directly.")
 	color.Cyan("     Tip: right-click a request in the Network tab -> Copy -> Copy as cURL gives the same string.")
 	color.Cyan("  4. The string must contain cf_clearance, otherwise Cloudflare blocks every request.")
-	cookieStr := util.ScanlinePromptTrim("Paste cookie string: ")
+	cookieStr := util.ScanlinePromptTrim("Paste cookie string:\n")
 	if cookieStr == "" {
 		return errors.New("No cookies provided")
 	}
@@ -241,7 +241,7 @@ func (c *Client) ConfigLoginWithCookies() (err error) {
 
 	color.Cyan("Cloudflare validates cf_clearance against the browser User-Agent.")
 	color.Cyan("Open the browser console on codeforces.com and run: navigator.userAgent")
-	ua := util.ScanlinePromptTrim("Paste your User-Agent to retry (empty line to give up): ")
+	ua := util.ScanlinePromptTrim("Paste your User-Agent to retry (empty line to give up):\n")
 	if ua == "" {
 		return err
 	}
