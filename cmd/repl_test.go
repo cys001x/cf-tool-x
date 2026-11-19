@@ -237,3 +237,38 @@ func mustRead(t *testing.T, path string) []byte {
 	}
 	return b
 }
+
+func TestReplRetimerAsksBeforeEnding(t *testing.T) {
+	m := newTestReplModel(t)
+	if err := timerStart("", "1136a", "read"); err != nil {
+		t.Fatal(err)
+	}
+
+	m.setInput("reTimer")
+	m.submit()
+	if !m.resetPending || m.resetCount != 1 {
+		t.Fatalf("expected reset confirmation, pending=%v count=%d", m.resetPending, m.resetCount)
+	}
+	if st, _ := loadTimeState(); len(st.Open) != 1 {
+		t.Fatalf("problems ended before confirmation: %+v", st.Open)
+	}
+
+	m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'n'}})
+	if m.resetPending {
+		t.Fatal("cancelling should clear the confirmation")
+	}
+	if st, _ := loadTimeState(); len(st.Open) != 1 {
+		t.Fatalf("cancel must keep open problems: %+v", st.Open)
+	}
+
+	m.setInput("reTimer")
+	m.submit()
+	m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'y'}})
+	st, err := loadTimeState()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if m.resetPending || len(st.Open) != 0 || st.ElapsedMS != 0 {
+		t.Fatalf("reset not applied: pending=%v state=%+v", m.resetPending, st)
+	}
+}

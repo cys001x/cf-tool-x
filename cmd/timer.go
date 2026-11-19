@@ -514,6 +514,58 @@ func timerPause() error {
 	return err
 }
 
+// timerResetPromptCount reports how many open problems reTimer would end. The
+// second result is false when the timer is not running.
+func timerResetPromptCount() (int, bool) {
+	st, err := loadTimeState()
+	if err != nil || !st.Running {
+		return 0, false
+	}
+	return len(st.Open), true
+}
+
+// timerReset ends every open problem (recording an end event for each), then
+// restarts the session clock from zero. The timer keeps running.
+func timerReset() error {
+	ended := 0
+	_, err := mutateTimeState(false, func(st *timeState, now time.Time) error {
+		if !st.Running {
+			return errors.New("The timer is not running")
+		}
+		elapsed := st.elapsed(now)
+		for _, seg := range st.Open {
+			duration := elapsed - seg.StartElapsedMS
+			if duration < 0 {
+				duration = 0
+			}
+			ev := timeEvent{
+				Type:       TimeEventEnd,
+				Time:       now.Format(timeLayout),
+				Elapsed:    formatElapsedMS(elapsed),
+				DurationMS: duration,
+				Practice:   seg.Practice,
+				Note:       "reTimer",
+			}
+			if err := appendProblemEvent(seg.Dir, seg.Problem, seg.Link, ev); err != nil {
+				return err
+			}
+			if err := setProblemSummary(seg.Dir, seg.Problem, seg.Link, "reTimer"); err != nil {
+				return err
+			}
+			ended++
+		}
+		st.Open = nil
+		restartTimeSession(st, now)
+		setNotice(st, "timer reset")
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	color.Green("Timer reset to 00:00:00. Ended %v problem(s).", ended)
+	return nil
+}
+
 // closeTimeSession ends every open segment and closes the timer.
 func closeTimeSession(note string) (*timeState, error) {
 	return mutateTimeState(false, func(st *timeState, now time.Time) error {
@@ -792,6 +844,8 @@ func runTimerCommand(command, practice, specifier, note string) error {
 		return timerEnd(practice, specifier, note)
 	case "pause":
 		return timerPause()
+	case "retimer":
+		return timerReset()
 	case "q":
 		st, err := closeTimeSession(note)
 		if err != nil {
@@ -808,7 +862,7 @@ func runTimerCommand(command, practice, specifier, note string) error {
 		printTimeStatus(st)
 		return nil
 	}
-	return fmt.Errorf("Unknown timer command %q. Use s/start, e/end, p/pause, q or status", command)
+	return fmt.Errorf("Unknown timer command %q. Use s/start, e/end, p/pause, reTimer, q or status", command)
 }
 
 func monitorAlive(pid int32) bool {

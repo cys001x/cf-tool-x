@@ -286,8 +286,12 @@ SQL，加 `--write` 才允许修改数据。每道题还会根据事件推导出
                        这次计时中的 Accepted 会推进 practice 标签。
                        "p_drill_1136a" 也可以代替 "p_drill 1136a"。
   s 1136a "read"       （在 cf shell 中）不用 "cf" 前缀开始计时：
-                       s/start、e/end；p/pause、q、status 也只在 shell 内使用。
+                       s/start、e/end；p/pause、reTimer、q、status 也只在
+                       shell 内使用。
   p                    （在 cf shell 中）暂停或继续计时。
+  reTimer              （在 cf shell 中）结束所有正在计时的题目并为每题记一次
+                       结束事件，然后把计时重置为 00:00:00；计时继续运行。
+                       有题目正在计时时会先询问是否确认。
   status               （在 cf shell 中）输出已用时间、当前题目和状态。
   q "contest done"     （在 cf shell 中）关闭计时、输出总结并退出 shell；
                        "exit" 是别名。

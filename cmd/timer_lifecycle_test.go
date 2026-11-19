@@ -315,3 +315,54 @@ func TestReopenShellRestartsTimer(t *testing.T) {
 		t.Fatalf("open segment not re-based: %+v", st.Open)
 	}
 }
+
+func TestTimerResetEndsOpenProblems(t *testing.T) {
+	setupTimerTest(t)
+
+	if err := timerStart("", "1136a", "read"); err != nil {
+		t.Fatal(err)
+	}
+	if err := timerStart("", "1136c", "read"); err != nil {
+		t.Fatal(err)
+	}
+	st, err := loadTimeState()
+	if err != nil {
+		t.Fatal(err)
+	}
+	dirs := []string{st.Open[0].Dir, st.Open[1].Dir}
+	st.ElapsedMS = int64(90 * time.Second / time.Millisecond)
+	if err = saveTimeState(st); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = timerReset(); err != nil {
+		t.Fatal(err)
+	}
+
+	st, err = loadTimeState()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !st.Running || st.Paused || st.ElapsedMS != 0 {
+		t.Fatalf("timer not restarted: %+v", st)
+	}
+	if len(st.Open) != 0 {
+		t.Fatalf("open problems not ended: %+v", st.Open)
+	}
+	for _, dir := range dirs {
+		events := timerRecordEvents(t, dir)
+		last := events[len(events)-1]
+		if last.Type != TimeEventEnd || last.Note != "reTimer" {
+			t.Fatalf("%v: unexpected reset event %+v", dir, last)
+		}
+	}
+}
+
+func TestRetimerCommandIsRoutedToTimer(t *testing.T) {
+	if normalizeTimerCommand("reTimer") != "retimer" {
+		t.Fatal("reTimer should normalize to retimer")
+	}
+	if !isTimerMonitorCommand("reTimer") {
+		t.Fatal("reTimer should be handled by the timer, not run as cf retimer")
+	}
+}

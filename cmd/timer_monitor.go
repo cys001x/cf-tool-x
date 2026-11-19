@@ -15,6 +15,8 @@ import (
 	ansi "github.com/k0kubun/go-ansi"
 	"github.com/mattn/go-runewidth"
 	"golang.org/x/term"
+
+	"github.com/cys001x/cf-tool-x/util"
 )
 
 // timerMonitorStatus draws the ticking line below the command output.
@@ -149,7 +151,7 @@ func splitCommandLine(line string) (args []string) {
 // the timer itself. Everything else runs as a normal "cf" command.
 func isTimerMonitorCommand(command string) bool {
 	switch normalizeTimerCommand(command) {
-	case "start", "end", "pause", "q", "status":
+	case "start", "end", "pause", "retimer", "q", "status":
 		return true
 	}
 	return false
@@ -204,6 +206,14 @@ func runMonitorCommandLine(line string) (quit, external bool) {
 	fmt.Printf("%v %v\n", color.CyanString(">"), line)
 	if isTimerMonitorCommand(args[0]) {
 		command, practice, specifier, note := parseTimerArgs(args)
+		if command == "retimer" {
+			if count, ok := timerResetPromptCount(); ok && count > 0 {
+				if !util.YesOrNo(fmt.Sprintf("End %v running problem(s) and reset the timer? (y/n) ", count)) {
+					color.Yellow("Reset cancelled.")
+					return false, false
+				}
+			}
+		}
 		if err := runTimerCommand(command, practice, specifier, note); err != nil {
 			color.Red(err.Error())
 		}
@@ -259,7 +269,7 @@ func runTimeMonitor() error {
 	// Ctrl-C raises SIGINT for the process group. The runner ignores it in the
 	// monitor and lets the child exit; see ignoreInterrupt.
 
-	color.Cyan("cf shell opened. Timer commands: s/start <specifier> <note>, e/end <specifier> <note>, p/pause, q.")
+	color.Cyan("cf shell opened. Timer commands: s/start <specifier> <note>, e/end <specifier> <note>, p/pause, reTimer, q.")
 	color.Cyan("Any other line runs as a cf command below the timer, e.g. `submit 1136a`. `cf --help` shows all commands.")
 
 	fd := int(os.Stdin.Fd())

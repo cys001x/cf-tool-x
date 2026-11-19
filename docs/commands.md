@@ -174,9 +174,10 @@ cf
 
 Opens the interactive shell with the timer status line at the bottom. It is the
 same shell that the timer commands record into. Type a timer command
-(`s/start`, `e/end`, `p/pause`, `q`, `status`) or any other `cf` command
-without the `cf` prefix: other commands run as `cf <line>` in a child process
-below the status line, with the same arguments and prompts as on the shell.
+(`s/start`, `e/end`, `p/pause`, `reTimer`, `q`, `status`) or any other `cf`
+command without the `cf` prefix: other commands run as `cf <line>` in a child
+process below the status line, with the same arguments and prompts as on the
+shell.
 Tab completes command names and the arguments of `db`, `watch`, `pull`,
 `clone`, and `completion`; press Tab again to cycle, Enter to accept, Esc to
 close. Up/Down recall the command history, which is stored in `~/.cf/history`;
@@ -185,7 +186,11 @@ the selected entry, Ctrl-R or Up moves to an older match, Down to a newer one,
 Tab or Left/Right accepts the match for editing, and Esc or Ctrl-C restores the
 original input.
 `q` closes the timer and leaves the shell; Ctrl-C or Ctrl-D leaves the timer
-running in the background. `cf --help` prints the command introduction.
+running in the background. `reTimer` ends every running problem (appending an
+end event with the note `reTimer` to each `count_time.json`) and resets the
+displayed elapsed time to `00:00:00`; the timer keeps running. When a problem
+is still open, `reTimer` asks for confirmation first. `cf --help` prints the
+command introduction.
 
 The timer commands are also available from any other terminal as
 `cf start ...` and `cf end ...`; see [cf start / cf end](#cf-start--cf-end).

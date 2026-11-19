@@ -200,9 +200,13 @@ Examples:
                        advance the practice label. "p_drill_1136a" can be
                        used instead of "p_drill 1136a".
   s 1136a "read"       (inside cf) Start timing without the "cf" prefix:
-                       s/start and e/end; p/pause, q and status are also
-                       available inside the shell.
+                       s/start and e/end; p/pause, reTimer, q and status are
+                       also available inside the shell.
   p                    (inside cf) Pause or resume the timer.
+  reTimer              (inside cf) End every running problem, record an end
+                       event for each, and reset the timer to 00:00:00. The
+                       timer keeps running. Asks for confirmation first when a
+                       problem is still open.
   status               (inside cf) Print the elapsed time, active problem and
                        state.
   q "contest done"     (inside cf) Close the timer, print the summary and

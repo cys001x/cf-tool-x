@@ -145,6 +145,9 @@ type replModel struct {
 	searchQuery string
 	searchIndex int
 	searchSaved string
+
+	resetPending bool
+	resetCount   int
 }
 
 func newReplModel() *replModel {
@@ -418,6 +421,14 @@ func (m *replModel) submit() tea.Cmd {
 	}
 	echo := tea.Println(replEcho(line))
 	if isTimerMonitorCommand(args[0]) {
+		command, _, _, _ := parseTimerArgs(args)
+		if command == "retimer" {
+			if count, ok := timerResetPromptCount(); ok && count > 0 {
+				m.resetPending = true
+				m.resetCount = count
+				return echo
+			}
+		}
 		return tea.Sequence(echo, m.runTimerLine(args))
 	}
 	return tea.Sequence(echo, m.runExternal(args))
@@ -475,6 +486,17 @@ func (m *replModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case tea.KeyMsg:
+		if m.resetPending {
+			switch msg.String() {
+			case "y", "Y":
+				m.resetPending = false
+				return m, m.runTimerLine([]string{"reTimer"})
+			case "n", "N", "esc", "ctrl+c":
+				m.resetPending = false
+				return m, tea.Println(color.YellowString("Reset cancelled."))
+			}
+			return m, nil
+		}
 		if m.searching {
 			switch msg.String() {
 			case "ctrl+r", "up":
@@ -643,6 +665,9 @@ func (m *replModel) View() string {
 	}
 	if m.searching {
 		line := fmt.Sprintf("(reverse-i-search)`%v': %v", m.searchQuery, m.searchMatch())
+		lines = append(lines, replSearchStyle.Render(runewidth.Truncate(line, m.width-1, "…")))
+	} else if m.resetPending {
+		line := fmt.Sprintf("End %v running problem(s) and reset the timer? (y/n)", m.resetCount)
 		lines = append(lines, replSearchStyle.Render(runewidth.Truncate(line, m.width-1, "…")))
 	} else {
 		lines = append(lines, m.input.View())
