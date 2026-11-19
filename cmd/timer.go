@@ -847,13 +847,29 @@ func timerOpen() error {
 		color.Cyan("Use `cf start/end` from any terminal, or run `cf` to open the shell.")
 		return nil
 	}
+	// Restart the clock on every shell open, so the elapsed time of a new
+	// shell always starts from zero. Problems that are still open stay open
+	// and are re-based to the new session.
 	if _, err = mutateTimeState(false, func(st *timeState, now time.Time) error {
+		restartTimeSession(st, now)
 		st.MonitorPID = int32(os.Getpid())
 		return nil
 	}); err != nil {
 		return err
 	}
 	return runTimeMonitor()
+}
+
+// restartTimeSession resets the session clock and drops the paused state.
+func restartTimeSession(st *timeState, now time.Time) {
+	ts := now.Format(timeLayout)
+	st.SessionStart = ts
+	st.ElapsedMS = 0
+	st.Paused = false
+	st.RunningSince = ts
+	for i := range st.Open {
+		st.Open[i].StartElapsedMS = 0
+	}
 }
 
 // StartTimer handles "cf start [<args>...]".

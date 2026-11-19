@@ -278,3 +278,40 @@ func TestEventInSessionZeroStart(t *testing.T) {
 		t.Fatal("zero session start should keep every event")
 	}
 }
+
+func TestReopenShellRestartsTimer(t *testing.T) {
+	setupTimerTest(t)
+
+	if err := timerStart("", "1136a", "read"); err != nil {
+		t.Fatal(err)
+	}
+	st, err := loadTimeState()
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Pretend the previous shell had been counting for a while and was paused.
+	st.SessionStart = time.Now().Add(-time.Hour).Format(timeLayout)
+	st.ElapsedMS = int64(5 * time.Minute / time.Millisecond)
+	st.Paused = true
+	st.RunningSince = ""
+	st.Open[0].StartElapsedMS = st.ElapsedMS
+	if err = saveTimeState(st); err != nil {
+		t.Fatal(err)
+	}
+
+	now := time.Now()
+	restartTimeSession(st, now)
+
+	if st.ElapsedMS != 0 {
+		t.Fatalf("elapsed not reset: %v", st.ElapsedMS)
+	}
+	if st.Paused || st.RunningSince != now.Format(timeLayout) {
+		t.Fatalf("timer not running from restart: paused=%v since=%q", st.Paused, st.RunningSince)
+	}
+	if st.SessionStart != now.Format(timeLayout) {
+		t.Fatalf("session start not reset: %q", st.SessionStart)
+	}
+	if len(st.Open) != 1 || st.Open[0].StartElapsedMS != 0 {
+		t.Fatalf("open segment not re-based: %+v", st.Open)
+	}
+}
