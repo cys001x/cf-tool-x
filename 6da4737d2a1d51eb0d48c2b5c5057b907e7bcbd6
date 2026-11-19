@@ -1,0 +1,95 @@
+cmd/contests_test.go
+  67e211a9145ae039 35-56
+client/fatch_test.go
+  67e211a9145ae039 1-60
+README_zh_CN.md
+  67e211a9145ae039 24,32,75,81-82,151-153,170,243,335-336
+cmd/cmd.go
+  67e211a9145ae039 34-35
+README.md
+  67e211a9145ae039 24,32,76,83-89,169-172,179,191,272-273,386-387
+cmd/completion.go
+  67e211a9145ae039 13,70
+cmd/contests.go
+  67e211a9145ae039 7,34-83
+client/fatch.go
+  67e211a9145ae039 6,11-12,177-303,319-321
+docs/commands.md
+  67e211a9145ae039 28,95,141-142,200-202,586-588,603-604,728-744
+cf.go
+  67e211a9145ae039 52,133-134,247-248
+cmd/args.go
+  67e211a9145ae039 29
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8-ntes.10",
+  "base_commit_sha": "6da4737d2a1d51eb0d48c2b5c5057b907e7bcbd6",
+  "prompts": {
+    "67e211a9145ae039": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1e60530f-7069-4521-9637-0e22b38ae638",
+        "model": "deepseek-flash"
+      },
+      "human_author": "huawei",
+      "messages": [],
+      "total_additions": 347,
+      "total_deletions": 23,
+      "accepted_lines": 339,
+      "overriden_lines": 0,
+      "per_file_stats": {
+        "cmd/args.go": {
+          "additions": 1,
+          "accepted_lines": 1
+        },
+        "docs/commands.md": {
+          "additions": 29,
+          "deletions": 4,
+          "accepted_lines": 29
+        },
+        "cmd/contests.go": {
+          "additions": 51,
+          "accepted_lines": 51
+        },
+        "README_zh_CN.md": {
+          "additions": 15,
+          "deletions": 5,
+          "accepted_lines": 13
+        },
+        "client/fatch_test.go": {
+          "additions": 61,
+          "deletions": 1,
+          "accepted_lines": 60
+        },
+        "cmd/cmd.go": {
+          "additions": 2,
+          "accepted_lines": 2
+        },
+        "README.md": {
+          "additions": 25,
+          "deletions": 11,
+          "accepted_lines": 21
+        },
+        "cf.go": {
+          "additions": 5,
+          "accepted_lines": 5
+        },
+        "cmd/contests_test.go": {
+          "additions": 22,
+          "accepted_lines": 22
+        },
+        "cmd/completion.go": {
+          "additions": 2,
+          "deletions": 1,
+          "accepted_lines": 2
+        },
+        "client/fatch.go": {
+          "additions": 134,
+          "deletions": 1,
+          "accepted_lines": 133
+        }
+      }
+    }
+  }
+}
