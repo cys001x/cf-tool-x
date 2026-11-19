@@ -49,22 +49,20 @@ func ScanlineTrim() string {
 
 // ChooseIndex return valid index in [0, maxLen)
 func ChooseIndex(maxLen int) int {
-	color.Cyan("Please choose one (index): ")
 	for {
-		index := ScanlineTrim()
+		index := ScanlinePromptTrim("Please choose one (index): ")
 		i, err := strconv.Atoi(index)
 		if err == nil && i >= 0 && i < maxLen {
 			return i
 		}
-		color.Red("Invalid index! Please try again: ")
+		color.Red("Invalid index! Please try again")
 	}
 }
 
 // YesOrNo must choose one
 func YesOrNo(note string) bool {
-	color.Cyan(note)
 	for {
-		tmp := ScanlineTrim()
+		tmp := ScanlinePromptTrim(note)
 		if tmp == "y" || tmp == "Y" {
 			return true
 		}

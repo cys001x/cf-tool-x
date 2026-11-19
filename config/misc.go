@@ -41,10 +41,9 @@ func (c *Config) SetHost() (err error) {
 		host = "https://codeforces.com"
 	}
 	color.Green("Current host domain is %v", host)
-	color.Cyan(`Set a new host domain (e.g. "https://codeforces.com"`)
 	color.Cyan(`Note: Don't forget the "http://" or "https://"`)
 	for {
-		host, err = formatHost(util.ScanlineTrim())
+		host, err = formatHost(util.ScanlinePromptTrim(`Set a new host domain (e.g. "https://codeforces.com"): `))
 		if err == nil {
 			break
 		}
@@ -66,11 +65,10 @@ func (c *Config) SetProxy() (err error) {
 	} else {
 		color.Green("Current proxy is %v", proxy)
 	}
-	color.Cyan(`Set a new proxy (e.g. "http://127.0.0.1:2333", "socks5://127.0.0.1:1080"`)
 	color.Cyan(`Enter empty line if you want to use default proxy from environment`)
 	color.Cyan(`Note: Proxy URL should match "protocol://host[:port]"`)
 	for {
-		proxy, err = formatProxy(util.ScanlineTrim())
+		proxy, err = formatProxy(util.ScanlinePromptTrim(`Set a new proxy (e.g. "http://127.0.0.1:2333", "socks5://127.0.0.1:1080"): `))
 		if err == nil {
 			break
 		}
@@ -94,10 +92,9 @@ func (c *Config) SetUserAgent() (err error) {
 	} else {
 		color.Green("Current User-Agent is %v", c.UserAgent)
 	}
-	color.Cyan(`Set your browser's User-Agent`)
 	color.Cyan(`Get it from the browser console on codeforces.com: navigator.userAgent`)
 	color.Cyan(`Enter an empty line to reset to the built-in default`)
-	ua := util.ScanlineTrim()
+	ua := util.ScanlinePromptTrim(`Set your browser's User-Agent: `)
 	c.UserAgent = ua
 	if len(ua) == 0 {
 		color.Green("User-Agent reset to the built-in default")
@@ -112,12 +109,12 @@ func (c *Config) SetFolderName() (err error) {
 	color.Cyan(`Set folders' name`)
 	color.Cyan(`Enter empty line if you don't want to change the value`)
 	color.Green(`Root path (current: %v)`, c.FolderName["root"])
-	if value := util.ScanlineTrim(); value != "" {
+	if value := util.ScanlinePromptTrim(`Root path: `); value != "" {
 		c.FolderName["root"] = value
 	}
 	for _, problemType := range client.ProblemTypes {
 		color.Green(`%v path (current: %v)`, problemType, c.FolderName[problemType])
-		if value := util.ScanlineTrim(); value != "" {
+		if value := util.ScanlinePromptTrim(problemType + ` path: `); value != "" {
 			c.FolderName[problemType] = value
 		}
 	}
