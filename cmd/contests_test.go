@@ -32,3 +32,25 @@ func TestRecentContests(t *testing.T) {
 		}
 	}
 }
+
+func TestUpcomingContests(t *testing.T) {
+	all := []client.ContestInfo{
+		{ID: 200, Phase: "BEFORE", StartTimeSeconds: 5000},
+		{ID: 201, Phase: "CODING", StartTimeSeconds: 1000},
+		{ID: 202, Phase: "BEFORE", StartTimeSeconds: 3000},
+		{ID: 100002, Phase: "BEFORE", StartTimeSeconds: 2000},
+		{ID: 203, Phase: "FINISHED", StartTimeSeconds: 4000},
+	}
+	upcoming := upcomingContests(all)
+	if len(upcoming) != 2 {
+		t.Fatalf("upcoming = %+v", upcoming)
+	}
+	if upcoming[0].ID != 202 || upcoming[1].ID != 200 {
+		t.Fatalf("order = %v, %v; want 202, 200", upcoming[0].ID, upcoming[1].ID)
+	}
+	for _, contest := range upcoming {
+		if contest.Phase != "BEFORE" || contest.ID >= 100000 {
+			t.Fatalf("unexpected contest: %+v", contest)
+		}
+	}
+}

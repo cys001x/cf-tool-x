@@ -25,6 +25,7 @@ document describes every command, its arguments, and the files it creates.
   - [cf detail](#cf-detail)
   - [cf list](#cf-list)
   - [cf ncontests](#cf-ncontests)
+  - [cf futureContests](#cf-futurecontests)
   - [cf open / stand / sid](#cf-open--stand--sid)
   - [cf race](#cf-race)
   - [cf upgrade](#cf-upgrade)
@@ -91,6 +92,7 @@ cf/
             ├── in1.txt
             ├── ans1.txt
             ├── statement.md
+            ├── assets/   # images referenced by statement.md
             └── a.cpp
 ```
 
@@ -136,7 +138,8 @@ Synchronizes a contest or a single problem in one command. For every selected
 problem it:
 
 1. Fetches the samples and writes `inK.txt` / `ansK.txt`.
-2. Converts the problem statement to `statement.md`.
+2. Converts the problem statement to `statement.md` and downloads its images
+   into `assets/`.
 3. Looks up your **newest** submission for the problem:
    - If local code exists, asks `(y/n)` before overwriting it.
    - If no local code exists, downloads the submission as
@@ -194,7 +197,9 @@ command introduction.
 
 The timer commands are also available from any other terminal as
 `cf start ...` and `cf end ...`; see [cf start / cf end](#cf-start--cf-end).
-The shell itself is opened by a bare `cf`.
+The shell itself is opened by a bare `cf`. The clock restarts at `00:00:00`
+every time the shell opens; problems that are still being timed stay open and
+are re-based to the new session.
 
 ### cf start / cf end
 
@@ -578,7 +583,9 @@ cf statement [<specifier>...] [-d <dir>] [-f <file>]
 
 Converts problem statements to markdown. For a contest it writes
 `statement.md` into every problem folder; `-d` selects a single output
-directory and `-f` selects the file name.
+directory and `-f` selects the file name. Images in the statement are
+downloaded into an `assets/` folder next to the markdown file and referenced
+with relative paths, so the statement reads offline.
 
 ```plain
 cf statement 1136
@@ -593,7 +600,8 @@ cf material [<specifier>...] [-d <dir>] [-f <file>]
 ```
 
 Downloads the Contest materials (announcement, tutorial, and other linked blog
-entries) as markdown files.
+entries) as markdown files. Images are saved into `assets/` next to each
+markdown file, like `cf statement`.
 
 ```plain
 cf material 1136
@@ -716,6 +724,23 @@ The list comes from the public `/api/contest.list` endpoint, keeps only
 finished regular contests (gym contests are excluded), and sorts them by start
 time, newest first. The division is parsed from the contest name, for example
 `Div. 1`, `Div. 2`, or `Div. 1 + Div. 2`; contests without a division show `-`.
+
+### cf futureContests
+
+```
+cf futureContests
+```
+
+Lists the contests that have not started yet. Each row contains the contest
+link, local start time, division, and name.
+
+```plain
+cf futureContests
+```
+
+Like `cf ncontests`, it reads `/api/contest.list`, keeps only contests in the
+`BEFORE` phase (gym contests are excluded), and sorts them by start time,
+soonest first. Times are shown in the local timezone.
 
 ### cf open / stand / sid
 

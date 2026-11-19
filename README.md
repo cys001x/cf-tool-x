@@ -21,6 +21,7 @@ It's fast, small, cross-platform and powerful.
 * Watch submissions' status dynamically.
 * Fetch problems' samples.
 * Sync a contest or a problem in one command: samples, statements, and the latest submission code.
+* Download statement images so saved statements read offline.
 * Time a contest or a problem and record every time node.
 * Query timer data with SQL, totals, and date-range statistics.
 * Generate random practice sets from local history or the Codeforces problemset.
@@ -28,7 +29,7 @@ It's fast, small, cross-platform and powerful.
 * Clone all codes of someone.
 * Generate codes from the specified template (including timestamp, author, etc.)
 * List problems' stats of one contest.
-* List the 20 most recent contests with links and divisions.
+* List the 20 most recent and upcoming contests with links and divisions.
 * Use default web browser to open problems' pages, standings' page, etc.
 * Setup a network proxy. Setup a mirror host.
 * Colorful CLI.
@@ -72,18 +73,20 @@ If the contest has not started yet, `cf` will count down. If the contest have st
 
  `cf sync 1136` or `cf sync 1136a`
 
-Sync a whole contest or a single problem in one command: fetch samples and statements, pull your latest submission code, or generate a code from the default template when there is no submission and no local code. If local code already exists, `cf` asks before overwriting it.
+Sync a whole contest or a single problem in one command: fetch samples and statements, pull your latest submission code, or generate a code from the default template when there is no submission and no local code. If local code already exists, `cf` asks before overwriting it. Statement images are downloaded into an `assets/` folder next to `statement.md` and referenced with relative paths.
 
  `cf`
 
 Open the interactive shell. A timer status line refreshes every second at the
 bottom. Type `start <specifier> <note>` to start timing a problem or contest,
 `end <specifier> <note>` to stop it, `pause` to pause or resume, and `q` (or
-`exit`) to close the timer and print the summary. `start` and `end` also work
-from any other terminal as `cf start ...` and `cf end ...`; `pause`, `q`, and
-`status` are shell-only. `cf --help` prints the full command introduction;
-unknown commands print a short `Unknown command: "<name>"` message instead of
-the whole usage. There is no background daemon: the clock is derived from
+`exit`) to close the timer and print the summary. `reTimer` ends every running
+problem and resets the clock to `00:00:00`, asking for confirmation when a
+problem is still open. The clock also restarts at zero every time the shell
+opens. `start` and `end` also work from any other terminal as `cf start ...`
+and `cf end ...`; `pause`, `q`, and `status` are shell-only. `cf --help` prints
+the full command introduction; unknown commands print a short `Unknown
+command: "<name>"` message instead of the whole usage. There is no background daemon: the clock is derived from
 timestamps in `~/.cf/timer.json`.
 
 While the shell is open, every other `cf` command can be typed without the `cf`
@@ -163,11 +166,17 @@ List problems' stats of the contest.
 
 List the 20 most recent finished contests with their link, division, and name.
 
+ `cf futureContests`
+
+List contests that have not started yet, with their local start time, division,
+and name, soonest first.
+
  `cf stand` 
 
 Open the standings' page of the contest.
 
 ```plain
+
 You should run "cf config" to configure your handle, password and code
 templates at first.
 
@@ -179,6 +188,7 @@ Usage:
   cf submit [-f <file>] [<specifier>...]
   cf list [<specifier>...]
   cf ncontests
+  cf futureContests
   cf parse [<specifier>...]
   cf gen [<alias>]
   cf test [-f <file>] [-d <dir>] [<specifier>...]
@@ -259,6 +269,8 @@ Examples:
   cf list 1119
   cf ncontests         List the 20 most recent finished contests with their
                        link, division and name.
+  cf futureContests    List upcoming contests with their start time, division
+                       and name, soonest first.
   cf parse 100         Fetch all problems' samples of contest 100 into
                        "{cf}/{contest}/100/<problem-id>".
   cf parse gym 100001a
@@ -371,6 +383,8 @@ Examples:
   cf statement         Fetch problem statement of current problem as statement.md.
   cf statement 1136a   Fetch statement of contest 1136 problem a.
   cf statement 1136    Fetch all statements of contest 1136.
+                       Statement images are downloaded into ./assets and
+                       referenced with relative paths.
   cf material 1136     Fetch all Contest materials for contest 1136 and save as .md files.
   cf completion bash   Print a bash completion script. Load it with
                        "source <(cf completion bash)".

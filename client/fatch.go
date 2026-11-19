@@ -3,10 +3,13 @@ package client
 import (
 	"encoding/json"
 	"fmt"
+	"hash/fnv"
 	stdhtml "html"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -14,8 +17,8 @@ import (
 
 	"golang.org/x/net/html"
 
-	"github.com/cys001x/cf-tool-x/util"
 	"github.com/PuerkitoBio/goquery"
+	"github.com/cys001x/cf-tool-x/util"
 )
 
 func nodeText(sel *goquery.Selection, visited map[*html.Node]bool) string {
@@ -171,6 +174,133 @@ func (c *Client) FetchUrlContentToMdFile(URL, path string, fileName string, mu *
 	return c.writeContentToMdFile(body, URL, path, fileName)
 }
 
+// resolveImageURL turns src into an absolute URL relative to pageURL.
+func resolveImageURL(pageURL, src string) string {
+	src = strings.TrimSpace(src)
+	if src == "" {
+		return ""
+	}
+	if strings.HasPrefix(src, "//") {
+		return "https:" + src
+	}
+	u, err := url.Parse(src)
+	if err != nil {
+		return ""
+	}
+	if u.IsAbs() {
+		return u.String()
+	}
+	base, err := url.Parse(pageURL)
+	if err != nil {
+		return ""
+	}
+	return base.ResolveReference(u).String()
+}
+
+func imageExtFromContentType(contentType string) string {
+	contentType = strings.ToLower(strings.TrimSpace(strings.Split(contentType, ";")[0]))
+	switch contentType {
+	case "image/png":
+		return ".png"
+	case "image/jpeg":
+		return ".jpg"
+	case "image/gif":
+		return ".gif"
+	case "image/svg+xml":
+		return ".svg"
+	case "image/webp":
+		return ".webp"
+	}
+	return ""
+}
+
+// imageFileName builds a stable, collision-free file name from an image URL.
+func imageFileName(u *url.URL, src, contentType string) string {
+	base := path.Base(u.Path)
+	stem := strings.TrimSuffix(base, path.Ext(base))
+	stem = regexp.MustCompile(`[^\w.-]+`).ReplaceAllString(stem, "_")
+	stem = strings.Trim(stem, "._")
+	if stem == "" {
+		stem = "image"
+	}
+	ext := strings.ToLower(path.Ext(base))
+	if ext == "" {
+		ext = imageExtFromContentType(contentType)
+	}
+	if ext == "" {
+		ext = ".img"
+	}
+	h := fnv.New32a()
+	h.Write([]byte(src))
+	return fmt.Sprintf("%s_%08x%s", stem, h.Sum32(), ext)
+}
+
+// downloadImage fetches one image into dir. It returns the path relative to
+// the markdown file, or "" when the image cannot be saved.
+func (c *Client) downloadImage(pageURL, src, dir string) string {
+	resolved := resolveImageURL(pageURL, src)
+	if resolved == "" {
+		return ""
+	}
+	u, err := url.Parse(resolved)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") {
+		return ""
+	}
+	if err = os.MkdirAll(dir, os.ModePerm); err != nil {
+		return ""
+	}
+	resp, err := c.client.Get(resolved)
+	if err != nil {
+		return ""
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return ""
+	}
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil || len(data) == 0 {
+		return ""
+	}
+	name := imageFileName(u, resolved, resp.Header.Get("Content-Type"))
+	if err = ioutil.WriteFile(filepath.Join(dir, name), data, 0644); err != nil {
+		return ""
+	}
+	return "assets/" + name
+}
+
+// localizeImages downloads every statement image into "<dir>/assets" and
+// rewrites the <img> node as markdown so the statement works offline. Images
+// that cannot be fetched keep their absolute URL.
+func (c *Client) localizeImages(doc *goquery.Document, pageURL, dir string) int {
+	assetsDir := filepath.Join(dir, "assets")
+	saved := map[string]string{}
+	count := 0
+	doc.Find(".problem-statement img, .ttypography img").Each(func(_ int, s *goquery.Selection) {
+		src, _ := s.Attr("src")
+		if src == "" {
+			src, _ = s.Attr("data-src")
+		}
+		if src == "" || strings.HasPrefix(strings.ToLower(src), "data:") {
+			return
+		}
+		ref, ok := saved[src]
+		if !ok {
+			ref = c.downloadImage(pageURL, src, assetsDir)
+			if ref == "" {
+				ref = resolveImageURL(pageURL, src)
+			}
+			saved[src] = ref
+		}
+		alt := regexp.MustCompile(`[\[\]\r\n]+`).ReplaceAllString(s.AttrOr("alt", ""), " ")
+		node := s.Get(0)
+		text := &html.Node{Type: html.TextNode, Data: fmt.Sprintf("![%v](%v)", strings.TrimSpace(alt), ref)}
+		node.Parent.InsertBefore(text, node)
+		node.Parent.RemoveChild(node)
+		count++
+	})
+	return count
+}
+
 // writeContentToMdFile renders an already fetched problem page as markdown.
 // Splitting the fetch from the rendering lets Sync reuse a single request for
 // both the samples and the statement.
@@ -185,6 +315,9 @@ func (c *Client) writeContentToMdFile(body []byte, URL, path string, fileName st
 	if err != nil {
 		return fmt.Errorf("cannot parse HTML: %v", err)
 	}
+
+	// Pull statement images down so the markdown works offline.
+	c.localizeImages(doc, URL, path)
 
 	var sb strings.Builder
 

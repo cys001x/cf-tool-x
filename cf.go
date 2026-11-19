@@ -49,6 +49,7 @@ Usage:
   cf submit [-f <file>] [<specifier>...]
   cf list [<specifier>...]
   cf ncontests
+  cf futureContests
   cf parse [<specifier>...]
   cf gen [<alias>]
   cf test [-f <file>] [-d <dir>] [<specifier>...]
@@ -129,6 +130,8 @@ Examples:
   cf list 1119
   cf ncontests         List the 20 most recent finished contests with their
                        link, division and name.
+  cf futureContests    List upcoming contests with their start time, division
+                       and name, soonest first.
   cf parse 100         Fetch all problems' samples of contest 100 into
                        "{cf}/{contest}/100/<problem-id>".
   cf parse gym 100001a
@@ -241,6 +244,8 @@ Examples:
   cf statement         Fetch problem statement of current problem as statement.md.
   cf statement 1136a   Fetch statement of contest 1136 problem a.
   cf statement 1136    Fetch all statements of contest 1136.
+                       Statement images are downloaded into ./assets and
+                       referenced with relative paths.
   cf material 1136     Fetch all Contest materials for contest 1136 and save as .md files.
   cf completion bash   Print a bash completion script. Load it with
                        "source <(cf completion bash)".

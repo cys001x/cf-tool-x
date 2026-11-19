@@ -10,7 +10,7 @@ import (
 // completionCommands is used by the generated shell completion scripts. Keep
 // it in sync with the Usage section in cf.go.
 var completionCommands = []string{
-	"config", "submit", "list", "ncontests", "parse", "gen", "test", "watch",
+	"config", "submit", "list", "ncontests", "futureContests", "parse", "gen", "test", "watch",
 	"open", "stand", "sid", "detail", "race", "pull", "sync",
 	"start", "end",
 	"clone", "upgrade", "statement", "material", "completion",
@@ -67,6 +67,7 @@ _cf() {
         'submit:submit code'
         'list:list problems of a contest'
         'ncontests:list recent contests'
+        'futureContests:list upcoming contests'
         'parse:fetch samples'
         'gen:generate code from a template'
         'test:run the template scripts and test samples'

@@ -31,6 +31,8 @@ func Eval(opts docopt.Opts) error {
 		return List()
 	} else if Args.NContests {
 		return NContests()
+	} else if Args.Future {
+		return FutureContests()
 	} else if Args.Parse {
 		return Parse()
 	} else if Args.Gen {

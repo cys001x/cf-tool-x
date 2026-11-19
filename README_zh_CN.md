@@ -21,6 +21,7 @@ Codeforces Tool 是 [Codeforces](https://codeforces.com) 的命令行界面的�
 * 动态刷新提交后的情况
 * 拉取问题的样例
 * 一条命令同步比赛或题目：样例、题面和最新提交代码
+* 下载题面图片，保存的题面可离线阅读
 * 全局计时器：为比赛或题目计时，并记录每个时间节点
 * 用 SQL 查询计时数据、统计总用时和按日期统计完成题数
 * 从本地记录或 Codeforces 题库随机生成练习集
@@ -28,7 +29,7 @@ Codeforces Tool 是 [Codeforces](https://codeforces.com) 的命令行界面的�
 * 拉取某人的所有代码
 * 从指定模板生成代码（包括时间戳，作者等信息）
 * 列出某场比赛的所有题目的整体信息
-* 列出最近 20 场比赛的链接和 div 等级
+* 列出最近 20 场和即将开始的比赛的链接和 div 等级
 * 用默认的网页浏览器打开题目页面、榜单、提交页面等
 * 设置网络代理，设置镜像站
 * 丰富多彩的命令行
@@ -71,12 +72,14 @@ $ go env -w GOPRIVATE=github.com/cys001x/cf-tool-x
 
  `cf sync 1136` 或者 `cf sync 1136a`
 
-一条命令同步整场比赛或单道题目：拉取样例和题面，拉取你最新的一次提交代码；如果没有提交且本地没有代码，则用默认模板生成代码。若本地已有代码，会先询问是否覆盖。
+一条命令同步整场比赛或单道题目：拉取样例和题面，拉取你最新的一次提交代码；如果没有提交且本地没有代码，则用默认模板生成代码。若本地已有代码，会先询问是否覆盖。题面图片会下载到 `statement.md` 旁边的 `assets/` 目录，并用相对路径引用。
 
  `cf`
 
 打开交互式 shell，底部每秒刷新计时状态行。输入 `start <specifier> <描述>` 开始为一道题目或一场
 比赛计时，`end <specifier> <描述>` 结束，`pause` 暂停或继续，`q`（或 `exit`）关闭计时并输出总结。
+`reTimer` 会结束所有正在计时的题目并把计时重置为 `00:00:00`，有题目仍在计时时会先询问是否确认；
+每次打开 shell 时计时也会从零重新开始。
 `start`/`end` 也可以在其它终端通过 `cf start ...` / `cf end ...` 执行；`pause`、`q`、`status`
 只在 shell 内可用。完整命令说明用 `cf --help` 查看；未知命令只输出简短的
 `Unknown command: "<名字>"` 提示，不再打印整页用法。没有后台守护进程：
@@ -145,6 +148,10 @@ SQL，加 `--write` 才允许修改数据。每道题还会根据事件推导出
 
 列出最近 20 场已结束比赛的链接、div 等级和名字。
 
+ `cf futureContests`
+
+列出即将开始的比赛及其本地开始时间、div 等级和名字，按开始时间排序。
+
  `cf stand` 
 
 用浏览器打开榜单，查看排名。
@@ -160,6 +167,7 @@ SQL，加 `--write` 才允许修改数据。每道题还会根据事件推导出
   cf submit [-f <file>] [<specifier>...]
   cf list [<specifier>...]
   cf ncontests
+  cf futureContests
   cf parse [<specifier>...]
   cf gen [<alias>]
   cf test [-f <file>] [-d <dir>] [<specifier>...]
@@ -232,6 +240,7 @@ SQL，加 `--write` 才允许修改数据。每道题还会根据事件推导出
   cf list              列出当前比赛的题目通过、时限等信息。
   cf list 1119         
   cf ncontests         列出最近 20 场已结束比赛的链接、div 等级和名字。
+  cf futureContests    列出即将开始的比赛及其开始时间、div 等级和名字，按开始时间排序。
   cf parse 100         获取 contest 100 的所有题目的样例到文件夹
                        "{cf}/{contest}/100/<题目>" 中。
   cf parse gym 100001a
@@ -323,7 +332,8 @@ SQL，加 `--write` 才允许修改数据。每道题还会根据事件推导出
   cf upgrade           从 GitHub 更新 "cf" 到最新版。
   cf statement         拉取当前题目的题面到当前文件夹下。
   cf statement 1136a   拉取比赛 1136 题目 a 的题面。
-  cf statement 1136    拉取比赛 1136 所有题目的题面。
+  cf statement 1136    拉取比赛 1136 所有题目的题面；题面图片会下载到
+                       ./assets 并用相对路径引用。
   cf material 1136     拉取比赛 1136 的所有比赛资料（公告、题解等）并保存为 .md 文件。
   cf completion bash   输出 bash 补全脚本，用 "source <(cf completion bash)" 加载。
   cf completion zsh    输出 zsh 补全脚本，在 ~/.zshrc 里用
