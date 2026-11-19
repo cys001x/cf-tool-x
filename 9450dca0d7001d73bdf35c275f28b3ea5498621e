@@ -1,0 +1,61 @@
+util/util.go
+  67e211a9145ae039 53,58,65
+config/template.go
+  67e211a9145ae039 34,56,63,67,80,84,104,108,112,115
+config/misc.go
+  67e211a9145ae039 46,71,97,112,117
+client/login.go
+  67e211a9145ae039 227,244,260
+util/interactive.go
+  67e211a9145ae039 1-122
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8-ntes.10",
+  "base_commit_sha": "9450dca0d7001d73bdf35c275f28b3ea5498621e",
+  "prompts": {
+    "67e211a9145ae039": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1e60530f-7069-4521-9637-0e22b38ae638",
+        "model": "deepseek-flash"
+      },
+      "human_author": "huawei",
+      "messages": [],
+      "total_additions": 181,
+      "total_deletions": 43,
+      "accepted_lines": 146,
+      "overriden_lines": 0,
+      "per_file_stats": {
+        "util/interactive_debug_test.go": {
+          "additions": 31
+        },
+        "util/interactive.go": {
+          "additions": 125,
+          "deletions": 3,
+          "accepted_lines": 122
+        },
+        "config/template.go": {
+          "additions": 10,
+          "deletions": 17,
+          "accepted_lines": 10
+        },
+        "util/util.go": {
+          "additions": 3,
+          "deletions": 5,
+          "accepted_lines": 3
+        },
+        "config/misc.go": {
+          "additions": 9,
+          "deletions": 12,
+          "accepted_lines": 8
+        },
+        "client/login.go": {
+          "additions": 3,
+          "deletions": 6,
+          "accepted_lines": 3
+        }
+      }
+    }
+  }
+}
