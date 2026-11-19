@@ -1,0 +1,39 @@
+cmd/timer.go
+  67e211a9145ae039 850-852,854,863-872
+cmd/timer_lifecycle_test.go
+  67e211a9145ae039 281-317
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8-ntes.10",
+  "base_commit_sha": "5d400f56670a333e86a51bbafe521153a41bfa3c",
+  "prompts": {
+    "67e211a9145ae039": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1e60530f-7069-4521-9637-0e22b38ae638",
+        "model": "deepseek-flash"
+      },
+      "human_author": "huawei",
+      "messages": [],
+      "total_additions": 54,
+      "total_deletions": 1,
+      "accepted_lines": 53,
+      "overriden_lines": 0,
+      "per_file_stats": {
+        "screenlog.0": {
+          "additions": 1,
+          "deletions": 1
+        },
+        "cmd/timer.go": {
+          "additions": 16,
+          "accepted_lines": 16
+        },
+        "cmd/timer_lifecycle_test.go": {
+          "additions": 37,
+          "accepted_lines": 37
+        }
+      }
+    }
+  }
+}
