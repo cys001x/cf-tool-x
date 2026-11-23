@@ -1,0 +1,44 @@
+client/client.go
+  a7d0c41f023ae985 6,12,18-24,109-119
+client/fatch.go
+  a7d0c41f023ae985 4,18,26-28,258-264
+client/material.go
+  a7d0c41f023ae985 83,85-86
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8-ntes.10",
+  "base_commit_sha": "022c79dd18c8b357b0ff44734e25c4d2ac73984d",
+  "prompts": {
+    "a7d0c41f023ae985": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1f4647a1-d9b6-427d-87c4-b517472c3437",
+        "model": "deepseek-flash"
+      },
+      "human_author": "cys",
+      "messages": [],
+      "total_additions": 38,
+      "total_deletions": 5,
+      "accepted_lines": 38,
+      "overriden_lines": 0,
+      "per_file_stats": {
+        "client/fatch.go": {
+          "additions": 13,
+          "deletions": 1,
+          "accepted_lines": 13
+        },
+        "client/material.go": {
+          "additions": 3,
+          "deletions": 3,
+          "accepted_lines": 3
+        },
+        "client/client.go": {
+          "additions": 22,
+          "deletions": 1,
+          "accepted_lines": 22
+        }
+      }
+    }
+  }
+}
