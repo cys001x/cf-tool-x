@@ -22,7 +22,7 @@
 3. **练习集生成**
    - `cf lpractice`、`cf lrepractice`、`cf lnrepractice` 在真实 `~/.cf/timer.db` 上分别抽取全部 / `accepted` / `pending` 的题，数量与状态正确。
    - `cf opractice` 的 `--difficulty` 单值与区间边界、`--tags` 多标签（当前为 OR）、数量不足警告。
-   - 生成目录中样例、`statement.md`、代码文件、`practice.json` 均存在；无模板时不生成代码文件。
+   - 生成目录中样例（`<题目>_inK.txt`/`<题目>_ansK.txt`）、`<题目>_statement.md`、代码文件（`<题目>.cpp`）、`practice.json` 均存在；无模板时不生成代码文件。
    - 练习集名为中文或包含空格、斜杠时的目录名清洗结果。
 
 4. **数据库迁移**

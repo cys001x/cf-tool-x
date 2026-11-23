@@ -37,14 +37,14 @@ func Submit() (err error) {
 	if err != nil {
 		return
 	}
-	printFailedSubmissionTests(cln)
+	printFailedSubmissionTests(cln, info)
 	recordSubmissionTimer(cln)
 	return
 }
 
 // printFailedSubmissionTests pulls the judge details of the submission that
 // just finished and prints the test cases it failed.
-func printFailedSubmissionTests(cln *client.Client) {
+func printFailedSubmissionTests(cln *client.Client, info client.Info) {
 	if cln.LastVerdict == "" || cln.LastVerdict == "OK" || cln.LastSubmission == nil {
 		return
 	}
@@ -69,7 +69,11 @@ func printFailedSubmissionTests(cln *client.Client) {
 	if wdErr != nil {
 		return
 	}
-	saved, saveErr := saveFailedTestFiles(detail, dir)
+	prefix := ""
+	if info.ProblemID != "" {
+		prefix = info.FilePrefix(info.ProblemID)
+	}
+	saved, saveErr := saveFailedTestFiles(detail, dir, prefix)
 	if saveErr != nil {
 		color.Yellow("Cannot save test files: %v", saveErr)
 		return

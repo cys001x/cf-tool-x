@@ -26,13 +26,13 @@ func Parse() (err error) {
 		}
 	}
 	work := func() error {
-		_, paths, err := cln.Parse(info)
+		problems, paths, err := cln.Parse(info)
 		if err != nil {
 			return err
 		}
 		if cfg.GenAfterParse {
-			for _, path := range paths {
-				gen(source, path, ext)
+			for i, path := range paths {
+				gen(source, path, ext, info.FilePrefix(problems[i]))
 			}
 		}
 		return nil

@@ -99,7 +99,7 @@ func Sync() (err error) {
 			color.Yellow("Problem %v: language %q of submission #%v has no known file extension. Skip.",
 				problem.ID, ref.Lang, ref.ID)
 		case hasSubmission:
-			target := filepath.Join(problem.Path, strings.ToLower(problem.ID)+"."+ref.Ext)
+			target := filepath.Join(problem.Path, info.FilePrefix(problem.ID)+"."+ref.Ext)
 			if len(local) > 0 {
 				note := fmt.Sprintf("Problem %v already has code (%v). Overwrite %v with submission #%v? (y/n) ",
 					problem.ID, strings.Join(local, ", "), filepath.Base(target), ref.ID)
@@ -122,7 +122,7 @@ func Sync() (err error) {
 			if e := loadTemplate(); e != nil {
 				return e
 			}
-			if e := gen(source, problem.Path, templateExt); e != nil {
+			if e := gen(source, problem.Path, templateExt, info.FilePrefix(problem.ID)); e != nil {
 				return e
 			}
 		default:

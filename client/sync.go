@@ -100,7 +100,8 @@ func (c *Client) Sync(info Info) (problems []SyncedProblem, latest map[string]La
 				return
 			}
 
-			samples, standardIO, e := writeSamples(body, problem.Path, &mu)
+			prefix := info.FilePrefix(problem.ID)
+			samples, standardIO, e := writeSamples(body, problem.Path, prefix, &mu)
 			if e != nil {
 				mu.Lock()
 				color.Red("Failed %v samples: %v", problem.ID, e.Error())
@@ -108,7 +109,8 @@ func (c *Client) Sync(info Info) (problems []SyncedProblem, latest map[string]La
 				return
 			}
 
-			statementErr := c.writeContentToMdFile(body, URL, problem.Path, "statement.md")
+			statementName := PrefixedName(prefix, "statement.md")
+			statementErr := c.writeContentToMdFile(body, URL, problem.Path, statementName)
 			mu.Lock()
 			if statementErr != nil {
 				color.Red("Failed %v statement: %v", problem.ID, statementErr.Error())
@@ -117,7 +119,7 @@ func (c *Client) Sync(info Info) (problems []SyncedProblem, latest map[string]La
 				if !standardIO {
 					warn = " " + color.YellowString("Non standard input/output format.")
 				}
-				color.Green("Synced %v: %v samples, statement.md%v", problem.ID, samples, warn)
+				color.Green("Synced %v: %v samples, %v%v", problem.ID, samples, statementName, warn)
 			}
 			problem.Samples, problem.StandardIO = samples, standardIO
 			mu.Unlock()

@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -36,13 +37,15 @@ func readTemplateSource(path string, cln *client.Client) (source string, err err
 	return
 }
 
-// ensureAnalysisFile creates an empty analysis.md when it is missing. An
-// existing file is never overwritten.
-func ensureAnalysisFile(currentPath string) bool {
-	path := filepath.Join(currentPath, "analysis.md")
+// ensureAnalysisFile creates an empty "<prefix>_analysis.md" when it is
+// missing. An existing file is never overwritten.
+func ensureAnalysisFile(currentPath, prefix string) bool {
+	name := client.PrefixedName(prefix, "analysis.md")
+	path := filepath.Join(currentPath, name)
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0644)
 	if err == nil {
 		file.Close()
+		color.Green("Created %v.", name)
 		return true
 	}
 	if !os.IsExist(err) {
@@ -51,13 +54,34 @@ func ensureAnalysisFile(currentPath string) bool {
 	return false
 }
 
-func gen(source, currentPath, ext string) error {
-	path := filepath.Join(currentPath, filepath.Base(currentPath))
+var practiceProblemReg = regexp.MustCompile(`^\d+[a-z][a-z0-9]*$`)
+
+// problemPrefixFromPath derives the file-name prefix from a practice problem
+// folder such as "{cf}/practice/drill/1136a" -> "1136a". Contest and gym
+// folders are covered by the problem id parsed from the path, so this only
+// needs to recognise the "<contest-id><index>" practice folder names.
+func problemPrefixFromPath(dir string) string {
+	base := strings.ToLower(filepath.Base(dir))
+	if practiceProblemReg.MatchString(base) {
+		return base
+	}
+	return ""
+}
+
+// gen writes the source file and an empty analysis file into currentPath. With
+// a prefix the code file is named "<prefix><ext>" (e.g. "1136a.cpp"), otherwise
+// after the directory.
+func gen(source, currentPath, ext, prefix string) error {
+	stem := filepath.Base(currentPath)
+	if prefix != "" {
+		stem = prefix
+	}
+	path := filepath.Join(currentPath, stem)
 
 	savePath := path + ext
 	i := 1
 	for _, err := os.Stat(savePath); err == nil; _, err = os.Stat(savePath) {
-		tmpPath := fmt.Sprintf("%v%v%v", path, i, ext)
+		tmpPath := fmt.Sprintf("%v_%v%v", path, i, ext)
 		fmt.Printf("%v exists. Rename to %v\n", filepath.Base(savePath), filepath.Base(tmpPath))
 		savePath = tmpPath
 		i++
@@ -65,9 +89,7 @@ func gen(source, currentPath, ext string) error {
 
 	err := ioutil.WriteFile(savePath, []byte(source), 0644)
 	if err == nil {
-		if ensureAnalysisFile(currentPath) {
-			color.Green("Created analysis.md.")
-		}
+		ensureAnalysisFile(currentPath, prefix)
 		color.Green("Generated! See %v", filepath.Base(savePath))
 	}
 	return err
@@ -112,6 +134,13 @@ func Gen() (err error) {
 		return
 	}
 
+	prefix := ""
+	if Args.Info.ProblemID != "" {
+		prefix = Args.Info.FilePrefix(Args.Info.ProblemID)
+	} else {
+		prefix = problemPrefixFromPath(currentPath)
+	}
+
 	ext := filepath.Ext(path)
-	return gen(source, currentPath, ext)
+	return gen(source, currentPath, ext, prefix)
 }

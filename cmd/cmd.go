@@ -77,7 +77,28 @@ func Eval(opts docopt.Opts) error {
 	return nil
 }
 
-func getSampleID(dir string) (samples []string) {
+// sampleFile identifies one sample pair in a test directory. Sample files are
+// named "<prefix>_inK.txt" / "<prefix>_ansK.txt"; prefix is empty for the
+// legacy "inK.txt" / "ansK.txt" names.
+type sampleFile struct {
+	prefix string
+	index  string
+}
+
+func sampleName(prefix, kind, index string) string {
+	if prefix == "" {
+		return kind + index + ".txt"
+	}
+	return prefix + "_" + kind + index + ".txt"
+}
+
+func (s sampleFile) inName() string  { return sampleName(s.prefix, "in", s.index) }
+func (s sampleFile) ansName() string { return sampleName(s.prefix, "ans", s.index) }
+
+// getSampleID lists the sample pairs in dir. When preferredPrefix matches some
+// files, only those are returned so that one directory can hold several
+// problems' samples.
+func getSampleID(dir, preferredPrefix string) (samples []sampleFile) {
 	path := dir
 	if path == "" {
 		var err error
@@ -90,16 +111,31 @@ func getSampleID(dir string) (samples []string) {
 	if err != nil {
 		return
 	}
-	reg := regexp.MustCompile(`in(\d+).txt`)
+	prefixed := regexp.MustCompile(`^([A-Za-z0-9]+)_in(\d+)\.txt$`)
+	legacy := regexp.MustCompile(`^in(\d+)\.txt$`)
+	var found []sampleFile
 	for _, f := range paths {
 		name := f.Name()
-		tmp := reg.FindSubmatch([]byte(name))
-		if tmp != nil {
-			idx := string(tmp[1])
-			ans := filepath.Join(path, fmt.Sprintf("ans%v.txt", idx))
-			if _, err := os.Stat(ans); err == nil {
-				samples = append(samples, idx)
+		if m := prefixed.FindStringSubmatch(name); m != nil {
+			found = append(found, sampleFile{prefix: m[1], index: m[2]})
+		} else if m := legacy.FindStringSubmatch(name); m != nil {
+			found = append(found, sampleFile{index: m[1]})
+		}
+	}
+	if preferredPrefix != "" {
+		var matched []sampleFile
+		for _, s := range found {
+			if s.prefix == preferredPrefix {
+				matched = append(matched, s)
 			}
+		}
+		if len(matched) > 0 {
+			found = matched
+		}
+	}
+	for _, s := range found {
+		if _, err := os.Stat(filepath.Join(path, s.ansName())); err == nil {
+			samples = append(samples, s)
 		}
 	}
 	return

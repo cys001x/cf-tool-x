@@ -57,8 +57,8 @@ func (c *Client) Statement(info Info) (err error) {
 				return
 			}
 			URL := fmt.Sprintf(urlFormatter, pid)
-			fileName := "statement.md"
-			if len(info.Dir) > 0 {
+			fileName := PrefixedName(info.FilePrefix(pid), "statement.md")
+			if len(info.Dir) > 0 && info.File != "" {
 				fileName = info.File
 			}
 			e := c.FetchUrlContentToMdFile(URL, ppath, fileName, &mu)

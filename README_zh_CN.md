@@ -72,7 +72,7 @@ $ go env -w GOPRIVATE=github.com/cys001x/cf-tool-x
 
  `cf sync 1136` 或者 `cf sync 1136a`
 
-一条命令同步整场比赛或单道题目：拉取样例和题面，拉取你最新的一次提交代码；如果没有提交且本地没有代码，则用默认模板生成代码。若本地已有代码，会先询问是否覆盖。题面图片会下载到 `statement.md` 旁边的 `assets/` 目录，并用相对路径引用。
+一条命令同步整场比赛或单道题目：拉取样例和题面，拉取你最新的一次提交代码；如果没有提交且本地没有代码，则用默认模板生成代码。若本地已有代码，会先询问是否覆盖。题面图片会下载到 `<题目>_statement.md`（例如 `1136a_statement.md`）旁边的 `assets/` 目录，并用相对路径引用。
 
  `cf`
 
@@ -109,7 +109,7 @@ SQL，加 `--write` 才允许修改数据。每道题还会根据事件推导出
  `cf lpractice 5`
 
 从本地计时数据库随机抽 5 道题，生成到 `cf/practice/<时间戳>-practice` 下。每题包含样例、
-`statement.md` 和用默认模板生成的代码文件。`cf lrepractice` 只抽 Accepted（含 `practice_N`）的题，
+`<题目>_statement.md` 和用默认模板生成的代码文件。`cf lrepractice` 只抽 Accepted（含 `practice_N`）的题，
 `cf lnrepractice` 只抽从未计时过的题。第二个参数可以指定文件夹名，例如`cf lpractice 5 drill`。`cf opractice 5 --difficulty 1200-1600 --tags dp,greedy`
 则从 Codeforces 在线题库中抽取。用 `cf start p_drill 1136a "retry"` 开始练习计时，
 这次计时中的 Accepted 会推进该题的 practice 标签。
@@ -126,9 +126,9 @@ SQL，加 `--write` 才允许修改数据。每道题还会根据事件推导出
 
  `cf gen` 
 
-用默认模板生成一份代码，代码文件名默认是题目的 ID。同目录下会创建一个空的 `analysis.md`。
+用默认模板生成一份代码，代码文件和空的笔记文件都以题目 ID 命名，例如在 `cf/contest/1136/a` 下会得到 `1136a.cpp` 和 `1136a_analysis.md`。
 
- `vim a.cpp` 
+ `vim 1136a.cpp`
 
 用 Vim 写代码（这取决于你）。
 
@@ -250,10 +250,13 @@ SQL，加 `--write` 才允许修改数据。每道题还会根据事件推导出
                        获取 gym 100001 的所有题目的样例到文件夹
                        "{cf}/{gym}/100001" 中。
   cf parse             获取当前比赛的当前题目到当前文件夹下。
-  cf gen               用默认的模板生成一份代码到当前文件夹下，并创建空的 analysis.md。
+  cf gen               用默认的模板生成一份代码到当前文件夹下，并创建空的
+                       <题目>_analysis.md。代码和笔记文件都以题号命名，
+                       例如 1136a.cpp、1136a_analysis.md。
   cf gen cpp           用名字为 "cpp" 的模板来生成一份代码到当前文件夹下。
   cf test              在当前目录下执行模板里的命令，并测试全部样例。如果你想加一组新的测试数据，
-                       新建两个文件 "inK.txt" 和 "ansK.txt" 即可，其中 K 是包含 0~9 的字符串。
+                       新建两个文件 "<题目>_inK.txt" 和 "<题目>_ansK.txt" 即可，其中 K 是包含 0~9 的字符串。
+                       直接写 "inK.txt" 和 "ansK.txt" 也可以。
   cf test -f a.cpp -d ./1a
                        用 ./1a 目录下的样例文件测试 a.cpp。
   cf watch             查看自己在当前比赛的最后 10 次提交结果。
@@ -268,15 +271,18 @@ SQL，加 `--write` 才允许修改数据。每道题还会根据事件推导出
                        输入、输出与期望答案。
   cf detail            打印最后一次提交的详情。
   cf submit 1136a      提交后立刻打印提交链接；若判定不是 Accepted，会打印失败的
-                       测试点并存成 inK.txt/ansK.txt，可直接用 cf test 本地复现。
+                       测试点并存成 <题目>_inK.txt/<题目>_ansK.txt，可直接用
+                       cf test 本地复现。
   cf race 1136         如果比赛还未开始且进入倒计时，则该命令会倒计时。倒计时完后，会自动打开一些
                        题目页面并拉取样例。
-  cf pull 100          拉取比赛 100 中你的全部提交，保存到 "./<题目>/<题目>.<后缀>"。
-  cf pull 100 a        拉取比赛 100 题目 a 的全部提交，保存到 "./a.<后缀>"。
+  cf pull 100          拉取比赛 100 中你的全部提交，保存到
+                       "./<题目>/<比赛ID><题目>.<后缀>"。
+  cf pull 100 a        拉取比赛 100 题目 a 的全部提交，保存到 "./100a.<后缀>"。
   cf pull ac 100 a     拉取比赛 id 为 100 的题目 a 的 AC 代码。
-  cf pull              拉取当前题目的全部提交到当前文件夹下。
-  cf sync 1136         同步比赛 1136 的所有题目：拉取样例和题面，拉取每题最新提交；
-                       没有提交且本地没有代码时用默认模板生成。
+  cf pull              拉取当前题目的全部提交到当前文件夹下，文件名为
+                       "./<比赛ID><题目>.<后缀>"。
+  cf sync 1136         同步比赛 1136 的所有题目：拉取样例和题面，把每题最新提交
+                       存成 <题目>.<后缀>；没有提交且本地没有代码时用默认模板生成。
   cf sync 1136a        同步比赛 1136 的题目 a。
   cf sync              同步当前题目。
   cf                   打开交互式 shell，底部每秒刷新计时状态行。可以直接输入
@@ -330,11 +336,13 @@ SQL，加 `--write` 才允许修改数据。每道题还会根据事件推导出
   cf lpractice 5 drill 练习集放到 "cf/practice/drill"。
   cf clone xalanq      拉取 xalanq 的所有提交代码。
   cf upgrade           从 GitHub 更新 "cf" 到最新版。
-  cf statement         拉取当前题目的题面到当前文件夹下。
+  cf statement         拉取当前题目的题面，保存为 <题目>_statement.md
+                       （例如 1136a_statement.md）。
   cf statement 1136a   拉取比赛 1136 题目 a 的题面。
   cf statement 1136    拉取比赛 1136 所有题目的题面；题面图片会下载到
                        ./assets 并用相对路径引用。
-  cf material 1136     拉取比赛 1136 的所有比赛资料（公告、题解等）并保存为 .md 文件。
+  cf material 1136     拉取比赛 1136 的所有比赛资料（公告、题解等），保存为
+                       <比赛ID>_<名称>.md 文件（例如 1136_announcement.md）。
   cf completion bash   输出 bash 补全脚本，用 "source <(cf completion bash)" 加载。
   cf completion zsh    输出 zsh 补全脚本，在 ~/.zshrc 里用
                        "eval \"$(cf completion zsh)\"" 加载。
@@ -431,7 +439,7 @@ Codeforces Tool 是命令行界面的工具，你应该在终端里运行这个�
 
 ### 如何加一个新的测试数据
 
-新建两个额外的测试数据文件 `inK.txt` 和 `ansK.txt` （K 是包含 0~9 的字符串）。
+新建两个额外的测试数据文件 `<题目>_inK.txt` 和 `<题目>_ansK.txt` （K 是包含 0~9 的字符串）。直接写 `inK.txt` 和 `ansK.txt` 也可以。
 
 ### 在终端里启用 tab 补全命令
 

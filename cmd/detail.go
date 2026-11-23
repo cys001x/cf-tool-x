@@ -163,15 +163,16 @@ func writeSample(name, content string) error {
 	return ioutil.WriteFile(name, []byte(content), 0644)
 }
 
-// saveFailedTestFiles stores the failed tests as inK.txt / ansK.txt so that
-// "cf test" can reproduce them locally.
-func saveFailedTestFiles(detail client.SubmissionDetail, dir string) (saved []string, err error) {
+// saveFailedTestFiles stores the failed tests as "<prefix>_inK.txt" /
+// "<prefix>_ansK.txt" so that "cf test" can reproduce them locally.
+func saveFailedTestFiles(detail client.SubmissionDetail, dir, prefix string) (saved []string, err error) {
 	for _, test := range detail.Tests {
 		if test.Passed || strings.TrimSpace(test.Input) == "" {
 			continue
 		}
-		inName := filepath.Join(dir, fmt.Sprintf("in%v.txt", test.Index))
-		ansName := filepath.Join(dir, fmt.Sprintf("ans%v.txt", test.Index))
+		sample := sampleFile{prefix: prefix, index: fmt.Sprintf("%v", test.Index)}
+		inName := filepath.Join(dir, sample.inName())
+		ansName := filepath.Join(dir, sample.ansName())
 		if err = writeSample(inName, test.Input); err != nil {
 			return
 		}

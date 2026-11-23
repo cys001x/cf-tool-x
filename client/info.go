@@ -55,6 +55,29 @@ func (info *Info) errorContest() (string, error) {
 	return "", errors.New(ErrorNeedContestID)
 }
 
+// FilePrefix returns the prefix used for files generated for a problem: the
+// lower-case contest id followed by the lower-case problem index, for example
+// "1136a". acmsguru problems live in a flat folder, so their prefix is the
+// problem id alone. With an empty problem id the contest id is returned, which
+// names contest-level files such as the contest materials.
+func (info *Info) FilePrefix(problemID string) string {
+	problemID = strings.ToLower(problemID)
+	if info == nil || info.ProblemType == "acmsguru" || info.ContestID == "" {
+		return problemID
+	}
+	return strings.ToLower(info.ContestID) + problemID
+}
+
+// PrefixedName joins a file-name prefix and a file name, for example
+// PrefixedName("1136a", "statement.md") is "1136a_statement.md". An empty
+// prefix returns the name unchanged.
+func PrefixedName(prefix, name string) string {
+	if prefix == "" {
+		return name
+	}
+	return prefix + "_" + name
+}
+
 // Hint hint text
 func (info *Info) Hint() string {
 	text := strings.ToUpper(info.ProblemType)

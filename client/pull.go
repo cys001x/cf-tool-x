@@ -116,11 +116,12 @@ func (c *Client) Pull(info Info, rootPath string, ac bool) (err error) {
 		if !ok {
 			continue
 		}
+		prefix := info.FilePrefix(problemID)
 		path := ""
 		if info.ProblemID == "" {
-			path = filepath.Join(rootPath, problemID, problemID)
+			path = filepath.Join(rootPath, problemID, prefix)
 		} else {
-			path = filepath.Join(rootPath, problemID)
+			path = filepath.Join(rootPath, prefix)
 		}
 		newInfo := info
 		newInfo.SubmissionID = fmt.Sprintf("%v", submission.id)

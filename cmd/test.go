@@ -62,9 +62,10 @@ func plain(raw []byte) string {
 }
 
 // judge runs one sample and reports whether the output matched the answer.
-func judge(sampleID, sampleDir, command string) (passed bool, err error) {
-	inPath := filepath.Join(sampleDir, fmt.Sprintf("in%v.txt", sampleID))
-	ansPath := filepath.Join(sampleDir, fmt.Sprintf("ans%v.txt", sampleID))
+func judge(sample sampleFile, sampleDir, command string) (passed bool, err error) {
+	sampleID := sample.index
+	inPath := filepath.Join(sampleDir, sample.inName())
+	ansPath := filepath.Join(sampleDir, sample.ansName())
 	input, err := os.Open(inPath)
 	if err != nil {
 		return false, err
@@ -159,7 +160,11 @@ func Test() (err error) {
 		Args.Dir = Args.Info.Path()
 	}
 
-	samples := getSampleID(Args.Dir)
+	preferredPrefix := ""
+	if Args.Info.ProblemID != "" {
+		preferredPrefix = Args.Info.FilePrefix(Args.Info.ProblemID)
+	}
+	samples := getSampleID(Args.Dir, preferredPrefix)
 	if len(samples) == 0 {
 		return errors.New("Cannot find any sample file " + Args.Dir)
 	}
@@ -198,8 +203,8 @@ func Test() (err error) {
 	}
 	allPassed := true
 	if s := filter(template.Script); len(s) > 0 {
-		for _, i := range samples {
-			passed, e := judge(i, Args.Dir, s)
+		for _, sample := range samples {
+			passed, e := judge(sample, Args.Dir, s)
 			if e != nil {
 				color.Red(e.Error())
 				allPassed = false

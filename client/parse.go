@@ -51,7 +51,9 @@ func findSample(body []byte) (input [][]byte, output [][]byte, err error) {
 }
 
 // writeSamples writes the sample inputs and outputs found in body into path.
-func writeSamples(body []byte, path string, mu *sync.Mutex) (samples int, standardIO bool, err error) {
+// Files are named "<prefix>_inK.txt" and "<prefix>_ansK.txt"; an empty prefix
+// falls back to the old "inK.txt" / "ansK.txt" names.
+func writeSamples(body []byte, path, prefix string, mu *sync.Mutex) (samples int, standardIO bool, err error) {
 	input, output, err := findSample(body)
 	if err != nil {
 		return
@@ -67,8 +69,8 @@ func writeSamples(body []byte, path string, mu *sync.Mutex) (samples int, standa
 	}
 
 	for i := 0; i < len(input); i++ {
-		fileIn := filepath.Join(path, fmt.Sprintf("in%v.txt", i+1))
-		fileOut := filepath.Join(path, fmt.Sprintf("ans%v.txt", i+1))
+		fileIn := filepath.Join(path, PrefixedName(prefix, fmt.Sprintf("in%v.txt", i+1)))
+		fileOut := filepath.Join(path, PrefixedName(prefix, fmt.Sprintf("ans%v.txt", i+1)))
 		e := ioutil.WriteFile(fileIn, input[i], 0644)
 		if e != nil {
 			if mu != nil {
@@ -93,8 +95,9 @@ func writeSamples(body []byte, path string, mu *sync.Mutex) (samples int, standa
 	return len(input), standardIO, nil
 }
 
-// ParseProblem parse problem to path. mu can be nil
-func (c *Client) ParseProblem(URL, path string, mu *sync.Mutex) (samples int, standardIO bool, err error) {
+// ParseProblem parse problem to path. mu can be nil. prefix is used in the
+// sample file names, see writeSamples.
+func (c *Client) ParseProblem(URL, path, prefix string, mu *sync.Mutex) (samples int, standardIO bool, err error) {
 	body, err := util.GetBody(c.client, URL)
 	if err != nil {
 		return
@@ -105,7 +108,7 @@ func (c *Client) ParseProblem(URL, path string, mu *sync.Mutex) (samples int, st
 		return
 	}
 
-	return writeSamples(body, path, mu)
+	return writeSamples(body, path, prefix, mu)
 }
 
 // Parse parse
@@ -154,7 +157,7 @@ func (c *Client) Parse(info Info) (problems []string, paths []string, err error)
 			}
 			URL := fmt.Sprintf(urlFormatter, problemID)
 
-			samples, standardIO, err := c.ParseProblem(URL, path, &mu)
+			samples, standardIO, err := c.ParseProblem(URL, path, info.FilePrefix(problemID), &mu)
 
 			warns := ""
 			if !standardIO {

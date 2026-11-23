@@ -89,12 +89,19 @@ cf/
 └── contest/            # or gym/, group/, acmsguru/
     └── 1136/
         └── a/
-            ├── in1.txt
-            ├── ans1.txt
-            ├── statement.md
-            ├── assets/   # images referenced by statement.md
-            └── a.cpp
+            ├── 1136a_in1.txt
+            ├── 1136a_ans1.txt
+            ├── 1136a_statement.md
+            ├── assets/   # images referenced by 1136a_statement.md
+            └── 1136a.cpp
 ```
+
+Generated files carry a problem prefix: the lower-case contest id followed by
+the lower-case problem index (`1136a`). Sample files become
+`<problem-id>_inK.txt` / `<problem-id>_ansK.txt`, statements and notes become
+`<problem-id>_statement.md` / `<problem-id>_analysis.md`, and generated code
+becomes `<problem-id>.<ext>`. acmsguru problems use the problem id alone. An
+explicit `-f <file>` always wins over the generated name.
 
 The root folder and the per-type folder names can be changed with
 `cf config` → `8) set folders' name`. The tool walks up from the current
@@ -137,13 +144,14 @@ cf sync [<specifier>...]
 Synchronizes a contest or a single problem in one command. For every selected
 problem it:
 
-1. Fetches the samples and writes `inK.txt` / `ansK.txt`.
-2. Converts the problem statement to `statement.md` and downloads its images
-   into `assets/`.
+1. Fetches the samples and writes `<problem-id>_inK.txt` /
+   `<problem-id>_ansK.txt`.
+2. Converts the problem statement to `<problem-id>_statement.md` and downloads
+   its images into `assets/`.
 3. Looks up your **newest** submission for the problem:
    - If local code exists, asks `(y/n)` before overwriting it.
    - If no local code exists, downloads the submission as
-     `<problem-id>.<ext>` (for example `a.cpp`).
+     `<problem-id>.<ext>` (for example `1136a.cpp`).
 4. If you have no submission and there is no local code, generates code from
    the default template.
 5. If you have no submission but local code exists, keeps the local code.
@@ -432,8 +440,8 @@ cf opractice [options] <count> [<name>]
 ```
 
 Create a randomized practice set. Picked problems are materialized as folders
-containing samples, `statement.md`, an optional code file from the default
-template, and a shared `practice.json` manifest.
+containing samples, `<problem-id>_statement.md`, an optional code file from the
+default template, and a shared `practice.json` manifest.
 
 | Command | Source | Selection |
 |---------|--------|-----------|
@@ -465,9 +473,9 @@ cf/
     └── 20261105-153000-practice/   # default name
         ├── practice.json
         ├── 1136a/
-        │   ├── in1.txt
-        │   ├── ans1.txt
-        │   ├── statement.md
+        │   ├── 1136a_in1.txt
+        │   ├── 1136a_ans1.txt
+        │   ├── 1136a_statement.md
         │   └── 1136a.cpp
         └── 1136c/
 ```
@@ -481,7 +489,7 @@ cf/
 - Samples require a valid Codeforces session. Statement failures are reported
   but do not abort the set.
 - A code file is generated only when a default template exists. An empty
-  `analysis.md` is created next to it if missing.
+  `<problem-id>_analysis.md` is created next to it if missing.
 - To record a practice run, start the timer from the set with
   `cf start p_<set> <problem>`. Only accepted submits made during that timer
   segment advance the problem's `practice` count and status.
@@ -511,11 +519,12 @@ cf pull ac 100 a      # only accepted ones
 cf pull               # current problem
 ```
 
-With a problem specifier the file is written as `./<problem-id>.<ext>`.
-With a contest specifier every problem gets its own folder:
-`./a/a.cpp`, `./b/b.cpp`, and so on. When a file already exists, a numeric
-suffix is added (`a.cpp`, `a_1.cpp`, `a_2.cpp`, ...), so repeated runs do not
-overwrite anything.
+With a problem specifier the file is written as
+`./<contest-id><problem-id>.<ext>` (for example `./100a.cpp`). With a contest
+specifier every problem gets its own folder:
+`./a/100a.cpp`, `./b/100b.cpp`, and so on. When a file already exists, a
+numeric suffix is added (`100a.cpp`, `100a_1.cpp`, `100a_2.cpp`, ...), so
+repeated runs do not overwrite anything.
 
 This command is similar to `cf sync`, but it copies every matching submission
 instead of the newest one, and it does not fetch samples or statements.
@@ -582,10 +591,11 @@ cf statement [<specifier>...] [-d <dir>] [-f <file>]
 ```
 
 Converts problem statements to markdown. For a contest it writes
-`statement.md` into every problem folder; `-d` selects a single output
-directory and `-f` selects the file name. Images in the statement are
-downloaded into an `assets/` folder next to the markdown file and referenced
-with relative paths, so the statement reads offline.
+`<problem-id>_statement.md` (for example `1136a_statement.md`) into every
+problem folder; `-d` selects a single output directory and `-f` selects the
+file name. Images in the statement are downloaded into an `assets/` folder next
+to the markdown file and referenced with relative paths, so the statement reads
+offline.
 
 ```plain
 cf statement 1136
@@ -600,8 +610,10 @@ cf material [<specifier>...] [-d <dir>] [-f <file>]
 ```
 
 Downloads the Contest materials (announcement, tutorial, and other linked blog
-entries) as markdown files. Images are saved into `assets/` next to each
-markdown file, like `cf statement`.
+entries) as markdown files named `<contest-id>_<entry>.md`, for example
+`1136_announcement.md` and `1136_tutorial.md`. Images are saved into `assets/`
+next to each markdown file, like `cf statement`. An explicit `-f` prefix
+replaces the contest id in the file name.
 
 ```plain
 cf material 1136
@@ -614,14 +626,19 @@ cf gen [<alias>]
 ```
 
 Generates a source file from a configured template in the current directory.
-The file is named after the current directory (the problem id). If no alias is
-given, the default template is used. An empty `analysis.md` is also created in
-the same directory; an existing file is kept unchanged.
+The file is named after the problem: inside a contest problem folder it becomes
+`<contest-id><problem-index>.<ext>` (for example `1136a.cpp`), and inside a
+practice problem folder it keeps that folder's name. An empty
+`<problem-id>_analysis.md` is also created; an existing file is kept unchanged.
+If no alias is given, the default template is used.
 
 ```plain
 cf gen
 cf gen cpp
 ```
+
+When the directory is not a problem folder, the code is named after the
+directory and the analysis file keeps the plain `analysis.md` name.
 
 Placeholders such as `$%U%$` (handle), `$%Y%$` / `$%M%$` / `$%D%$`, and
 `$%h%$` / `$%m%$` / `$%s%$` are replaced when the file is generated.
@@ -636,7 +653,9 @@ Runs the template's `before_script`, `script`, and `after_script` and compares
 the program output with the sample answers.
 
 - `-f` selects the source file.
-- `-d` selects the directory containing `inK.txt` / `ansK.txt`.
+- `-d` selects the directory containing the sample files. Both
+  `<problem-id>_inK.txt` / `<problem-id>_ansK.txt` and the plain
+  `inK.txt` / `ansK.txt` names are recognized.
 - Without a specifier, the current directory is used.
 
 ```plain
@@ -644,8 +663,9 @@ cf test
 cf test -f a.cpp -d ./1a
 ```
 
-Add extra tests by creating `inK.txt` and `ansK.txt` with any string `K`
-containing `0`–`9`.
+Add extra tests by creating `<problem-id>_inK.txt` and `<problem-id>_ansK.txt`
+with any string `K` containing `0`–`9`. Plain `inK.txt` and `ansK.txt` also
+work.
 
 ### cf submit
 

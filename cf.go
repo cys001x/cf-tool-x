@@ -125,7 +125,8 @@ Examples:
   cf submit gym 100001 a
   cf submit 1136a      Print the link right after submitting, and when the
                        verdict is not accepted, print the failed tests and
-                       save them as inK.txt/ansK.txt for "cf test".
+                       save them as <problem-id>_inK.txt/<problem-id>_ansK.txt
+                       for "cf test".
   cf list              List all problems' stats of a contest.
   cf list 1119
   cf ncontests         List the 20 most recent finished contests with their
@@ -141,14 +142,16 @@ Examples:
                        Fetch all problems' samples of gym 100001 into
                        "{cf}/{gym}/100001".
   cf parse             Fetch samples of current problem into current path.
-  cf gen               Generate a code from default template and create an
-                       empty analysis.md next to it.
+  cf gen               Generate a code from the default template and create an
+                       empty analysis file next to it. Both are named after
+                       the problem, e.g. 1136a.cpp and 1136a_analysis.md.
   cf gen cpp           Generate a code from the template whose alias is "cpp"
                        into current path.
   cf test              Run the commands of a template in current path. Then
                        test all samples. If you want to add a new testcase,
-                       create two files "inK.txt" and "ansK.txt" where K is
-                       a string with 0~9.
+                       create two files "<problem-id>_inK.txt" and
+                       "<problem-id>_ansK.txt" where K is a string with 0~9.
+                       Plain "inK.txt" and "ansK.txt" still work.
   cf test -f a.cpp -d ./1a  Test a.cpp using sample files from directory ./1a.
   cf watch             Watch the first 10 submissions of current contest.
   cf watch all         Watch all submissions of current contest.
@@ -168,17 +171,17 @@ Examples:
                        countdown. When the countdown ends, it will open all
                        problems' pages and parse samples.
   cf pull 100          Pull all your submissions of contest 100 into
-                       "./<problem-id>/<problem-id>.<ext>".
+                       "./<problem-id>/<contest-id><problem-id>.<ext>".
   cf pull 100 a        Pull your submissions of problem "a" of contest 100
-                       into "./a.<ext>".
+                       into "./100a.<ext>".
   cf pull ac 100 a     Pull the "Accepted" or "Pretests passed" code of problem
                        "a" of contest 100.
   cf pull              Pull your submissions of the current problem into the
                        current path.
   cf sync 1136         Sync all problems of contest 1136: fetch samples and
-                       statements, pull the latest submission code, or
-                       generate a code from the default template when there is
-                       no submission and no local code.
+                       statements, pull the latest submission code as
+                       <problem-id>.<ext>, or generate a code from the default
+                       template when there is no submission and no local code.
   cf sync 1136a        Sync problem "a" of contest 1136.
   cf sync              Sync the current problem.
   cf                   Open the interactive shell. A timer status line is
@@ -241,12 +244,15 @@ Examples:
   cf lpractice 5 drill Create "cf/practice/drill" instead of a timestamped
                        folder.
   cf clone xalanq      Clone all codes of xalanq.
-  cf statement         Fetch problem statement of current problem as statement.md.
+  cf statement         Fetch problem statement of current problem as
+                       <problem-id>_statement.md (e.g. 1136a_statement.md).
   cf statement 1136a   Fetch statement of contest 1136 problem a.
   cf statement 1136    Fetch all statements of contest 1136.
                        Statement images are downloaded into ./assets and
                        referenced with relative paths.
-  cf material 1136     Fetch all Contest materials for contest 1136 and save as .md files.
+  cf material 1136     Fetch all Contest materials for contest 1136 and save
+                       them as <contest-id>_<name>.md files (e.g.
+                       1136_announcement.md).
   cf completion bash   Print a bash completion script. Load it with
                        "source <(cf completion bash)".
   cf completion zsh    Print a zsh completion script. Load it with

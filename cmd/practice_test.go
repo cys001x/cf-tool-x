@@ -396,7 +396,7 @@ func TestPracticeSpecifierCodeLookup(t *testing.T) {
 	if err = os.WriteFile(filepath.Join(base, "practice.json"), data, 0644); err != nil {
 		t.Fatal(err)
 	}
-	codePath := filepath.Join(problemDir, "a.cpp")
+	codePath := filepath.Join(problemDir, "1136a.cpp")
 	if err = os.WriteFile(codePath, []byte("int main() { return 0; }"), 0644); err != nil {
 		t.Fatal(err)
 	}

@@ -23,7 +23,7 @@ func safeName(title string) string {
 }
 
 // FetchTutorial fetches all Contest materials blog entries for a contest and
-// saves each as <title>.md under the contest path.
+// saves each as "<contest-id>_<title>.md" under the contest path.
 func (c *Client) Material(info Info, host string) error {
 	if info.ContestID == "" {
 		return fmt.Errorf("you have to specify the Contest ID")
@@ -78,7 +78,7 @@ func (c *Client) Material(info Info, host string) error {
 				match := reg.FindStringSubmatch(info.File)
 				filename = match[1] + "_" + safeName(linkText) + match[2]
 			} else {
-				filename = safeName(linkText) + ".md"
+				filename = PrefixedName(info.FilePrefix(""), safeName(linkText)+".md")
 			}
 			err = c.FetchUrlContentToMdFile(blogURL, savePath, filename, &mu)
 			mu.Lock()

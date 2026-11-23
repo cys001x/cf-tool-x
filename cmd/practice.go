@@ -425,7 +425,7 @@ func createPractice(problems []practiceProblem, name string) error {
 			color.Red("Failed %v: no problem URL", problem.Display)
 			continue
 		}
-		samples, standardIO, err := cln.ParseProblem(URL, dir, nil)
+		samples, standardIO, err := cln.ParseProblem(URL, dir, problem.Display, nil)
 		if err != nil {
 			color.Red("Failed %v: %v", problem.Display, err)
 			continue
@@ -434,11 +434,11 @@ func createPractice(problems []practiceProblem, name string) error {
 		if !standardIO {
 			warn = color.YellowString(" Non standard input/output format.")
 		}
-		if err = cln.FetchUrlContentToMdFile(URL, dir, "statement.md", nil); err != nil {
+		if err = cln.FetchUrlContentToMdFile(URL, dir, client.PrefixedName(problem.Display, "statement.md"), nil); err != nil {
 			color.Yellow("Statement for %v skipped: %v", problem.Display, err)
 		}
 		if source != "" {
-			gen(source, dir, ext)
+			gen(source, dir, ext, problem.Display)
 		}
 		color.Green("Practice %v: %v samples.%v", problem.Display, samples, warn)
 		success++
