@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"hash/fnv"
@@ -14,12 +15,17 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"time"
 
 	"golang.org/x/net/html"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/cys001x/cf-tool-x/util"
 )
+
+// imageTimeout bounds a single image download. Image hosts used by old blog
+// entries are often dead and would otherwise block the whole command.
+const imageTimeout = 20 * time.Second
 
 func nodeText(sel *goquery.Selection, visited map[*html.Node]bool) string {
 	var sb strings.Builder
@@ -249,7 +255,13 @@ func (c *Client) downloadImage(pageURL, src, dir string) string {
 	if err = os.MkdirAll(dir, os.ModePerm); err != nil {
 		return ""
 	}
-	resp, err := c.client.Get(resolved)
+	ctx, cancel := context.WithTimeout(context.Background(), imageTimeout)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, "GET", resolved, nil)
+	if err != nil {
+		return ""
+	}
+	resp, err := c.client.Do(req)
 	if err != nil {
 		return ""
 	}

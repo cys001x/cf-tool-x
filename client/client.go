@@ -3,14 +3,25 @@ package client
 import (
 	"encoding/json"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/cys001x/cf-tool-x/cookiejar"
 	"github.com/fatih/color"
+)
+
+// HTTP timeouts. Without them a stalled connection to Codeforces or to an
+// external image host blocks the command forever.
+const (
+	requestTimeout        = 60 * time.Second
+	dialTimeout           = 15 * time.Second
+	tlsHandshakeTimeout   = 15 * time.Second
+	responseHeaderTimeout = 30 * time.Second
 )
 
 // Client codeforces client
@@ -95,7 +106,17 @@ func Init(path, host, proxy string) {
 			Proxy = http.ProxyURL(proxyURL)
 		}
 	}
-	c.client = &http.Client{Jar: c.Jar, Transport: &uaTransport{inner: &http.Transport{Proxy: Proxy}}}
+	transport := &http.Transport{
+		Proxy:                 Proxy,
+		DialContext:           (&net.Dialer{Timeout: dialTimeout}).DialContext,
+		TLSHandshakeTimeout:   tlsHandshakeTimeout,
+		ResponseHeaderTimeout: responseHeaderTimeout,
+	}
+	c.client = &http.Client{
+		Jar:       c.Jar,
+		Transport: &uaTransport{inner: transport},
+		Timeout:   requestTimeout,
+	}
 	if err := c.save(); err != nil {
 		color.Red(err.Error())
 	}

@@ -80,10 +80,10 @@ func (c *Client) Material(info Info, host string) error {
 			} else {
 				filename = PrefixedName(info.FilePrefix(""), safeName(linkText)+".md")
 			}
-			err = c.FetchUrlContentToMdFile(blogURL, savePath, filename, &mu)
+			e := c.FetchUrlContentToMdFile(blogURL, savePath, filename, &mu)
 			mu.Lock()
-			if err != nil {
-				color.Red("Failed %v: %v", linkText, err)
+			if e != nil {
+				color.Red("Failed %v: %v", linkText, e)
 			} else {
 				color.Green("Fetched material for %v  -> %v/%v", blogURL, savePath, filename)
 			}
