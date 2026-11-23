@@ -1,0 +1,187 @@
+cmd/practice.go
+  a7d0c41f023ae985 428,437,441
+README.md
+  a7d0c41f023ae985 76,125,147,149,267-268,284-286,291-293,321-323,386-387,392-394,497
+client/pull.go
+  a7d0c41f023ae985 119,122,124
+cmd/gen.go
+  a7d0c41f023ae985 9,40-44,48,57,59-79,84,92,137-143,145
+docs/commands.md
+  a7d0c41f023ae985 92-96,99-104,147-150,154,443-444,476-478,492,522-527,594-598,613-616,629-633,640-642,656-658,666-668
+client/parse.go
+  a7d0c41f023ae985 54-56,72-73,98-100,111,160
+client/info.go
+  a7d0c41f023ae985 58-80
+client/material.go
+  a7d0c41f023ae985 26,81
+client/statement.go
+  a7d0c41f023ae985 60-61
+cmd/gen_test.go
+  a7d0c41f023ae985 10,14,17,24,29,33,36,39,44-62
+cmd/parse.go
+  a7d0c41f023ae985 29,34-35
+cmd/submit.go
+  a7d0c41f023ae985 40,47,72-76
+cf.go
+  a7d0c41f023ae985 128-129,145-147,152-154,174,176,182-184,247-248,253-255
+client/parse_test.go
+  a7d0c41f023ae985 1-49
+docs/leftover-tests.md
+  a7d0c41f023ae985 25
+cmd/detail.go
+  a7d0c41f023ae985 166-168,173-175
+cmd/practice_test.go
+  a7d0c41f023ae985 399
+README_zh_CN.md
+  a7d0c41f023ae985 75,112,129,131,253-255,258-259,274-275,278-280,282-285,339-340,344-345,442
+cmd/test.go
+  a7d0c41f023ae985 65-68,163-167,206-207
+client/sync.go
+  a7d0c41f023ae985 103-104,112-113,122
+cmd/sync.go
+  a7d0c41f023ae985 102,125
+cmd/cmd.go
+  a7d0c41f023ae985 80-101,114-116,119-129,132-138
+client/info_test.go
+  a7d0c41f023ae985 1-32
+cmd/sample_test.go
+  a7d0c41f023ae985 1-46
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8-ntes.10",
+  "base_commit_sha": "010f1cfb84696919c93966dca3ed7a3d97cff702",
+  "prompts": {
+    "a7d0c41f023ae985": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1f4647a1-d9b6-427d-87c4-b517472c3437",
+        "model": "deepseek-flash"
+      },
+      "human_author": "cys",
+      "messages": [],
+      "total_additions": 458,
+      "total_deletions": 175,
+      "accepted_lines": 431,
+      "overriden_lines": 0,
+      "per_file_stats": {
+        "cmd/detail.go": {
+          "additions": 6,
+          "deletions": 5,
+          "accepted_lines": 6
+        },
+        "cf.go": {
+          "additions": 18,
+          "deletions": 12,
+          "accepted_lines": 18
+        },
+        "README.md": {
+          "additions": 22,
+          "deletions": 22,
+          "accepted_lines": 21
+        },
+        "client/info_test.go": {
+          "additions": 32,
+          "accepted_lines": 32
+        },
+        "cmd/test.go": {
+          "additions": 11,
+          "deletions": 6,
+          "accepted_lines": 11
+        },
+        "client/material.go": {
+          "additions": 2,
+          "deletions": 2,
+          "accepted_lines": 2
+        },
+        "docs/leftover-tests.md": {
+          "additions": 1,
+          "deletions": 1,
+          "accepted_lines": 1
+        },
+        "cmd/practice.go": {
+          "additions": 3,
+          "deletions": 3,
+          "accepted_lines": 3
+        },
+        "cmd/gen.go": {
+          "additions": 54,
+          "deletions": 25,
+          "accepted_lines": 40
+        },
+        "cmd/sync.go": {
+          "additions": 2,
+          "deletions": 2,
+          "accepted_lines": 2
+        },
+        "cmd/parse.go": {
+          "additions": 3,
+          "deletions": 3,
+          "accepted_lines": 3
+        },
+        "cmd/cmd.go": {
+          "additions": 44,
+          "deletions": 8,
+          "accepted_lines": 44
+        },
+        "client/info.go": {
+          "additions": 23,
+          "accepted_lines": 23
+        },
+        "client/sync.go": {
+          "additions": 5,
+          "deletions": 3,
+          "accepted_lines": 5
+        },
+        "client/statement.go": {
+          "additions": 2,
+          "deletions": 2,
+          "accepted_lines": 2
+        },
+        "cmd/practice_test.go": {
+          "additions": 1,
+          "deletions": 1,
+          "accepted_lines": 1
+        },
+        "docs/commands.md": {
+          "additions": 52,
+          "deletions": 32,
+          "accepted_lines": 52
+        },
+        "cmd/sample_test.go": {
+          "additions": 46,
+          "accepted_lines": 46
+        },
+        "client/parse_test.go": {
+          "additions": 49,
+          "accepted_lines": 49
+        },
+        "client/pull.go": {
+          "additions": 3,
+          "deletions": 2,
+          "accepted_lines": 3
+        },
+        "client/parse.go": {
+          "additions": 10,
+          "deletions": 7,
+          "accepted_lines": 10
+        },
+        "cmd/gen_test.go": {
+          "additions": 38,
+          "deletions": 20,
+          "accepted_lines": 27
+        },
+        "cmd/submit.go": {
+          "additions": 7,
+          "deletions": 3,
+          "accepted_lines": 7
+        },
+        "README_zh_CN.md": {
+          "additions": 24,
+          "deletions": 16,
+          "accepted_lines": 23
+        }
+      }
+    }
+  }
+}
