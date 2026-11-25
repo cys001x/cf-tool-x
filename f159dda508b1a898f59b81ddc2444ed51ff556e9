@@ -1,0 +1,36 @@
+client/fatch.go
+  d820d46eb2dcd2d5 414-417
+client/fatch_test.go
+  d820d46eb2dcd2d5 9,62-92
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8-ntes.10",
+  "base_commit_sha": "f159dda508b1a898f59b81ddc2444ed51ff556e9",
+  "prompts": {
+    "d820d46eb2dcd2d5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "eed8b7f1-4ab0-4b62-8c69-ccf2a61d73fa",
+        "model": "deepseek-flash"
+      },
+      "human_author": "cys",
+      "messages": [],
+      "total_additions": 36,
+      "total_deletions": 6,
+      "accepted_lines": 36,
+      "overriden_lines": 0,
+      "per_file_stats": {
+        "client/fatch_test.go": {
+          "additions": 32,
+          "accepted_lines": 32
+        },
+        "client/fatch.go": {
+          "additions": 4,
+          "deletions": 6,
+          "accepted_lines": 4
+        }
+      }
+    }
+  }
+}
