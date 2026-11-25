@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"testing"
 )
 
@@ -56,5 +57,36 @@ func TestWriteContentDownloadsStatementImages(t *testing.T) {
 	}
 	if !regexp.MustCompile(regexp.QuoteMeta("](" + server.URL + "/missing.png)")).Match(md) {
 		t.Fatalf("failed image should keep its absolute URL:\n%s", md)
+	}
+}
+
+func TestWriteContentKeepsMathDelimitersTight(t *testing.T) {
+	body := []byte(`<html><script>handle = "tester"</script>
+<div class="problem-statement">
+  <div class="header"></div>
+  <div><p>Given $$$n$$$ towns and $$$$$$a+b$$$$$$ pairs.</p></div>
+</div>
+</html>`)
+
+	c := &Client{}
+	dir := t.TempDir()
+	if err := c.writeContentToMdFile(body, "https://codeforces.com/problem", dir, "statement.md"); err != nil {
+		t.Fatalf("writeContentToMdFile: %v", err)
+	}
+
+	md, err := os.ReadFile(filepath.Join(dir, "statement.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := string(md)
+	for _, want := range []string{"$n$", "$$a+b$$"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("missing %q in:\n%s", want, got)
+		}
+	}
+	for _, bad := range []string{"$ n $", "$ a+b $"} {
+		if strings.Contains(got, bad) {
+			t.Errorf("math delimiters padded with spaces: %q in:\n%s", bad, got)
+		}
 	}
 }

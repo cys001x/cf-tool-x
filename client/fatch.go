@@ -411,13 +411,11 @@ func (c *Client) writeContentToMdFile(body []byte, URL, path string, fileName st
 	// trim excessive blank lines globally
 	reg := regexp.MustCompile(`\n{3,}`)
 	content = reg.ReplaceAllString(content, "\n\n")
-	// Codeforces uses $$$ for both inline and display math; replace with $
+	// Codeforces wraps math in $$$ (inline) and $$$$$$ (display). Collapse
+	// them to $...$ / $$...$$ with the delimiters tight against the
+	// expression: GitHub, VS Code and most KaTeX-based renderers only treat
+	// $...$ as math when no whitespace touches the dollar signs.
 	content = strings.ReplaceAll(content, "$$$", "$")
-
-	reg = regexp.MustCompile(`(\${1,2})([^\$\n ])`)
-	content = reg.ReplaceAllString(content, "$1 $2")
-	reg = regexp.MustCompile(`([^\$\n ])(\${1,2})`)
-	content = reg.ReplaceAllString(content, "$1 $2")
 
 	outFile := filepath.Join(path, fileName)
 	if err := ioutil.WriteFile(outFile, []byte(content), 0644); err != nil {
