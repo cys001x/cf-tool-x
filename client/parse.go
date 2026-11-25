@@ -142,7 +142,7 @@ func (c *Client) Parse(info Info) (problems []string, paths []string, err error)
 	mu := sync.Mutex{}
 	paths = make([]string, len(problems))
 	for i, problemID := range problems {
-		paths[i] = filepath.Join(contestPath, strings.ToLower(problemID))
+		paths[i] = problemDir(info.Dir, contestPath, problemID)
 		go func(problemID, path string) {
 			defer wg.Done()
 			mu.Lock()

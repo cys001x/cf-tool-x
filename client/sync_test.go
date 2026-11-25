@@ -6,6 +6,18 @@ import (
 	"testing"
 )
 
+func TestProblemDir(t *testing.T) {
+	// A practice specifier sets Dir to the problem folder itself; appending the
+	// problem id again would create a stray subfolder.
+	practice := "/home/u/cf/practice/P2/1118c"
+	if got := problemDir(practice, practice, "c"); got != practice {
+		t.Errorf("problemDir(practice) = %q, want %q", got, practice)
+	}
+	if got := problemDir("", "/home/u/cf/contest/1136", "A"); got != "/home/u/cf/contest/1136/a" {
+		t.Errorf("problemDir(contest) = %q, want %q", got, "/home/u/cf/contest/1136/a")
+	}
+}
+
 func TestLanguageExt(t *testing.T) {
 	tests := map[string]string{
 		"GNU G++17 7.3.0":          "cpp",

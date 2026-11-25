@@ -27,6 +27,16 @@ type LatestSubmission struct {
 	URL  string
 }
 
+// problemDir returns the folder that stores one problem's files. A Dir set by
+// a practice specifier already names the problem folder; otherwise the folder
+// is the contest path joined with the lower-case problem id.
+func problemDir(dir, contestPath, problemID string) string {
+	if dir != "" {
+		return dir
+	}
+	return filepath.Join(contestPath, strings.ToLower(problemID))
+}
+
 // Sync downloads samples and statements for the problems described by info.
 // Every problem page is fetched once and reused for both the samples and the
 // statement. The newest submission of each problem is returned in a map keyed
@@ -67,7 +77,7 @@ func (c *Client) Sync(info Info) (problems []SyncedProblem, latest map[string]La
 	wg := sync.WaitGroup{}
 	wg.Add(len(problems))
 	for i := range problems {
-		problems[i].Path = filepath.Join(contestPath, strings.ToLower(problems[i].ID))
+		problems[i].Path = problemDir(info.Dir, contestPath, problems[i].ID)
 		go func(problem *SyncedProblem) {
 			defer wg.Done()
 			mu.Lock()
