@@ -3,16 +3,19 @@ package cmd
 import (
 	"archive/zip"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"runtime"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/cys001x/cf-tool-x/util"
@@ -132,66 +135,55 @@ func getLatest() (version, note, ptime, url string, size uint, err error) {
 type WriteCounter struct {
 	Count, Total uint
 	last         uint
+	printedAt    time.Time
 }
 
 // Print print progress
 func (w *WriteCounter) Print() {
-	fmt.Printf("\rProgress: %v/%v KB  Speed: %v KB/s  Remain: %.0f s           ",
-		w.Count/1024, w.Total/1024, (w.Count-w.last)/1024, float64(w.Total-w.Count)/float64(w.Count-w.last))
+	now := time.Now()
+	fmt.Printf("\rProgress: %v/%v KB", w.Count/1024, w.Total/1024)
+	if elapsed := now.Sub(w.printedAt).Seconds(); !w.printedAt.IsZero() && elapsed > 0 {
+		speed := float64(w.Count-w.last) / elapsed
+		fmt.Printf("  Speed: %.0f KB/s", speed/1024)
+		if speed > 0 && w.Count <= w.Total {
+			fmt.Printf("  Remain: %.0f s", float64(w.Total-w.Count)/speed)
+		}
+	}
+	fmt.Print("           ")
 	w.last = w.Count
+	w.printedAt = now
 }
 
 func (w *WriteCounter) Write(p []byte) (int, error) {
 	n := len(p)
 	w.Count += uint(n)
+	if time.Since(w.printedAt) >= time.Second {
+		w.Print()
+	}
 	return n, nil
 }
 
-func upgrade(url, exePath string, size uint) (err error) {
-	updateDir := filepath.Dir(exePath)
-
-	oldPath := filepath.Join(updateDir, fmt.Sprintf(".%s.old", filepath.Base(exePath)))
-	color.Cyan("Move the old one to %v", oldPath)
-	if err = os.Rename(exePath, oldPath); err != nil {
-		return
-	}
-	defer func() {
-		if err != nil {
-			color.Cyan("Move the old one back")
-			if e := os.Rename(oldPath, exePath); e != nil {
-				color.Red(e.Error())
-			}
-		} else {
-			color.Cyan("Remove the old one")
-			if e := os.Remove(oldPath); e != nil {
-				color.Red(e.Error() + "\nYou could remove it manually")
-			}
-		}
-	}()
-
+func upgrade(url, exePath, version string, size uint) error {
 	color.Cyan("Download %v", url)
-	counter := &WriteCounter{Count: 0, Total: size, last: 0}
-	counter.Print()
-
-	ticker := time.NewTicker(time.Second)
-	go func() {
-		for range ticker.C {
-			counter.Print()
-		}
-	}()
-
 	resp, err := http.Get(url)
 	if err != nil {
-		return
+		return err
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("download release asset: %s", resp.Status)
+	}
 
-	data, err := ioutil.ReadAll(io.TeeReader(resp.Body, counter))
-	ticker.Stop()
+	counter := &WriteCounter{Total: size}
+	counter.Print()
+	data, err := io.ReadAll(io.TeeReader(resp.Body, counter))
 	counter.Print()
 	fmt.Println()
 	if err != nil {
-		return
+		return err
+	}
+	if size != 0 && uint(len(data)) != size {
+		return fmt.Errorf("downloaded %d bytes, expected %d", len(data), size)
 	}
 	// Releases ship plain binaries; older ones shipped a zip holding the
 	// binary as its first file. Accept both.
@@ -208,20 +200,53 @@ func upgrade(url, exePath string, size uint) (err error) {
 		}
 	}
 
-	newPath := filepath.Join(updateDir, fmt.Sprintf(".%s.new", filepath.Base(exePath)))
+	staged, err := os.CreateTemp(filepath.Dir(exePath), ".cf-update-*"+filepath.Ext(exePath))
+	if err != nil {
+		return err
+	}
+	newPath := staged.Name()
+	defer os.Remove(newPath)
 	color.Cyan("Save the new one to %v", newPath)
-	if err = ioutil.WriteFile(newPath, payload, 0755); err != nil {
-		return
+	_, writeErr := staged.Write(payload)
+	closeErr := staged.Close()
+	if writeErr != nil {
+		return writeErr
+	}
+	if closeErr != nil {
+		return closeErr
+	}
+	if err := os.Chmod(newPath, 0755); err != nil {
+		return err
 	}
 
-	if err = os.Rename(newPath, exePath); err != nil {
-		color.Cyan("Delete the new one %v", newPath)
-		if e := os.Remove(newPath); e != nil {
-			color.Red(e.Error())
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	output, err := exec.CommandContext(ctx, newPath, "--version").Output()
+	if ctx.Err() == context.DeadlineExceeded {
+		return fmt.Errorf("verify downloaded executable: version check timed out")
+	}
+	if err != nil {
+		return fmt.Errorf("verify downloaded executable: %w", err)
+	}
+	if got, want := strings.TrimSpace(string(output)), "Codeforces Tool (cf) "+version; got != want {
+		return fmt.Errorf("verify downloaded executable: got %q, expected %q", got, want)
+	}
+
+	oldPath := newPath + ".old"
+	color.Cyan("Move the old one to %v", oldPath)
+	if err := os.Rename(exePath, oldPath); err != nil {
+		return err
+	}
+	if err := os.Rename(newPath, exePath); err != nil {
+		if restoreErr := os.Rename(oldPath, exePath); restoreErr != nil {
+			return fmt.Errorf("install update: %w; restore failed, previous executable at %s: %w", err, oldPath, restoreErr)
 		}
+		return fmt.Errorf("install update (previous executable restored): %w", err)
 	}
-
-	return
+	if err := os.Remove(oldPath); err != nil {
+		color.Yellow("Previous executable kept at %v: %v", oldPath, err)
+	}
+	return nil
 }
 
 // Upgrade itself
@@ -254,7 +279,7 @@ func Upgrade() (err error) {
 		return
 	}
 
-	if err = upgrade(url, exePath, size); err != nil {
+	if err = upgrade(url, exePath, latest, size); err != nil {
 		return
 	}
 
