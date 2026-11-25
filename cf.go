@@ -15,7 +15,7 @@ import (
 	docopt "github.com/docopt/docopt-go"
 )
 
-const version = "v1.4.0"
+const version = "v1.4.1"
 const configPath = "~/.cf/config"
 const sessionPath = "~/.cf/session"
 
