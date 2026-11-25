@@ -1,0 +1,43 @@
+client/parse.go
+  1265c7bdec4430ed 145
+client/sync.go
+  1265c7bdec4430ed 30-39,80
+client/sync_test.go
+  1265c7bdec4430ed 9-20
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8-ntes.10",
+  "base_commit_sha": "1165ae8f06d51a9526704d1ee2e648936ffb547d",
+  "prompts": {
+    "1265c7bdec4430ed": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "be4bdbca-2734-4cfa-bbb2-3571db4f414f",
+        "model": "deepseek-flash"
+      },
+      "human_author": "cys",
+      "messages": [],
+      "total_additions": 24,
+      "total_deletions": 2,
+      "accepted_lines": 24,
+      "overriden_lines": 0,
+      "per_file_stats": {
+        "client/parse.go": {
+          "additions": 1,
+          "deletions": 1,
+          "accepted_lines": 1
+        },
+        "client/sync_test.go": {
+          "additions": 12,
+          "accepted_lines": 12
+        },
+        "client/sync.go": {
+          "additions": 11,
+          "deletions": 1,
+          "accepted_lines": 11
+        }
+      }
+    }
+  }
+}
