@@ -1,0 +1,57 @@
+cmd/repl.go
+  195c45a3b7c33e26 4,13,27-114,235-239,261,519-521,534-539,544-556,588-713,866,878-894,955-957,987,989-991
+README.md
+  195c45a3b7c33e26 93-103
+README_zh_CN.md
+  195c45a3b7c33e26 88-92
+docs/commands.md
+  195c45a3b7c33e26 196-217
+cmd/repl_test.go
+  195c45a3b7c33e26 275-338
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8-ntes.10",
+  "base_commit_sha": "11141731bf0ba93b19364a0e3432a992acb077d1",
+  "prompts": {
+    "195c45a3b7c33e26": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d64b72e2-5bbe-48bd-a951-511cc46a0ea0",
+        "model": "deepseek-flash"
+      },
+      "human_author": "cys",
+      "messages": [],
+      "total_additions": 391,
+      "total_deletions": 26,
+      "accepted_lines": 377,
+      "overriden_lines": 0,
+      "per_file_stats": {
+        "cmd/repl.go": {
+          "additions": 283,
+          "deletions": 11,
+          "accepted_lines": 275
+        },
+        "README.md": {
+          "additions": 11,
+          "deletions": 5,
+          "accepted_lines": 11
+        },
+        "cmd/repl_test.go": {
+          "additions": 64,
+          "accepted_lines": 64
+        },
+        "README_zh_CN.md": {
+          "additions": 5,
+          "deletions": 2,
+          "accepted_lines": 5
+        },
+        "docs/commands.md": {
+          "additions": 28,
+          "deletions": 8,
+          "accepted_lines": 22
+        }
+      }
+    }
+  }
+}
