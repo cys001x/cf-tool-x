@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -334,5 +335,53 @@ func TestReplJobQueueLimit(t *testing.T) {
 	m.killJobs()
 	if len(m.jobs) != 0 || len(m.jobQueue) != 0 {
 		t.Fatalf("killJobs left jobs=%d queue=%d", len(m.jobs), len(m.jobQueue))
+	}
+}
+
+func TestReplJobTracksSubmitVerdict(t *testing.T) {
+	job := &replJob{label: "submit 1136a", argv: []string{"submit", "1136a"}, started: time.Now()}
+	job.trackLine("\x1b[32m status: \x1b[32mAccepted\x1b[0m")
+	if job.lastStatus != "Accepted" {
+		t.Fatalf("lastStatus = %q, want Accepted", job.lastStatus)
+	}
+	text := jobDoneText(job, nil)
+	if !strings.Contains(text, "submit 1136a") || !strings.Contains(text, "Accepted") {
+		t.Fatalf("summary = %q", text)
+	}
+
+	job = &replJob{label: "submit 1136a", argv: []string{"submit", "1136a"}, started: time.Now()}
+	job.trackLine(" status: Wrong answer on test 2")
+	if got := jobDoneText(job, nil); !strings.Contains(got, "Wrong answer") {
+		t.Fatalf("summary = %q", got)
+	}
+}
+
+func TestReplJobTracksTestSamples(t *testing.T) {
+	job := &replJob{label: "test 1136a", argv: []string{"test", "1136a"}, started: time.Now()}
+	job.trackLine("\x1b[32mPassed #1 0.123s 1.2MB\x1b[0m")
+	job.trackLine("\x1b[31mFailed #2 0.234s 2.1MB\x1b[0m")
+	if job.passed != 1 || job.failed != 1 {
+		t.Fatalf("passed=%d failed=%d", job.passed, job.failed)
+	}
+	text := jobDoneText(job, nil)
+	if !strings.Contains(text, "1 passed, 1 failed") {
+		t.Fatalf("summary = %q", text)
+	}
+
+	all := &replJob{label: "test 1136a", argv: []string{"test", "1136a"}, started: time.Now()}
+	all.trackLine("Passed #1 0.1s 1MB")
+	all.trackLine("Passed #2 0.1s 1MB")
+	if got := jobDoneText(all, nil); !strings.Contains(got, "all 2 samples passed") {
+		t.Fatalf("summary = %q", got)
+	}
+}
+
+func TestReplJobSummaryKeepsCommandName(t *testing.T) {
+	text := jobDoneText(&replJob{label: "getTag 1136a", argv: []string{"getTag", "1136a"}, started: time.Now()}, nil)
+	if !strings.Contains(text, "getTag 1136a") {
+		t.Fatalf("summary = %q", text)
+	}
+	if strings.Contains(text, "[") || strings.Contains(text, "0 ") {
+		t.Fatalf("summary must not carry the job id: %q", text)
 	}
 }

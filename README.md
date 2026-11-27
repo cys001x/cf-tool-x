@@ -93,9 +93,12 @@ While the shell is open, every other `cf` command can be typed without the `cf`
 prefix, for example `submit 1136a`. Commands run in the background, so the
 shell keeps accepting input while a submission waits for its verdict. Up to 5
 commands run at the same time; more are queued and started as slots free up.
-Output is streamed into the shell line by line with a `[job-id command]`
-prefix, and a `Jobs 2/5 · ...` line at the bottom shows what is running and for
-how long. `config` and `upgrade` need the terminal and still run in the
+Output is streamed into the shell line by line, and a `Jobs 2/5 · ...` line at
+the bottom shows what is running and for how long. When several jobs run at
+once their lines are prefixed with the command; a single job's output is
+printed as-is. The summary line reflects the command: `cf submit` reports the
+verdict (Accepted green, Wrong answer blue, other verdicts red) and `cf test`
+reports how many samples passed, failed, or all passed in green. `config` and `upgrade` need the terminal and still run in the
 foreground; append `&` to force any other command into the background queue.
 Leaving the shell kills every running job. Tab completes commands and their
 arguments (`db`, `watch`, `pull`, `clone`, `completion`); Up/Down recall the

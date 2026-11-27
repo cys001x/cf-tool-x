@@ -198,12 +198,19 @@ submission waits for its verdict.
 
 Up to 5 background jobs run at the same time; further commands are queued and
 started as slots free up. A job's output is streamed into the shell line by
-line, prefixed with `[job-id command]`, and the line at the bottom of the
-screen shows the running jobs:
+line. When several jobs run at once, lines are prefixed with the command so
+they can be told apart; a single job prints without a prefix. The line at the
+bottom of the screen shows the running jobs:
 
 ```
-Jobs 2/5 · 1 submit 1136a 12s · 2 test 1136b 3s
+Jobs 2/5 · submit 1136a 12s · test 1136b 3s
 ```
+
+The summary printed when a job finishes depends on the command: `cf submit`
+reports the verdict (Accepted green, Wrong answer blue, any other verdict
+red), `cf test` reports the number of passed and failed samples (green when
+every sample passes), and other commands print `finished in <time>`. Colors of
+the job's own output are preserved.
 
 `config` and `upgrade` prompt for input and keep running in the foreground
 with the TUI suspended. A trailing `&` forces any command into the background

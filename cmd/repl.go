@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
@@ -42,6 +43,34 @@ type replJob struct {
 	label   string
 	started time.Time
 	cmd     *exec.Cmd
+
+	// Parsed from the job's output so the summary can show the verdict.
+	lastStatus string
+	passed     int
+	failed     int
+}
+
+var (
+	jobStatusReg = regexp.MustCompile(`^status:\s*(.+)$`)
+	jobTestReg   = regexp.MustCompile(`^(Passed|Failed) #`)
+	jobANSIReg   = regexp.MustCompile("\x1b\\[[0-9;]*[A-Za-z]")
+)
+
+// trackLine watches the job's output for the verdict of "cf submit" and the
+// sample results of "cf test".
+func (job *replJob) trackLine(line string) {
+	plain := strings.TrimSpace(jobANSIReg.ReplaceAllString(line, ""))
+	if m := jobStatusReg.FindStringSubmatch(plain); m != nil {
+		job.lastStatus = strings.TrimSpace(m[1])
+		return
+	}
+	if m := jobTestReg.FindStringSubmatch(plain); m != nil {
+		if m[1] == "Passed" {
+			job.passed++
+		} else {
+			job.failed++
+		}
+	}
 }
 
 type replJobLineMsg struct {
@@ -595,7 +624,7 @@ func (m *replModel) enqueueJob(args []string) tea.Cmd {
 	cmds := m.startQueuedJobs()
 	if _, running := m.jobs[job.id]; !running {
 		cmds = append(cmds, tea.Println(replDimStyle.Render(
-			fmt.Sprintf("job %d queued: %v", job.id, shortJobLabel(job.label)))))
+			fmt.Sprintf("job queued: %v", shortJobLabel(job.label)))))
 	}
 	return tea.Sequence(cmds...)
 }
@@ -631,6 +660,9 @@ func (m *replModel) startJob(job *replJob) error {
 	cmd.Stdout = writer
 	cmd.Stderr = writer
 	cmd.Stdin = nil
+	// The child's stdout is a pipe, which makes fatih/color drop colors.
+	// CF_FORCE_COLOR keeps the output colored inside the shell.
+	cmd.Env = append(os.Environ(), "CF_FORCE_COLOR=1")
 	if err = cmd.Start(); err != nil {
 		return err
 	}
@@ -694,21 +726,55 @@ func (m *replModel) jobsView() string {
 	parts := []string{head}
 	for _, id := range ids {
 		job := m.jobs[id]
-		parts = append(parts, fmt.Sprintf("%d %v %v", id, shortJobLabel(job.label),
+		parts = append(parts, fmt.Sprintf("%v %v", shortJobLabel(job.label),
 			formatJobDuration(time.Since(job.started))))
 	}
 	return strings.Join(parts, " · ")
 }
 
-// jobDoneText is the line printed when a background job finishes.
+// jobCommand is the command name typed in the shell, e.g. "submit".
+func jobCommand(job *replJob) string {
+	if len(job.argv) == 0 {
+		return ""
+	}
+	return strings.ToLower(job.argv[0])
+}
+
+// jobDoneText is the line printed when a background job finishes. The verdict
+// of "cf submit" and the sample results of "cf test" are parsed from the
+// streamed output so the summary is colored like the verdict itself: Accepted
+// green, Wrong answer blue, other verdicts red.
 func jobDoneText(job *replJob, err error) string {
 	took := formatJobDuration(time.Since(job.started))
+	name := shortJobLabel(job.label)
 	if err != nil {
-		return color.RedString("✗ [%d %v] failed after %v: %v",
-			job.id, shortJobLabel(job.label), took, err)
+		return color.RedString("✗ %v failed after %v: %v", name, took, err)
 	}
-	return color.GreenString("✓ [%d %v] finished in %v",
-		job.id, shortJobLabel(job.label), took)
+	switch jobCommand(job) {
+	case "submit":
+		if verdict := job.lastStatus; verdict != "" {
+			text := fmt.Sprintf("%v: %v (%v)", name, verdict, took)
+			lower := strings.ToLower(verdict)
+			switch {
+			case strings.Contains(lower, "accepted"):
+				return color.GreenString("✓ %v", text)
+			case strings.Contains(lower, "wrong"):
+				return color.New(color.FgBlue).Sprintf("✗ %v", text)
+			default:
+				return color.RedString("✗ %v", text)
+			}
+		}
+	case "test":
+		if job.passed+job.failed > 0 {
+			if job.failed > 0 {
+				return color.RedString("✗ %v: %d passed, %d failed (%v)",
+					name, job.passed, job.failed, took)
+			}
+			return color.GreenString("✓ %v: all %d samples passed (%v)",
+				name, job.passed, took)
+		}
+	}
+	return color.GreenString("✓ %v finished in %v", name, took)
 }
 
 func (m *replModel) runExternal(args []string) tea.Cmd {
@@ -876,11 +942,17 @@ func (m *replModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, tea.Sequence(cmds...)
 
 	case replJobLineMsg:
-		prefix := replDimStyle.Render(fmt.Sprintf("[%d]", msg.id))
-		if job := m.jobs[msg.id]; job != nil {
-			prefix = replDimStyle.Render(fmt.Sprintf("[%d %v]", msg.id, shortJobLabel(job.label)))
+		job := m.jobs[msg.id]
+		text := msg.line
+		if job != nil {
+			job.trackLine(text)
+			// With several jobs the lines interleave; label them so the
+			// output can still be attributed to a command.
+			if len(m.jobs) > 1 {
+				text = replDimStyle.Render("["+shortJobLabel(job.label)+"] ") + text
+			}
 		}
-		return m, tea.Println(prefix + " " + msg.line)
+		return m, tea.Println(text)
 
 	case replJobDoneMsg:
 		job := m.jobs[msg.id]

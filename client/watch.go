@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -17,7 +18,16 @@ import (
 	"github.com/fatih/color"
 	ansi "github.com/k0kubun/go-ansi"
 	"github.com/olekukonko/tablewriter"
+	"golang.org/x/term"
 )
+
+// stdoutIsTerminal reports whether stdout can handle cursor movement. When the
+// output is a pipe (a background shell job or a redirection), the watch
+// display prints a snapshot only when it changes instead of redrawing with
+// escape sequences.
+func stdoutIsTerminal() bool {
+	return term.IsTerminal(int(os.Stdout.Fd()))
+}
 
 // Submission submit state
 type Submission struct {
@@ -108,9 +118,18 @@ func (s *Submission) display(first bool, maxWidth *int) {
 	ansi.Printf(" memory: %v\n", s.ParseMemory())
 }
 
-func display(submissions []Submission, problemID string, first bool, maxWidth *int, line bool) {
+func display(submissions []Submission, problemID string, first bool, maxWidth *int, line bool, last *string) {
 	if line {
-		submissions[0].display(first, maxWidth)
+		sub := submissions[0]
+		if !stdoutIsTerminal() {
+			status := fmt.Sprintf(" status: %v", sub.ParseStatus())
+			if *last != status {
+				*last = status
+				ansi.Println(status)
+			}
+			return
+		}
+		sub.display(first, maxWidth)
 		return
 	}
 	var buf bytes.Buffer
@@ -136,6 +155,17 @@ func display(submissions []Submission, problemID string, first bool, maxWidth *i
 		})
 	}
 	table.Render()
+
+	if !stdoutIsTerminal() {
+		// A pipe cannot be redrawn; only print changed snapshots.
+		rendered := buf.String()
+		if *last == rendered {
+			return
+		}
+		*last = rendered
+		fmt.Print(rendered)
+		return
+	}
 
 	if !first {
 		ansi.CursorUp(len(submissions) + 2)
@@ -287,13 +317,14 @@ func (c *Client) WatchSubmission(info Info, n int, line bool) (submissions []Sub
 
 	maxWidth := 0
 	first := true
+	last := ""
 	for {
 		st := time.Now()
 		submissions, err = c.getSubmissions(URL, n)
 		if err != nil {
 			return
 		}
-		display(submissions, info.ProblemID, first, &maxWidth, line)
+		display(submissions, info.ProblemID, first, &maxWidth, line, &last)
 		first = false
 		endCount := 0
 		for _, submission := range submissions {

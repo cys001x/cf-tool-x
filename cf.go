@@ -20,6 +20,12 @@ const configPath = "~/.cf/config"
 const sessionPath = "~/.cf/session"
 
 func main() {
+	// Background jobs of the interactive shell capture stdout through a pipe.
+	// fatih/color disables colors on a non-terminal, so the shell sets
+	// CF_FORCE_COLOR to keep the output colored.
+	if os.Getenv("CF_FORCE_COLOR") != "" {
+		color.NoColor = false
+	}
 	if len(os.Args) > 1 {
 		switch strings.ToLower(os.Args[1]) {
 		case "lpractice":
