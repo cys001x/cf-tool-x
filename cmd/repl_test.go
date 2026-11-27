@@ -385,3 +385,27 @@ func TestReplJobSummaryKeepsCommandName(t *testing.T) {
 		t.Fatalf("summary must not carry the job id: %q", text)
 	}
 }
+
+func TestReplJobOutputIsBufferedInOrder(t *testing.T) {
+	m := newTestReplModel(t)
+	m.jobs[0] = &replJob{id: 0, label: "test 1136a"}
+	m.Update(replJobLineMsg{id: 0, line: "-----Output-----"})
+	m.Update(replJobLineMsg{id: 0, line: "1 2"})
+	m.Update(replJobLineMsg{id: 0, line: "2 1 3"})
+
+	if len(m.pendingOutput) != 3 {
+		t.Fatalf("pending = %#v", m.pendingOutput)
+	}
+	if m.pendingOutput[1] != "1 2" || m.pendingOutput[2] != "2 1 3" {
+		t.Fatalf("pending order = %#v", m.pendingOutput)
+	}
+	if m.flushJobOutput() == nil {
+		t.Fatal("flushJobOutput must return a print command")
+	}
+	if len(m.pendingOutput) != 0 {
+		t.Fatalf("pending after flush = %#v", m.pendingOutput)
+	}
+	if m.flushJobOutput() != nil {
+		t.Fatal("flushJobOutput must return nil for an empty buffer")
+	}
+}

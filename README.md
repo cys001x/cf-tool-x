@@ -93,7 +93,8 @@ While the shell is open, every other `cf` command can be typed without the `cf`
 prefix, for example `submit 1136a`. Commands run in the background, so the
 shell keeps accepting input while a submission waits for its verdict. Up to 5
 commands run at the same time; more are queued and started as slots free up.
-Output is streamed into the shell line by line, and a `Jobs 2/5 · ...` line at
+Job output is printed into the shell in order, in batches of at most one
+second, and a `Jobs 2/5 · ...` line at
 the bottom shows what is running and for how long. When several jobs run at
 once their lines are prefixed with the command; a single job's output is
 printed as-is. The summary line reflects the command: `cf submit` reports the

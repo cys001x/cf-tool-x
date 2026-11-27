@@ -197,8 +197,9 @@ process in the background, so the shell keeps accepting input while a
 submission waits for its verdict.
 
 Up to 5 background jobs run at the same time; further commands are queued and
-started as slots free up. A job's output is streamed into the shell line by
-line. When several jobs run at once, lines are prefixed with the command so
+started as slots free up. A job's output is printed into the shell in order,
+in batches of at most one second. When several jobs run at once, lines are
+prefixed with the command so
 they can be told apart; a single job prints without a prefix. The line at the
 bottom of the screen shows the running jobs:
 

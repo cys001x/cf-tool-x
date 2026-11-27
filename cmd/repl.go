@@ -265,6 +265,10 @@ type replModel struct {
 	jobQueue  []*replJob
 	nextJobID int
 	program   *tea.Program
+	// pendingOutput collects job lines until the next tick. Printing each
+	// line with its own tea.Println would let the renderer run those commands
+	// concurrently and reorder the lines; one batch per tick keeps orders.
+	pendingOutput []string
 
 	searching   bool
 	searchQuery string
@@ -732,6 +736,17 @@ func (m *replModel) jobsView() string {
 	return strings.Join(parts, " · ")
 }
 
+// flushJobOutput returns a command that prints the buffered job lines as one
+// block, preserving their order.
+func (m *replModel) flushJobOutput() tea.Cmd {
+	if len(m.pendingOutput) == 0 {
+		return nil
+	}
+	text := strings.Join(m.pendingOutput, "\n")
+	m.pendingOutput = nil
+	return tea.Println(text)
+}
+
 // jobCommand is the command name typed in the shell, e.g. "submit".
 func jobCommand(job *replJob) string {
 	if len(job.argv) == 0 {
@@ -922,6 +937,7 @@ func (m *replModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.nextTick = time.Now().Add(time.Second)
 		var cmds []tea.Cmd
+		cmds = append(cmds, m.flushJobOutput())
 		cur, err := loadTimeState()
 		if err == nil {
 			m.status = cur
@@ -952,13 +968,15 @@ func (m *replModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				text = replDimStyle.Render("["+shortJobLabel(job.label)+"] ") + text
 			}
 		}
-		return m, tea.Println(text)
+		m.pendingOutput = append(m.pendingOutput, text)
+		return m, nil
 
 	case replJobDoneMsg:
 		job := m.jobs[msg.id]
 		delete(m.jobs, msg.id)
 		var cmds []tea.Cmd
 		if job != nil {
+			cmds = append(cmds, m.flushJobOutput())
 			cmds = append(cmds, tea.Println(jobDoneText(job, msg.err)))
 		}
 		cmds = append(cmds, m.startQueuedJobs()...)
