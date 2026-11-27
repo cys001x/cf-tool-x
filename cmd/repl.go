@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -9,6 +10,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 	"unicode"
 
@@ -21,6 +23,95 @@ import (
 )
 
 const replHistoryLimit = 1000
+
+// maxReplJobs is the number of cf commands that may run at the same time in
+// the interactive shell. Further commands wait in a queue.
+const maxReplJobs = 5
+
+// replForegroundCommands need the terminal to prompt (login menu, upgrade
+// confirmation), so they run with the TUI suspended instead of as jobs.
+var replForegroundCommands = map[string]bool{
+	"config":  true,
+	"upgrade": true,
+}
+
+// replJob is one cf command running, or waiting to run, in the background.
+type replJob struct {
+	id      int
+	argv    []string
+	label   string
+	started time.Time
+	cmd     *exec.Cmd
+}
+
+type replJobLineMsg struct {
+	id   int
+	line string
+}
+
+type replJobDoneMsg struct {
+	id  int
+	err error
+}
+
+// newReplJobCommand builds the child process of a background job. It is a
+// variable so tests can replace it.
+var newReplJobCommand = func(argv []string) (*exec.Cmd, error) {
+	exe, err := os.Executable()
+	if err != nil {
+		return nil, err
+	}
+	return exec.Command(exe, argv...), nil
+}
+
+// jobLineWriter turns the child's writes into whole lines for the TUI. Child
+// commands write prompts and progress without a trailing newline, so a partial
+// line is buffered until it ends or the job finishes. Write is safe for
+// concurrent calls because stdout and stderr share one writer.
+type jobLineWriter struct {
+	mu   sync.Mutex
+	buf  []byte
+	send func(string)
+}
+
+// jobLineWriterMax bounds a line that never ends.
+const jobLineWriterMax = 4096
+
+func (w *jobLineWriter) Write(p []byte) (int, error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.buf = append(w.buf, p...)
+	for {
+		i := bytes.IndexByte(w.buf, '\n')
+		if i < 0 {
+			break
+		}
+		w.emit(string(w.buf[:i]))
+		w.buf = w.buf[i+1:]
+	}
+	if len(w.buf) >= jobLineWriterMax {
+		w.emit(string(w.buf))
+		w.buf = w.buf[:0]
+	}
+	return len(p), nil
+}
+
+func (w *jobLineWriter) emit(line string) {
+	line = strings.TrimRight(line, "\r")
+	if w.send != nil {
+		w.send(line)
+	}
+}
+
+// Flush emits a trailing line that has no newline.
+func (w *jobLineWriter) Flush() {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if len(w.buf) > 0 {
+		w.emit(string(w.buf))
+		w.buf = w.buf[:0]
+	}
+}
 
 var (
 	replStatusStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("10"))
@@ -141,6 +232,11 @@ type replModel struct {
 	closed    bool
 	quitting  bool
 
+	jobs      map[int]*replJob
+	jobQueue  []*replJob
+	nextJobID int
+	program   *tea.Program
+
 	searching   bool
 	searchQuery string
 	searchIndex int
@@ -162,6 +258,7 @@ func newReplModel() *replModel {
 		input:   input,
 		history: history,
 		histPos: len(history),
+		jobs:    map[int]*replJob{},
 	}
 	m.setWidth(80)
 	if st, err := loadTimeState(); err == nil {
@@ -419,6 +516,9 @@ func (m *replModel) submit() tea.Cmd {
 	if len(args) == 0 {
 		return nil
 	}
+	// A trailing "&" forces a command that normally needs the terminal into
+	// the background queue. Other commands run in the background by default.
+	args, forceBackground := stripBackgroundFlag(args)
 	echo := tea.Println(replEcho(line))
 	if isTimerMonitorCommand(args[0]) {
 		command, _, _, _ := parseTimerArgs(args)
@@ -431,7 +531,29 @@ func (m *replModel) submit() tea.Cmd {
 		}
 		return tea.Sequence(echo, m.runTimerLine(args))
 	}
+	if forceBackground || replRunsInBackground(args) {
+		argv, err := monitorCfArgs(args)
+		if err != nil {
+			return tea.Sequence(echo, tea.Println(color.RedString(err.Error())))
+		}
+		return tea.Sequence(echo, m.enqueueJob(argv))
+	}
 	return tea.Sequence(echo, m.runExternal(args))
+}
+
+// stripBackgroundFlag removes a trailing "&" argument, which forces a command
+// into the background queue.
+func stripBackgroundFlag(args []string) ([]string, bool) {
+	if len(args) > 1 && args[len(args)-1] == "&" {
+		return args[:len(args)-1], true
+	}
+	return args, false
+}
+
+// replRunsInBackground reports whether the command may run without the
+// terminal.
+func replRunsInBackground(args []string) bool {
+	return !replForegroundCommands[strings.ToLower(args[0])]
 }
 
 func replEcho(line string) string {
@@ -461,6 +583,132 @@ func (m *replModel) runTimerLine(args []string) tea.Cmd {
 		cmds = append(cmds, tea.Quit)
 	}
 	return tea.Sequence(cmds...)
+}
+
+// enqueueJob adds args to the background queue and starts as many jobs as the
+// concurrency limit allows.
+func (m *replModel) enqueueJob(args []string) tea.Cmd {
+	job := &replJob{id: m.nextJobID, argv: args, label: strings.Join(args, " ")}
+	m.nextJobID++
+	m.jobQueue = append(m.jobQueue, job)
+
+	cmds := m.startQueuedJobs()
+	if _, running := m.jobs[job.id]; !running {
+		cmds = append(cmds, tea.Println(replDimStyle.Render(
+			fmt.Sprintf("job %d queued: %v", job.id, shortJobLabel(job.label)))))
+	}
+	return tea.Sequence(cmds...)
+}
+
+// startQueuedJobs launches queued jobs while the concurrency limit allows.
+// Starting a process is fast; waiting for it happens in a goroutine.
+func (m *replModel) startQueuedJobs() []tea.Cmd {
+	var cmds []tea.Cmd
+	for len(m.jobs) < maxReplJobs && len(m.jobQueue) > 0 {
+		job := m.jobQueue[0]
+		m.jobQueue = m.jobQueue[1:]
+		if err := m.startJob(job); err != nil {
+			cmds = append(cmds, tea.Println(color.RedString(
+				"Cannot start job %d (%v): %v", job.id, shortJobLabel(job.label), err)))
+		}
+	}
+	return cmds
+}
+
+// startJob runs one cf command without taking over the terminal. The child's
+// stdout and stderr are streamed line by line into the TUI and the completion
+// is reported with replJobDoneMsg.
+func (m *replModel) startJob(job *replJob) error {
+	cmd, err := newReplJobCommand(job.argv)
+	if err != nil {
+		return err
+	}
+	writer := &jobLineWriter{send: func(line string) {
+		if m.program != nil {
+			m.program.Send(replJobLineMsg{id: job.id, line: line})
+		}
+	}}
+	cmd.Stdout = writer
+	cmd.Stderr = writer
+	cmd.Stdin = nil
+	if err = cmd.Start(); err != nil {
+		return err
+	}
+	job.cmd = cmd
+	job.started = time.Now()
+	m.jobs[job.id] = job
+
+	go func() {
+		err := cmd.Wait()
+		writer.Flush()
+		if m.program != nil {
+			m.program.Send(replJobDoneMsg{id: job.id, err: err})
+		}
+	}()
+	return nil
+}
+
+// killJobs stops every running job and drops the queue. It runs when the shell
+// exits: background work does not outlive the TUI.
+func (m *replModel) killJobs() {
+	for _, job := range m.jobs {
+		if job.cmd != nil && job.cmd.Process != nil {
+			job.cmd.Process.Kill()
+		}
+	}
+	m.jobs = map[int]*replJob{}
+	m.jobQueue = nil
+}
+
+// shortJobLabel bounds a command line in single-line output.
+func shortJobLabel(label string) string {
+	return runewidth.Truncate(label, 28, "…")
+}
+
+// formatJobDuration renders a job's running time compactly.
+func formatJobDuration(d time.Duration) string {
+	if d < time.Second {
+		return "<1s"
+	}
+	if d < time.Minute {
+		return fmt.Sprintf("%ds", int(d.Seconds()))
+	}
+	return fmt.Sprintf("%dm%02ds", int(d.Minutes()), int(d.Seconds())%60)
+}
+
+// jobsView renders the running jobs line shown at the bottom of the shell.
+func (m *replModel) jobsView() string {
+	if len(m.jobs) == 0 && len(m.jobQueue) == 0 {
+		return ""
+	}
+	ids := make([]int, 0, len(m.jobs))
+	for id := range m.jobs {
+		ids = append(ids, id)
+	}
+	sort.Ints(ids)
+
+	head := fmt.Sprintf("Jobs %d/%d", len(m.jobs), maxReplJobs)
+	if queued := len(m.jobQueue); queued > 0 {
+		head += fmt.Sprintf(" +%d queued", queued)
+	}
+	parts := []string{head}
+	for _, id := range ids {
+		job := m.jobs[id]
+		parts = append(parts, fmt.Sprintf("%d %v %v", id, shortJobLabel(job.label),
+			formatJobDuration(time.Since(job.started))))
+	}
+	return strings.Join(parts, " · ")
+}
+
+// jobDoneText is the line printed when a background job finishes.
+func jobDoneText(job *replJob, err error) string {
+	took := formatJobDuration(time.Since(job.started))
+	if err != nil {
+		return color.RedString("✗ [%d %v] failed after %v: %v",
+			job.id, shortJobLabel(job.label), took, err)
+	}
+	return color.GreenString("✓ [%d %v] finished in %v",
+		job.id, shortJobLabel(job.label), took)
 }
 
 func (m *replModel) runExternal(args []string) tea.Cmd {
@@ -615,7 +863,7 @@ func (m *replModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.lastNote = cur.NoticeSeq
 				cmds = append(cmds, tea.Println(color.CyanString("Timer: %v", cur.Notice)))
 			}
-			if !cur.Running && !m.execing {
+			if !cur.Running && !m.execing && len(m.jobs) == 0 && len(m.jobQueue) == 0 {
 				if !m.closed {
 					summary := captureOutput(func() { printTimeSummary(cur) })
 					cmds = append(cmds, tea.Println(strings.TrimRight(summary, "\n")))
@@ -625,6 +873,23 @@ func (m *replModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 		cmds = append(cmds, replTick())
+		return m, tea.Sequence(cmds...)
+
+	case replJobLineMsg:
+		prefix := replDimStyle.Render(fmt.Sprintf("[%d]", msg.id))
+		if job := m.jobs[msg.id]; job != nil {
+			prefix = replDimStyle.Render(fmt.Sprintf("[%d %v]", msg.id, shortJobLabel(job.label)))
+		}
+		return m, tea.Println(prefix + " " + msg.line)
+
+	case replJobDoneMsg:
+		job := m.jobs[msg.id]
+		delete(m.jobs, msg.id)
+		var cmds []tea.Cmd
+		if job != nil {
+			cmds = append(cmds, tea.Println(jobDoneText(job, msg.err)))
+		}
+		cmds = append(cmds, m.startQueuedJobs()...)
 		return m, tea.Sequence(cmds...)
 
 	case replExecDoneMsg:
@@ -687,6 +952,9 @@ func (m *replModel) View() string {
 			}
 		}
 	}
+	if jobs := m.jobsView(); jobs != "" {
+		lines = append(lines, replDimStyle.Render(runewidth.Truncate(jobs, m.width-1, "…")))
+	}
 	return strings.Join(lines, "\n")
 }
 
@@ -716,7 +984,11 @@ func runReplTUI() error {
 		model.setWidth(width)
 	}
 	program := tea.NewProgram(model, tea.WithoutSignalHandler())
+	model.program = program
 	_, err := program.Run()
+	// Closing the shell stops its background jobs instead of leaving orphan
+	// cf processes behind.
+	model.killJobs()
 	if err == tea.ErrInterrupted {
 		return nil
 	}

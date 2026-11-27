@@ -193,8 +193,28 @@ Opens the interactive shell with the timer status line at the bottom. It is the
 same shell that the timer commands record into. Type a timer command
 (`s/start`, `e/end`, `p/pause`, `reTimer`, `q`, `status`) or any other `cf`
 command without the `cf` prefix: other commands run as `cf <line>` in a child
-process below the status line, with the same arguments and prompts as on the
-shell.
+process in the background, so the shell keeps accepting input while a
+submission waits for its verdict.
+
+Up to 5 background jobs run at the same time; further commands are queued and
+started as slots free up. A job's output is streamed into the shell line by
+line, prefixed with `[job-id command]`, and the line at the bottom of the
+screen shows the running jobs:
+
+```
+Jobs 2/5 · 1 submit 1136a 12s · 2 test 1136b 3s
+```
+
+`config` and `upgrade` prompt for input and keep running in the foreground
+with the TUI suspended. A trailing `&` forces any command into the background
+queue, for example `sync 1136 &`; keep the `&` off commands that need
+keyboard input. Leaving the shell (`q`, Ctrl-C, or Ctrl-D) kills every running
+job and drops the queue: background work does not outlive the shell. If the
+timer stops from another terminal while jobs are running, the shell waits for
+them before closing. Background jobs have no stdin, so a command that asks a
+question (for example `cf sync` offering to overwrite local code) exits with an
+error; run that command from a normal terminal or answer the prompt first.
+
 Tab completes command names and the arguments of `db`, `watch`, `pull`,
 `clone`, and `completion`; press Tab again to cycle, Enter to accept, Esc to
 close. Up/Down recall the command history, which is stored in `~/.cf/history`;

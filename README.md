@@ -90,11 +90,17 @@ command: "<name>"` message instead of the whole usage. There is no background da
 timestamps in `~/.cf/timer.json`.
 
 While the shell is open, every other `cf` command can be typed without the `cf`
-prefix, for example `submit 1136a`. It runs below the timer and the shell stays
-open afterwards. Tab completes commands and their arguments (`db`, `watch`,
-`pull`, `clone`, `completion`); Up/Down recall the command history, which is
-saved in `~/.cf/history`, and Ctrl-R searches it. Ctrl-C or Ctrl-D leaves the
-timer running in the background.
+prefix, for example `submit 1136a`. Commands run in the background, so the
+shell keeps accepting input while a submission waits for its verdict. Up to 5
+commands run at the same time; more are queued and started as slots free up.
+Output is streamed into the shell line by line with a `[job-id command]`
+prefix, and a `Jobs 2/5 · ...` line at the bottom shows what is running and for
+how long. `config` and `upgrade` need the terminal and still run in the
+foreground; append `&` to force any other command into the background queue.
+Leaving the shell kills every running job. Tab completes commands and their
+arguments (`db`, `watch`, `pull`, `clone`, `completion`); Up/Down recall the
+command history, which is saved in `~/.cf/history`, and Ctrl-R searches it.
+Ctrl-C or Ctrl-D leaves the timer running in the background.
 
 Several problems can be timed at the same time; `end` closes the one matching
 the specifier. `cf test` records a `test` node when every sample passes, and `cf submit`

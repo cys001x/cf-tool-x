@@ -272,3 +272,67 @@ func TestReplRetimerAsksBeforeEnding(t *testing.T) {
 		t.Fatalf("reset not applied: pending=%v state=%+v", m.resetPending, st)
 	}
 }
+
+func TestJobLineWriter(t *testing.T) {
+	var lines []string
+	w := &jobLineWriter{send: func(line string) { lines = append(lines, line) }}
+	w.Write([]byte("Submitted\nverdict "))
+	w.Write([]byte("OK\r\npartial"))
+	w.Flush()
+
+	want := []string{"Submitted", "verdict OK", "partial"}
+	if len(lines) != len(want) {
+		t.Fatalf("lines = %#v, want %#v", lines, want)
+	}
+	for i := range want {
+		if lines[i] != want[i] {
+			t.Fatalf("lines = %#v, want %#v", lines, want)
+		}
+	}
+}
+
+func TestStripBackgroundFlag(t *testing.T) {
+	args, forced := stripBackgroundFlag([]string{"submit", "1136a", "&"})
+	if !forced || len(args) != 2 || args[1] != "1136a" {
+		t.Fatalf("stripBackgroundFlag = %v, %v", args, forced)
+	}
+	if _, forced := stripBackgroundFlag([]string{"submit", "1136a"}); forced {
+		t.Fatal("a command without & must not be forced")
+	}
+}
+
+func TestReplCommandClassification(t *testing.T) {
+	if !replRunsInBackground([]string{"submit", "1136a"}) {
+		t.Fatal("submit must run in the background by default")
+	}
+	if replRunsInBackground([]string{"config"}) {
+		t.Fatal("config must keep the terminal")
+	}
+	if replRunsInBackground([]string{"upgrade"}) {
+		t.Fatal("upgrade must keep the terminal")
+	}
+}
+
+func TestReplJobQueueLimit(t *testing.T) {
+	m := newTestReplModel(t)
+	// Fill the running slots with jobs that never started a process.
+	for i := 0; i < maxReplJobs; i++ {
+		m.jobs[i] = &replJob{id: i, label: "watch"}
+	}
+	m.enqueueJob([]string{"submit", "1136a"})
+
+	if len(m.jobs) != maxReplJobs {
+		t.Fatalf("running jobs = %d, want %d", len(m.jobs), maxReplJobs)
+	}
+	if len(m.jobQueue) != 1 || m.jobQueue[0].label != "submit 1136a" {
+		t.Fatalf("queue = %#v", m.jobQueue)
+	}
+	if !strings.Contains(m.jobsView(), "Jobs 5/5 +1 queued") {
+		t.Fatalf("jobs view = %q", m.jobsView())
+	}
+
+	m.killJobs()
+	if len(m.jobs) != 0 || len(m.jobQueue) != 0 {
+		t.Fatalf("killJobs left jobs=%d queue=%d", len(m.jobs), len(m.jobQueue))
+	}
+}
