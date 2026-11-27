@@ -13,7 +13,7 @@ var completionCommands = []string{
 	"config", "submit", "list", "ncontests", "futureContests", "parse", "gen", "test", "watch",
 	"open", "stand", "sid", "detail", "race", "pull", "sync",
 	"start", "end",
-	"clone", "upgrade", "statement", "material", "completion",
+	"clone", "upgrade", "statement", "material", "getTag", "completion",
 	"db",
 	"lpractice", "lrepractice", "lnrepractice", "opractice",
 }
@@ -85,6 +85,7 @@ _cf() {
         'upgrade:upgrade cf'
         'statement:fetch problem statements'
         'material:fetch contest materials'
+        'getTag:fetch problem tags and difficulty into tag.md'
         'completion:print a shell completion script'
         'db:query the local timer database'
         'lpractice:pick random local problems'

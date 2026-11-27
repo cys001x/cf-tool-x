@@ -30,6 +30,8 @@ func main() {
 			os.Args[1] = "lnrepractice"
 		case "opractice":
 			os.Args[1] = "opractice"
+		case "gettag":
+			os.Args[1] = "getTag"
 		}
 		if message := cmd.ValidateCommandLine(os.Args[1:]); message != "" {
 			fmt.Fprintln(os.Stderr, message)
@@ -71,6 +73,7 @@ Usage:
   cf clone [ac] [<handle>]
   cf statement [<specifier>...] [-d <dir>] [-f <file>]
   cf material [<specifier>...] [-d <dir>] [-f <file>]
+  cf getTag [<specifier>...]
   cf completion [<shell>]
   cf upgrade
 
@@ -253,6 +256,10 @@ Examples:
   cf material 1136     Fetch all Contest materials for contest 1136 and save
                        them as <contest-id>_<name>.md files (e.g.
                        1136_announcement.md).
+  cf getTag 1136a      Fetch the tags and difficulty of contest 1136 problem
+                       "a" and save them as tag.md in the problem folder.
+  cf getTag 1136       Fetch the tags and difficulty of every problem of
+                       contest 1136.
   cf completion bash   Print a bash completion script. Load it with
                        "source <(cf completion bash)".
   cf completion zsh    Print a zsh completion script. Load it with

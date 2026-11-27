@@ -42,6 +42,7 @@ type ParsedArgs struct {
 	Upgrade      bool     `docopt:"upgrade"`
 	Statement    bool     `docopt:"statement"`
 	Material     bool     `docopt:"material"`
+	GetTag       bool     `docopt:"getTag"`
 	Completion   bool     `docopt:"completion"`
 	Start        bool     `docopt:"start"`
 	End          bool     `docopt:"end"`

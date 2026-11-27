@@ -18,6 +18,7 @@ document describes every command, its arguments, and the files it creates.
   - [cf parse](#cf-parse)
   - [cf statement](#cf-statement)
   - [cf material](#cf-material)
+  - [cf getTag](#cf-gettag)
   - [cf gen](#cf-gen)
   - [cf test](#cf-test)
   - [cf submit](#cf-submit)
@@ -93,6 +94,7 @@ cf/
             ├── 1136a_ans1.txt
             ├── 1136a_statement.md
             ├── assets/   # images referenced by 1136a_statement.md
+            ├── tag.md    # created by "cf getTag"
             └── 1136a.cpp
 ```
 
@@ -100,8 +102,9 @@ Generated files carry a problem prefix: the lower-case contest id followed by
 the lower-case problem index (`1136a`). Sample files become
 `<problem-id>_inK.txt` / `<problem-id>_ansK.txt`, statements and notes become
 `<problem-id>_statement.md` / `<problem-id>_analysis.md`, and generated code
-becomes `<problem-id>.<ext>`. acmsguru problems use the problem id alone. An
-explicit `-f <file>` always wins over the generated name.
+becomes `<problem-id>.<ext>`. The tag file from `cf getTag` is the exception: it
+is always named `tag.md` without a prefix. acmsguru problems use the problem id
+alone. An explicit `-f <file>` always wins over the generated name.
 
 The root folder and the per-type folder names can be changed with
 `cf config` → `8) set folders' name`. The tool walks up from the current
@@ -175,6 +178,9 @@ Notes:
   the configured templates. Answering `n` skips that problem.
 - acmsguru problems have no submission list; only samples, statement, and
   template generation apply.
+- A submission that cannot be used (missing URL, unknown language extension, or
+  a failed download) is treated the same as no submission: local code is kept,
+  otherwise code is generated from the default template.
 - A template must be configured before `cf sync` can generate code.
 
 ### cf (interactive shell)
@@ -617,6 +623,37 @@ replaces the contest id in the file name.
 
 ```plain
 cf material 1136
+```
+
+### cf getTag
+
+```
+cf getTag [<specifier>...]
+```
+
+Fetches the problem tags and the difficulty rating from the "Problem tags"
+block of the problem page and writes them to `tag.md` in the corresponding
+problem folder:
+
+```markdown
+# Tags
+
+- brute force
+- implementation
+
+**Difficulty:** 800
+```
+
+The difficulty is the `*800` marker shown in the same block; the leading `*`
+is dropped. A contest specifier (`cf getTag 1136`) fetches the tags of every
+problem of the contest. Tags may be hidden while a contest is running; in that
+case a warning is printed and no file is written. An existing `tag.md` is
+overwritten.
+
+```plain
+cf getTag 1136a
+cf getTag 1136
+cf getTag              # the problem of the current directory
 ```
 
 ### cf gen

@@ -73,7 +73,7 @@ If the contest has not started yet, `cf` will count down. If the contest have st
 
  `cf sync 1136` or `cf sync 1136a`
 
-Sync a whole contest or a single problem in one command: fetch samples and statements, pull your latest submission code, or generate a code from the default template when there is no submission and no local code. If local code already exists, `cf` asks before overwriting it. Statement images are downloaded into an `assets/` folder next to `<problem-id>_statement.md` (for example `1136a_statement.md`) and referenced with relative paths.
+Sync a whole contest or a single problem in one command: fetch samples and statements, pull your latest submission code, or generate a code from the default template when no submission is usable (there is none, or it cannot be downloaded) and no local code exists. If local code already exists, `cf` asks before overwriting it. Statement images are downloaded into an `assets/` folder next to `<problem-id>_statement.md` (for example `1136a_statement.md`) and referenced with relative paths.
 
  `cf`
 
@@ -210,6 +210,7 @@ Usage:
   cf clone [ac] [<handle>]
   cf statement [<specifier>...] [-d <dir>] [-f <file>]
   cf material [<specifier>...] [-d <dir>] [-f <file>]
+  cf getTag [<specifier>...]
   cf completion [<shell>]
   cf upgrade
 
@@ -392,6 +393,10 @@ Examples:
   cf material 1136     Fetch all Contest materials for contest 1136 and save
                        them as <contest-id>_<name>.md files (e.g.
                        1136_announcement.md).
+  cf getTag 1136a      Fetch the tags and difficulty of contest 1136 problem
+                       "a" and save them as tag.md in the problem folder.
+  cf getTag 1136       Fetch the tags and difficulty of every problem of
+                       contest 1136.
   cf completion bash   Print a bash completion script. Load it with
                        "source <(cf completion bash)".
   cf completion zsh    Print a zsh completion script. Load it with

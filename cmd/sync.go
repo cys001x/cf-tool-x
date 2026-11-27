@@ -92,13 +92,27 @@ func Sync() (err error) {
 		ref, hasSubmission := latest[strings.ToLower(problem.ID)]
 		local := findLocalCodes(problem.Path, cfg)
 
-		switch {
-		case hasSubmission && ref.URL == "":
-			color.Yellow("Problem %v: cannot build the submission URL. Skip.", problem.ID)
-		case hasSubmission && ref.Ext == "":
-			color.Yellow("Problem %v: language %q of submission #%v has no known file extension. Skip.",
-				problem.ID, ref.Lang, ref.ID)
-		case hasSubmission:
+		// A submission that cannot be used is treated the same as having no
+		// submission at all, so the problem still gets a template file.
+		code := ""
+		if hasSubmission {
+			switch {
+			case ref.URL == "":
+				color.Yellow("Problem %v: cannot build the submission URL. Treat as no submission.", problem.ID)
+			case ref.Ext == "":
+				color.Yellow("Problem %v: language %q of submission #%v has no known file extension. Treat as no submission.",
+					problem.ID, ref.Lang, ref.ID)
+			default:
+				var e error
+				code, e = cln.FetchSubmissionCode(ref.URL)
+				if e != nil {
+					color.Red("Failed to fetch submission #%v: %v. Treat as no submission.", ref.ID, e.Error())
+					code = ""
+				}
+			}
+		}
+
+		if code != "" {
 			target := filepath.Join(problem.Path, info.FilePrefix(problem.ID)+"."+ref.Ext)
 			if len(local) > 0 {
 				note := fmt.Sprintf("Problem %v already has code (%v). Overwrite %v with submission #%v? (y/n) ",
@@ -108,27 +122,25 @@ func Sync() (err error) {
 					continue
 				}
 			}
-			code, e := cln.FetchSubmissionCode(ref.URL)
-			if e != nil {
-				color.Red("Failed to fetch submission #%v: %v", ref.ID, e.Error())
-				continue
-			}
-			if e = ioutil.WriteFile(target, []byte(code), 0644); e != nil {
+			if e := ioutil.WriteFile(target, []byte(code), 0644); e != nil {
 				color.Red("Failed to save %v: %v", target, e.Error())
 				continue
 			}
 			color.Green("Saved submission #%v -> %v", ref.ID, target)
-		case len(local) == 0:
+			continue
+		}
+
+		if len(local) == 0 {
 			if e := loadTemplate(); e != nil {
 				return e
 			}
 			if e := gen(source, problem.Path, templateExt, info.FilePrefix(problem.ID)); e != nil {
 				return e
 			}
-		default:
-			color.Yellow("Problem %v: no submission, keep the local code (%v).",
-				problem.ID, strings.Join(local, ", "))
+			continue
 		}
+		color.Yellow("Problem %v: no submission, keep the local code (%v).",
+			problem.ID, strings.Join(local, ", "))
 	}
 	return nil
 }

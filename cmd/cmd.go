@@ -61,6 +61,8 @@ func Eval(opts docopt.Opts) error {
 		return Statement()
 	} else if Args.Material {
 		return Material()
+	} else if Args.GetTag {
+		return GetTag()
 	} else if Args.Upgrade {
 		return Upgrade()
 	} else if Args.Completion {

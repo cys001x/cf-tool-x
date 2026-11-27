@@ -72,7 +72,7 @@ $ go env -w GOPRIVATE=github.com/cys001x/cf-tool-x
 
  `cf sync 1136` 或者 `cf sync 1136a`
 
-一条命令同步整场比赛或单道题目：拉取样例和题面，拉取你最新的一次提交代码；如果没有提交且本地没有代码，则用默认模板生成代码。若本地已有代码，会先询问是否覆盖。题面图片会下载到 `<题目>_statement.md`（例如 `1136a_statement.md`）旁边的 `assets/` 目录，并用相对路径引用。
+一条命令同步整场比赛或单道题目：拉取样例和题面，拉取你最新的一次提交代码；如果没有提交（或提交拉取失败）且本地没有代码，则用默认模板生成代码。若本地已有代码，会先询问是否覆盖。题面图片会下载到 `<题目>_statement.md`（例如 `1136a_statement.md`）旁边的 `assets/` 目录，并用相对路径引用。
 
  `cf`
 
@@ -189,6 +189,7 @@ SQL，加 `--write` 才允许修改数据。每道题还会根据事件推导出
   cf clone [ac] [<handle>]
   cf statement [<specifier>...] [-d <dir>] [-f <file>]
   cf material [<specifier>...] [-d <dir>] [-f <file>]
+  cf getTag [<specifier>...]
   cf completion [<shell>]
   cf upgrade
 
@@ -282,7 +283,8 @@ SQL，加 `--write` 才允许修改数据。每道题还会根据事件推导出
   cf pull              拉取当前题目的全部提交到当前文件夹下，文件名为
                        "./<比赛ID><题目>.<后缀>"。
   cf sync 1136         同步比赛 1136 的所有题目：拉取样例和题面，把每题最新提交
-                       存成 <题目>.<后缀>；没有提交且本地没有代码时用默认模板生成。
+                       存成 <题目>.<后缀>；没有提交（或提交拉取失败）且本地没有
+                       代码时用默认模板生成。
   cf sync 1136a        同步比赛 1136 的题目 a。
   cf sync              同步当前题目。
   cf                   打开交互式 shell，底部每秒刷新计时状态行。可以直接输入
@@ -343,6 +345,9 @@ SQL，加 `--write` 才允许修改数据。每道题还会根据事件推导出
                        ./assets 并用相对路径引用。
   cf material 1136     拉取比赛 1136 的所有比赛资料（公告、题解等），保存为
                        <比赛ID>_<名称>.md 文件（例如 1136_announcement.md）。
+  cf getTag 1136a      拉取比赛 1136 题目 a 的标签和难度，保存为题目文件夹下的
+                       tag.md。
+  cf getTag 1136       拉取比赛 1136 所有题目的标签和难度。
   cf completion bash   输出 bash 补全脚本，用 "source <(cf completion bash)" 加载。
   cf completion zsh    输出 zsh 补全脚本，在 ~/.zshrc 里用
                        "eval \"$(cf completion zsh)\"" 加载。
